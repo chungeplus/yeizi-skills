@@ -71,3 +71,4 @@ MIT License，详见 [LICENSE](./LICENSE)。
 ## 更新记录
 
 详见 [CHANGELOG.md](./CHANGELOG.md)。
+当前 changelog 按“仓库级”和“skill 级”分别记录，便于后续继续收录新的 skills。
