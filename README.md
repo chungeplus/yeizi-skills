@@ -1,6 +1,6 @@
 # yeizi-skills
 
-`yeizi-skills` 是一个 skills 包，收录了我整理的一些常用 skills。
+`yeizi-skills` 是一个 skills 包，当前主要收录面向软件开发全流程的 skills。
 
 用户可以直接下载这个仓库，把需要的 skill 文件夹复制到自己的 `skills` 目录中使用。
 
@@ -17,36 +17,41 @@
 
 ```text
 your-skills/
-└── refine-and-self-review/
+└── dev-refine-and-self-review/
     └── SKILL.md
 ```
 
 调用示例：
 
-`使用 refine-and-self-review 继续完善当前模块`
+`使用 dev-refine-and-self-review 继续完善当前模块`
 
 ## 当前 Skills
 
-### `refine-and-self-review`
+### `dev-refine-and-self-review`
 
 作用：
 
-- 处理“优化、补充、修复、继续完善”这类请求
+- 处理软件开发全流程里“优化、补充、修复、继续完善、重构、重做、换风格、合并、联调、提测、交付整理”这类请求
 
 功能：
 
 - 先完成当前任务
+- 首版创建任务也默认触发自审
 - 再检查结果是否还有明显缺口
 - 需要时补充下一步建议
 - 如果用户接受建议，会继续执行该建议并基于最新结果再次自审
+- 大产出时可采用抽样自审，并说明检查范围
+- 会按当前交付物切换产品、设计、研发、测试、交付等视角做自审
+- 如果同时改了多个交付物，会额外检查它们之间是否同步
 
 适用场景：
 
-- 代码优化
-- Bug 修复
-- 文档补充
-- 方案完善
-- 功能继续实现
+- PRD / 流程 / 验收标准补充
+- 首版 PRD / 原型 / 页面 / 接口创建
+- UI / 页面 / 组件改版与完善
+- 前后端功能实现、重构、联调
+- 测试验证、提测、发布前检查
+- 方案、架构、交付内容整理
 
 ## 目录结构
 
@@ -55,7 +60,7 @@ yeizi-skills/
 ├── CHANGELOG.md
 ├── README.md
 ├── LICENSE
-└── refine-and-self-review/
+└── dev-refine-and-self-review/
     └── SKILL.md
 ```
 
