@@ -32,6 +32,8 @@ your-skills/
 
 `使用 dev-refine-and-self-review 执行下一步，按你的建议继续验证并自审`
 
+`/pair-program -n 5 帮我评审这个登录重构方案`
+
 ## 当前 Skills
 
 ### `dev-refine-and-self-review`
@@ -68,6 +70,37 @@ your-skills/
 - 验证证据不足、需要明确缺失项和下一步补证方式的检查场景
 - 方案、架构、交付内容整理
 
+### `pair-program`
+
+结构说明：
+
+- 主规则在 `SKILL.md`
+- 调用示例在 `references/examples.md`
+
+作用：
+
+- 处理软件开发全流程里的显式结对输出请求
+- 仅在用户主动调用 `/pair-program` 时触发
+
+功能：
+
+- 解析 `/pair-program -n <轮次> <任务>`
+- 对 `-n` 做规范化处理：缺失或非法值回退到 `3`，超大值截断到 `9`
+- 让主智能体和一个动态副智能体围绕当前任务内部往返讨论 `n` 轮
+- 按需求、架构、代码、测试、发布等不同交付物切换副智能体角色
+- 讨论完成后输出 `主结论 + 内部讨论摘要`
+- 如果关键分歧仍存在，再输出 `分歧点 + 建议选择`
+- 如果宿主不支持真实子智能体，退化为单实例双角色模拟，并明确标记为未获得独立副智能体验证的降级模式
+- 始终只输出清洗后的内部讨论摘要，不暴露完整逐轮内部讨论
+
+适用场景：
+
+- PRD / 需求 / 用户故事评审
+- 技术方案、架构、选型比较
+- 代码实现建议、重构评审、接口设计讨论
+- 测试策略、联调方案、发布准备
+- 需要更稳健第二意见的软件开发内容输出
+
 ## 目录结构
 
 ```text
@@ -75,13 +108,17 @@ yeizi-skills/
 ├── CHANGELOG.md
 ├── README.md
 ├── LICENSE
-└── dev-refine-and-self-review/
+├── dev-refine-and-self-review/
+│   ├── SKILL.md
+│   └── references/
+│       ├── deliverables.md
+│       ├── examples.md
+│       ├── roles.md
+│       └── validation.md
+└── pair-program/
     ├── SKILL.md
     └── references/
-        ├── deliverables.md
-        ├── examples.md
-        ├── roles.md
-        └── validation.md
+        └── examples.md
 ```
 
 ## License
