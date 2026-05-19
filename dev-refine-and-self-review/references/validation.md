@@ -1,55 +1,55 @@
-# 验证证据来源与抽样审查
+# Verification Evidence and Sampling Review
 
-## 验证证据来源
+## Evidence Sources
 
-在写“已验证范围内”这类结论前，先明确证据来自哪里。可使用一种或多种来源：
+Before you write conclusions such as "within the verified scope", make the evidence source explicit. Use one or more of the following:
 
-- 静态检查：阅读代码、文档、配置、页面结构、样式结构得到的判断
-- 运行结果：本地运行、构建结果、命令输出、接口响应、日志输出
-- 浏览器 / 页面查看：页面渲染、布局、交互状态、滚动、可见性检查
-- 测试输出：单测、集成测试、回归测试、手动验证记录
-- 文档核对：PRD、原型、实现、测试说明、交付清单之间的对照
-- 人工走查：基于当前上下文做的结构检查、路径核对、状态核对
+- Static review: code, docs, config, structure, or style inspection
+- Runtime evidence: local execution, build results, command output, API responses, logs
+- Browser or page inspection: rendering, layout, interaction states, scrolling, visibility
+- Test output: unit tests, integration tests, regression tests, manual validation notes
+- Document comparison: PRD, prototype, implementation, test notes, and delivery checklist alignment
+- Manual walkthrough: structure checks, path checks, state checks based on the current context
 
-输出结论时，尽量让验证说明和证据来源对应：
+Try to match the wording of the conclusion to the actual evidence source:
 
-- 不要把“静态检查”写成“已实际运行验证”
-- 不要把“抽样查看几个页面”写成“已全量验证”
-- 不要把“文档核对通过”写成“功能已经可用”
+- Do not describe static review as runtime verification
+- Do not describe sampling a few pages as full verification
+- Do not describe document alignment as proof that the feature is usable
 
-## 大产出抽样审查
+## Sampling Large Outputs
 
-当产出明显大到全量审查成本过高时，可采用抽样策略做自审。以下阈值仅作参考，不是硬性门槛：
+When the output is large enough that full review is disproportionately expensive, sampling is allowed. These thresholds are only heuristics, not hard rules:
 
-- 代码：约 300 行以上
-- HTML/CSS：约 500 行以上
-- 文档：约 1000 字以上
+- Code: roughly more than 300 lines
+- HTML/CSS: roughly more than 500 lines
+- Documents: roughly more than 1000 words or characters of meaningful content
 
-### 抽样规则
+### Sampling Rules
 
-1. 必查项：
-   - 入口/出口逻辑，如函数开头与返回、页面首屏与底部关键区域
-   - 声明/定义区，如 `import`、全局状态、CSS 变量、配置区
-   - 首尾结构，如 HTML 头部与闭合标签、模块边界、文档开头与结尾
-   - 共享样式或公共能力，如公共组件、布局骨架、主题变量
-2. 抽样项：
-   - 额外抽取 2-3 个代表性中段或模块
-   - 尽量覆盖不同类型内容，如表单页 + 列表页 + 详情页，或初始化逻辑 + 主流程 + 异常分支
-   - 避免只检查相邻段落，避免样本过于单一
-3. 说明义务：
-   - 在自审结论中明确写出本次是全量审查还是抽样审查
-   - 如果是抽样审查，明确写出覆盖范围、未覆盖范围和残余风险
+1. Always inspect:
+   - Entry and exit logic, such as function boundaries or first-screen / bottom critical page areas
+   - Declaration zones, such as `import`s, global state, CSS variables, or config sections
+   - Start/end structure, such as opening and closing layout structure, module boundaries, document intro and ending
+   - Shared styles or shared capabilities, such as common components, layout skeletons, theme variables
+2. Sample additional representative sections:
+   - Inspect 2-3 representative middle sections or modules
+   - Cover different content types when possible, such as form page + list page + detail page, or initialization + main flow + error branch
+   - Avoid inspecting only adjacent sections or overly similar samples
+3. Explain the review scope:
+   - State whether the review was full or sampled
+   - If it was sampled, state the covered scope, uncovered scope, and residual risk
 
-如果用户明确要求严格验证、全量检查或高置信度结论，不要默认抽样，应优先执行更完整的审查。
+If the user explicitly asks for strict verification, full inspection, or a high-confidence conclusion, do not default to sampling.
 
-## 不适合默认抽样的高风险场景
+## High-Risk Changes That Should Not Default to Sampling
 
-即使产出体量很大，以下高风险修改也不应因为“大文件”而默认只做抽样审查，应优先全量检查或执行更严格的验证：
+Even if the output is large, do not default to sampling for these high-risk areas:
 
-- 权限、认证、登录、注册、风控相关逻辑
-- 支付、扣费、订单状态流转、退款相关逻辑
-- 发布脚本、部署流程、环境配置切换
-- 数据迁移、批量更新、删除、回填脚本
-- 涉及安全边界、敏感数据、外部系统回调的关键链路
+- Permission, authentication, login, registration, or risk-control logic
+- Payment, charging, order-state transitions, or refund logic
+- Release scripts, deployment workflows, or environment switching
+- Data migration, bulk update, delete, or backfill scripts
+- Critical paths that involve security boundaries, sensitive data, or external callbacks
 
-这类场景如果无法完成更严格验证，也不要勉强给出高置信度通过结论，而应明确说明当前验证不足和残余风险。
+If stronger verification cannot be completed in those cases, do not force a high-confidence pass conclusion. State the verification gap and residual risk explicitly.

@@ -1,177 +1,210 @@
 ---
 name: pair-program
 description: |
-  面向软件开发全流程的显式结对编程 skill。当用户使用 `/pair-program -n 5 任务说明`，或明确要求使用 pair-program 先让主智能体与副智能体内部讨论后再对外回答时，先围绕当前任务进行 N 轮往返讨论，再由主智能体输出正式结论和内部讨论摘要。适用于需求讨论、方案设计、架构评审、代码实现建议、重构、测试策略、联调、发布准备等软件开发过程内容输出；若讨论后仍有分歧，输出主结论、分歧点与建议选择。仅在用户显式调用时触发。
+  Use when the user explicitly invokes `/pair-program` for a small-to-medium software question involving requirement review, solution comparison, architecture slices, refactor planning, testing strategy, integration planning, or release preparation.
 ---
 
 # Pair Program
 
-这是一个仅在用户显式调用时生效的内部结对编程 skill。
+This explicit paired-discussion skill uses **two distinct sub-agents** to pressure-test a small-to-medium software question, then returns a more mature answer, plan, or implementation result without exposing raw internal reasoning.
 
-它的目标不是把完整内部推理原样展示给用户，而是让主智能体先和一个动态副智能体进行若干轮高质量讨论，再把更成熟的结果整理后输出。
+## Trigger Rules
 
-## 触发规则
+- Trigger only on explicit `/pair-program` use. Do not intercept normal replies automatically.
+- Standard form: `/pair-program <task>`
+- Use this skill for small-to-medium issue discussion, not for broad multi-decision exploration across large uncertain scopes
+- Debate length is internal to the skill. Do not accept user-configured round counts
+- Always run at least `3` internal debate rounds between the two sub-agents
+- Never exceed `10` internal debate rounds between the two sub-agents
+- Do **not** infer discussion rounds from numbers or round instructions inside the task body
+- If the command does not contain a clear task but the thread goal is obvious, continue from context; ask only if the target is still unclear
 
-- 仅在用户显式调用 `/pair-program` 时触发，不要自动拦截普通回复。
-- 标准调用写法：`/pair-program -n 5 <任务>`
-- 如果只写 `/pair-program <任务>`，默认按 `-n 3` 处理。
-- `-n` 只接受正整数。
-- 如果 `-n` 缺失，使用 `3`；如果 `-n` 是 `0`、负数、小数、非数字或其他非法值，也统一按 `3` 处理。
-- 为控制成本和避免空转，实际执行轮次上限为 `9`；如果用户给出大于 `9` 的值，按 `9` 轮处理。
-- 建议轮次区间仍为 `3-7`；只有在任务确实复杂时才使用更高轮次。
-- 如果 `-n` 被回退或截断，必须在最终输出里用一句话说明实际使用轮次，不要默默改掉。
-- 如果命令后没有明确任务，但当前线程目标清晰，可直接基于当前上下文继续；如果上下文仍不清晰，再向用户确认本轮目标。
+## Round Definition
 
-## 轮次定义
+- 1 round = **sub-agent A** presents or revises the current best solution, **sub-agent B** directly rebuts, stress-tests, or narrows it once, and the pair advances the debate by one full exchange
+- Minimum behavior = `3` full debate rounds between the two sub-agents
+- Maximum behavior = `10` full debate rounds between the two sub-agents
+- After the minimum `3` rounds, continue until stable agreement or the `10`-round limit
+- Even if partial consensus appears early, still complete at least the minimum `3` rounds before stopping
+- Stable agreement = both sub-agents endorse the same conclusion and the same next step, with no decision-relevant disagreement left
+- Every round must move the discussion forward: add constraints, revise assumptions, surface risk, reduce disagreement, or strengthen validation planning
+- If two consecutive rounds add no meaningful new information, shift the remaining debate into risk ranking, validation-gap organization, decision comparison, or release checks instead of repeating the same argument
+- If round `10` is reached without agreement, stop the debate and return the strongest supported path plus the remaining caveats to the primary agent instead of forcing false consensus
 
-- 1 轮 = 主智能体给出当前判断、方案或草案一次，副智能体回应一次。
-- `-n 5` = 完成 5 次主副往返。
-- 即使中途已经形成初步共识，也继续用剩余轮次做边界检查、失败场景压力测试、替代方案比较或验证缺口审视，不要提前草率结束。
-- 每一轮都必须推进内容：补充约束、修正假设、发现风险、缩小分歧或增强验证计划；不要原地复述。
-- 如果连续 2 轮没有新增信息，剩余轮次自动转为“风险排序、验证缺口梳理、决策比较或上线检查”，避免机械重复。
+## Sub-Agent Role Selection
 
-## 副智能体角色选择
+Create **two** sub-agents with distinct responsibilities.
 
-副智能体不是固定人格，而是根据当前交付物动态切换职责。
+- **Sub-agent A** should be the current best-fit solution proposer for the task
+- **Sub-agent B** should be the rebuttal reviewer who challenges A's current solution, assumptions, and trade-offs
 
-- 需求、PRD、用户故事、流程、范围、优先级：偏 `challenger`，重点质疑目标、边界、遗漏流程和验收标准。
-- 技术方案、架构设计、模块拆分、选型：偏 `architecture reviewer`，重点看权衡、复杂度、扩展性、性能、可靠性和迁移成本。
-- 前后端实现、重构、修复、接口设计：偏 `code reviewer`，重点看正确性、边界条件、可维护性、测试缺口和回归风险。
-- 测试策略、联调、发布准备、交付检查：偏 `verifier / release reviewer`，重点看验证覆盖、观测性、回滚、依赖同步和上线风险。
-- 如果同一任务跨多个领域，按最终交付物选择主角色，但以下高风险场景必须附加强制次级检查，不要只依赖主角色判断：
-  - 涉及认证、权限、密钥、支付、敏感数据：强制补 `security / privacy` 检查。
-  - 涉及数据库结构、数据迁移、缓存一致性、异步任务：强制补 `data / integration` 检查。
-  - 涉及接口契约、前后端联调、兼容性变更：强制补 `api / compatibility` 检查。
-  - 涉及发布窗口、特性开关、监控、回滚、值班：强制补 `release / verifier` 检查。
-- 只有与当前输出直接相关的次级检查才应加入；不要把所有任务都扩展成全领域巡检。
+Role guidance:
 
-## 执行流程
+- Requirements, PRDs, user stories, flows, scope, priority
+  - Sub-agent A: `solution proposer` with a product / requirements lens
+  - Sub-agent B: `challenger` or `acceptance reviewer`
+- Technical plans, architecture design, module splits, technology choices
+  - Sub-agent A: `solution proposer` with an architecture lens
+  - Sub-agent B: `risk reviewer` or `migration reviewer`
+- Frontend/backend implementation, refactors, fixes, API design
+  - Sub-agent A: `solution proposer` with an implementation lens
+  - Sub-agent B: `edge-case reviewer` or `regression reviewer`
+- Test strategy, integration, release preparation, delivery checks
+  - Sub-agent A: `solution proposer` with a verification / release lens
+  - Sub-agent B: `failure-mode reviewer` or `rollback reviewer`
 
-### 第 0 步：解析命令
+If a task spans multiple domains, pick the main role from the final deliverable, then use the second sub-agent to cover the most relevant complementary risk.
 
-- 识别 `/pair-program`
-- 解析 `-n`
-- 抽取本轮任务正文
-- 如果用户同时给了格式、范围或限制条件，先把这些条件记为硬约束
+For these high-risk cases, Sub-agent B should prefer a forced risk lens:
 
-### 第 1 步：先形成主智能体的初始立场
+- Authentication, authorization, secrets, payments, sensitive data: `security / privacy`
+- Schema changes, data migration, cache consistency, async jobs: `data / integration`
+- API contracts, frontend/backend integration, compatibility changes: `api / compatibility`
+- Release windows, feature flags, monitoring, rollback, on-call concerns: `release / verifier`
 
-在进入结对讨论前，先由主智能体给出一个当前版本的理解、方案、答案框架或执行路径。
+If no strong complementary lens is needed, Sub-agent B should still act as an independent skeptic or validation-focused reviewer instead of repeating A.
 
-这个初始立场不需要完美，但必须足够具体，能让副智能体有东西可以挑战、补充或纠偏。
+## Workflow
 
-### 第 2 步：启动副智能体
+### Step 0: Parse the Command
 
-- 如果宿主支持真实子智能体或委派能力，优先拉起 1 个副智能体，并只传入完成当前任务所需的最小上下文。
-- 如果宿主不支持真实子智能体，则进入**降级模式**：在同一实例内显式模拟“主智能体 / 副智能体”双角色回合。
-- 降级模式下，必须在最终输出中明确说明：`本轮未获得独立副智能体验证，仅进行了单实例双角色强化自检。`
-- 降级模式下，不要把形成的共识表述成“独立第二意见已确认”；如果结论强依赖独立复核，应降低置信度并把它列为残余风险。
-- 无论哪种方式，副智能体都不负责直接对用户定稿；它的职责是补充、挑战、校正和压测主智能体的方案。
+- Recognize `/pair-program`
+- Extract the task body
+- If the user also gave format, scope, or other limits, record them as hard constraints first
 
-### 第 3 步：执行 N 轮内部结对
+### Step 1: Build the Primary Agent Context Pack
 
-每一轮至少完成以下动作：
+Before the paired discussion starts, the primary agent should combine the current project information, thread context, user request, constraints, known codebase facts, and any directly relevant ambiguity into one working context pack.
 
-1. 主智能体提出当前答案、方案、实现思路或下一步动作。
-2. 副智能体基于动态角色指出漏洞、遗漏、约束、替代方案或验证缺口。
-3. 主智能体明确回应：接受、部分接受或拒绝，并给出理由。
-4. 记录本轮带来的关键更新：新增约束、被推翻假设、被保留方案、尚未解决问题。
+Then the primary agent should produce:
 
-执行时遵守以下约束：
+- a current best understanding of the task
+- an initial proposed direction or answer frame
+- a prompt for **sub-agent A** to propose the best-fit solution for this context
+- a prompt for **sub-agent B** to rebut, pressure-test, and narrow A's current solution
 
-- 不要把副智能体变成简单附和者。
-- 不要把每一轮都做成完整重写；重点是增量修正。
-- 如果发现某个分歧本质上需要真实验证才能裁定，明确标记为“待验证分歧”，不要伪造结论。
-- 如果任务本身要求实现、改代码、跑测试或查文件，结对讨论只是手段，不是替代实际执行。
+The initial direction is only a starting point. It is not privileged. If the debate reveals a stronger path, the next round should replace the earlier direction instead of defending it by inertia.
 
-### 第 4 步：合并讨论结果
+### Step 2: Start the Two Sub-Agents
 
-在 N 轮完成后，把讨论结果收敛成以下几类信息：
+- If the host supports real sub-agents or delegation, start **two** sub-agents and pass only the minimum context required for the task
+- Give the two sub-agents distinct roles; do not send them out as clones
+- If the host does not support two real sub-agents, enter **degraded mode** and explicitly simulate `primary / sub-agent A / sub-agent B` in one instance
+- In degraded mode, state this clearly in the final output: `This round did not use two independent sub-agents. It used a single-instance three-role self-check instead.`
+- In degraded mode, do not present the result as independently confirmed multi-agent validation; if the conclusion depends on independent review, lower confidence and list it as residual risk
+- In either mode, the two sub-agents do not finalize the user-facing answer directly; their job is to run a lightweight internal debate, then hand their discussion result and proposed solution back to the primary agent for synthesis
 
-- 已形成共识的结论
-- 经过讨论被修正或放弃的初始想法
-- 仍未解决、但需要对用户透明说明的分歧
-- 需要补充验证才能下高置信度结论的风险点
+### Step 3: Run the Internal Debate
 
-### 第 5 步：完成实际任务
+Run at least `3` rounds. After that, continue only as needed until stable agreement or the `10`-round cap. Each round should complete at least these actions:
 
-如果本轮请求不仅是讨论，还包含实现、修改、验证、评审、写文档或给出方案落地稿，则继续完成这些工作；不要只停在“我们讨论过了”。
+1. The primary agent gives the two sub-agents the current task frame, current proposal, and current constraints
+2. Sub-agent A proposes or revises the best-fit solution from its assigned lens
+3. Sub-agent B directly rebuts that solution from its complementary lens
+4. The next round starts from the updated state created by the previous exchange, not from a blank slate
+5. Record the important updates from the debate: new constraints, invalidated assumptions, retained options, unresolved issues
 
-### 第 6 步：对用户输出
+Rules during execution:
 
-最终输出默认包含：
+- Do not let either sub-agent become a simple echo or cheerleader
+- Do not let the two sub-agents collapse into the same perspective
+- Do not reduce the exchange to two isolated reviews; **sub-agent B** must directly challenge **sub-agent A**, and **sub-agent A** must revise or defend based on that challenge
+- If **sub-agent B** identifies a materially stronger path, let the next round promote that path into the main candidate instead of staying anchored to the original proposal
+- Do not rewrite everything from scratch every round; focus on incremental correction
+- If a disagreement fundamentally requires real verification, mark it as a validation-dependent disagreement instead of faking resolution
+- If the debate reaches round `10` without stable agreement, stop and return the strongest supported solution plus the remaining caveats to the primary agent
+- If the task also requires implementation, code changes, tests, or file inspection, remember that the paired discussion is a method, not a replacement for execution
 
-1. `主结论`
-2. `内部讨论摘要`
+### Step 4: Merge the Discussion Result
 
-当仍有未消除的关键分歧时，再追加：
+After the internal debate stops, the two sub-agents return their debate output to the primary agent. The primary agent then condenses the result into:
 
-3. `分歧点`
-4. `建议选择`
+- conclusions that reached consensus
+- initial ideas that were revised or discarded
+- disagreements that still matter and should be visible to the user
+- risks that still require further validation before a high-confidence conclusion
 
-## 输出要求
+### Step 5: Complete the Real Task
 
-- 永远不要原样暴露完整内部对话逐轮 transcript。
-- 即使用户明确要求查看“内部讨论全文”，也只返回经过清洗的结构化摘要、关键分歧和结论，不返回逐轮推理原文。
-- `主结论` 负责给出最终答案、方案、代码评审意见、实现建议或下一步动作。
-- `内部讨论摘要` 负责说明这轮 pair 讨论带来了什么修正、删掉了什么不稳妥想法、补上了哪些约束或验证项。
-- 除非用户明确要求展开摘要，否则 `内部讨论摘要` 默认不超过 `3` 条 bullet，每条只保留结论级信息；能用 1 句说清的，不要写成复盘长文。
-- 如果进入降级模式，或 `-n` 被回退 / 截断，必须在摘要中补 1 句执行说明；优先与第 3 条 bullet 合并，不要因此突破默认长度预算。
-- 如果存在 `分歧点`，只保留真正影响决策的关键分歧，不要罗列无关小争论。
-- `建议选择` 要明确告诉用户当前更推荐哪条路，以及推荐理由。
-- 如果用户同时要求严格固定格式输出，例如纯 JSON、纯补丁、纯代码块，则优先满足主格式要求；若无法同时容纳摘要，应明确说明本轮 pair 摘要被压缩或省略，而不是悄悄丢失。
+If the request also includes implementation, changes, verification, review, documentation, or concrete execution advice, continue and do that work. Do not stop at "we discussed it".
 
-## 推荐输出结构
+### Step 6: Return the User-Facing Output
 
-### 结构 A：已达成主结论，无关键分歧
+The default output should include:
+
+1. `Main conclusion`
+2. `Internal discussion summary`
+
+If a meaningful disagreement still remains, also add:
+
+3. `Key disagreement`
+
+If a recommendation is still appropriate, also add:
+
+4. `Recommended choice`
+
+## Output Requirements
+
+- Never expose the full internal round-by-round transcript
+- Even if the user explicitly asks for the full internal discussion, return only a cleaned structured summary, key disagreements, and the conclusion
+- `Main conclusion` gives the final answer, plan, review opinion, implementation suggestion, or next action
+- `Internal discussion summary` explains what the paired discussion corrected, removed, constrained, or added
+- Unless the user explicitly asks for expansion, keep `Internal discussion summary` within `3` bullets and keep them conclusion-level
+- If degraded mode was used, add one short execution note in the summary
+- If there is a `Key disagreement`, keep only disagreements that actually affect the decision
+- If the debate stopped at the `10`-round cap without full agreement, say so briefly and make the best-supported recommendation instead of adding user burden
+- `Recommended choice` should clearly state which path is recommended and why
+- If the user also requires a strict fixed format such as pure JSON, pure patch, or pure code, satisfy that first; if the summary cannot fit, say it was compressed or omitted instead of silently dropping it
+
+## Recommended Output Structures
+
+### Structure A: Main Conclusion Reached, No Key Disagreement
 
 ```markdown
-**主结论**
+**Main conclusion**
 
-[给用户的正式结论]
+[formal answer to the user]
 
-**内部讨论摘要**
+**Internal discussion summary**
 
-- [最重要的修正或补充 1]
-- [最重要的修正或补充 2]
-- [如有必要，将验证/风险提醒或执行说明合并在第 3 条里]
+- [most important correction or addition 1]
+- [most important correction or addition 2]
+- [optional verification/risk/execution note]
 ```
 
-### 结构 B：存在关键分歧
+### Structure B: Key Disagreement Remains
 
 ```markdown
-**主结论**
+**Main conclusion**
 
-[当前更推荐的正式结论]
+[currently recommended conclusion]
 
-**内部讨论摘要**
+**Internal discussion summary**
 
-- [达成的共识]
-- [被推翻或修正的点]
-- [还需要用户知道的约束]
+- [consensus reached]
+- [point revised or rejected]
+- [constraint the user should know]
 
-**分歧点**
+**Key disagreement**
 
-- [真正影响决策的关键分歧]
+- [decision-relevant disagreement]
 
-**建议选择**
+**Recommended choice**
 
-- [推荐选项 + 推荐理由]
+- [recommended option + rationale]
 ```
 
-## 适用范围
+## Applicable Scope
 
-将这个 skill 视为软件开发全过程里的显式结对输出器，适用于：
+Treat this skill as an explicit paired-discussion layer for small-to-medium software questions. It is useful for:
 
-- 需求讨论与 PRD 打磨
-- 方案设计与架构比较
-- 代码实现建议与重构决策
-- 接口设计与联调策略
-- 测试方案、验证计划与发布准备
-- 对已有产出做更稳健的二次审视
+- requirement discussion and PRD shaping
+- solution design and architecture comparison
+- implementation advice and refactor decisions
+- API design and integration strategy
+- test planning, validation planning, and release preparation
+- a more stable second-pass review of an existing output
 
-完整调用示例见 [references/examples.md](references/examples.md)。
+## One-Sentence Rule
 
-## 一句话准则
-
-当用户显式调用 `/pair-program` 时，先让主智能体和动态副智能体围绕当前软件开发任务做 N 轮内部结对，再由主智能体输出正式结论和简明内部讨论摘要；若关键分歧仍在，则额外给出分歧点与建议选择。
+When the user explicitly invokes `/pair-program`, let the primary agent build the context and two tailored sub-agent prompts, run a lightweight internal proposer-vs-rebuttal debate for at least `3` rounds and at most `10`, then have the primary agent return the final conclusion plus a concise internal discussion summary.

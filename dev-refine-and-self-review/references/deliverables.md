@@ -1,21 +1,21 @@
-# 多交付物联动检查
+# Cross-Deliverable Alignment Checks
 
-如果本轮同时修改了多个交付物，不要只检查单个文件或单个页面本身，还要检查这些交付物之间是否同步。
+If the current task changes multiple deliverables, do not review each file or page in isolation. Also check whether the deliverables stay aligned with each other.
 
-常见联动组合包括：
+Common linked combinations include:
 
-- PRD + 原型
-- 原型 + 页面实现
-- 页面实现 + 接口 / 数据结构
-- 测试记录 + 联调结果 + 提测说明
-- 发布说明 + 交付清单 + 实际产物路径
+- PRD + prototype
+- Prototype + page implementation
+- Page implementation + API / data structure
+- Test records + integration results + test handoff notes
+- Release notes + delivery checklist + actual artifact paths
 
-至少检查以下联动项：
+At minimum, check whether the following stay aligned:
 
-- 名称是否一致，如模块名、页面名、接口名、版本名
-- 数量是否一致，如页面数、接口数、步骤数、清单项数
-- 路径或引用是否一致，如文件路径、链接、接口地址、资源引用
-- 状态是否一致，如“已完成 / 待联调 / 待提测 / 已发布”等标记
-- 版本与范围是否一致，如 PRD、原型、页面实现、发布说明是否仍指向同一版本范围
+- Names: module name, page name, API name, version name
+- Counts: number of pages, APIs, steps, checklist items
+- Paths or references: file paths, links, endpoints, asset references
+- Status labels: completed / waiting for integration / waiting for testing / released
+- Version and scope: whether the PRD, prototype, implementation, and release notes still point to the same version scope
 
-如果多交付物之间存在不同步，不要只给局部通过结论，应优先把“同步缺口”列为自审结果。
+If these deliverables are out of sync, do not give only a local pass conclusion. Prioritize the alignment gap in the self-review result.

@@ -1,17 +1,17 @@
-# 角色视角与典型症状
+# Review Lenses and Typical Symptoms
 
-按主视角调整自审重点。维度保持抽象，典型症状帮助识别常见失败模式；症状列表不是穷尽式 checklist，应结合当前项目阶段和交付物判断。
+Adjust the review focus based on the primary lens. Keep the dimensions abstract and use the symptoms to spot common failure modes. The symptom list is not an exhaustive checklist; always judge it against the project phase and current deliverable.
 
-| 角色视角 | 典型任务 / 交付物 | 自审重点 | 典型症状（自审时重点排查） |
+| Review lens | Typical tasks / deliverables | Main review focus | Typical symptoms to investigate |
 | --- | --- | --- | --- |
-| 产品 / 需求 | PRD、用户故事、流程、验收标准、版本说明 | 闭环完整性、角色权限、异常流程、范围边界、验收口径 | 有主流程无异常流程、有功能无验收标准、有角色无权限边界、版本范围漂移、文档和原型不一致 |
-| 设计 / 前端 UI | 原型、页面、组件、设计规范、交互稿 | 布局完整性、交互闭环、视觉一致性、状态覆盖、响应式 | 元素超出页面边界、底部异常空白滚动、固定元素遮挡、点击无反馈、同类组件样式不一致、旧风格残留 |
-| 研发实现 | 前端代码、后端代码、接口、服务、脚本、任务实现 | 运行时风险、边界条件、异常处理、回归风险、可维护性 | `null`/`undefined` 未处理、异步竞态、状态未复位、重复逻辑、魔法数字、补丁式分支堆积、回填范围不清 |
-| 架构 / 技术方案 | 技术方案、架构拆分、选型、依赖治理 | 风险覆盖、回滚与降级、扩展性、依赖边界、成本与安全 | 有方案无回滚、有依赖无降级、扩展点无约束、职责边界模糊、成本上限不清、安全边界未说明、迁移脚本无回滚、表结构变更未同步上下游 |
-| 测试 / 验证 | 测试用例、验证记录、联调结论、走查结果 | 验证范围、证据充分性、通过条件、遗漏风险 | 只写结论不写依据、未区分已验证/未验证、抽样结论写成全量结论、联调问题无复现路径 |
-| 项目推进 / 交付 | 提测说明、发布说明、交付清单、状态同步 | 交付物一致性、依赖对齐、状态同步、下一步明确性 | 文档与实际产物不一致、路径/版本号未同步、提测条件不清、责任边界不清、下一步缺 owner 或缺入口 |
+| Product / requirements | PRDs, user stories, flows, acceptance criteria, release notes | Closed-loop completeness, role/permission boundaries, exception flows, scope boundaries, acceptance framing | Main flow exists but exception flow is missing; feature exists but acceptance criteria do not; role exists but permission boundary does not; version scope drift; document and prototype disagree |
+| Design / frontend UI | Prototypes, pages, components, design specs, interaction drafts | Layout completeness, interaction closure, visual consistency, state coverage, responsiveness | Elements overflow the page; unexpected blank scroll space; fixed elements overlap content; clicks have no feedback; same component type looks inconsistent; old styling remains |
+| Implementation | Frontend code, backend code, APIs, services, scripts, jobs | Runtime risk, edge cases, exception handling, regression risk, maintainability | `null` / `undefined` not handled; async races; state not reset; duplicated logic; magic numbers; patch-like branch buildup; unclear backfill scope |
+| Architecture / technical plan | Architecture plans, module splits, technology choices, dependency governance | Risk coverage, rollback / degradation, extensibility, dependency boundaries, cost and safety | A plan exists but no rollback; a dependency exists but no degradation path; extension points lack guardrails; ownership boundaries are blurry; cost ceiling is unclear; security boundary is unspecified; migration script has no rollback; schema change is not synchronized with upstream/downstream systems |
+| Testing / verification | Test cases, validation records, integration conclusions, walkthrough results | Verification scope, evidence quality, pass conditions, omission risk | The conclusion is written without evidence; verified and unverified items are mixed together; a sampled conclusion is written as if full coverage happened; an integration issue has no reproduction path |
+| Delivery | Test handoff notes, release notes, delivery checklists, status sync | Deliverable consistency, dependency alignment, status sync, clarity of next steps | The document differs from the actual artifact; paths or versions are out of sync; test-entry conditions are unclear; ownership boundaries are unclear; the next step has no owner or no starting point |
 
-默认规则：
+Default rules:
 
-- 如果当前交付物是代码、接口、服务、脚本、模块实现，默认使用研发视角
-- 如果任务同时跨多个交付物，先按最终交付物定主视角，再补与当前交付直接相关的次视角检查
+- If the deliverable is code, API, service, script, or module implementation, default to the implementation lens
+- If the task spans multiple deliverables, choose the primary lens from the final deliverable first, then add only directly relevant secondary checks
