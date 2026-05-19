@@ -6,7 +6,7 @@ description: |
 
 # Pair Program
 
-This explicit paired-discussion skill uses **two distinct sub-agents** to pressure-test a small-to-medium software question, then returns a more mature answer, plan, or implementation result without exposing raw internal reasoning.
+This explicit paired-discussion skill uses **two distinct sub-agents** to pressure-test a small-to-medium software question, then returns a more mature answer or plan without exposing raw internal reasoning.
 
 ## Trigger Rules
 
@@ -113,7 +113,7 @@ Rules during execution:
 - Do not rewrite everything from scratch every round; focus on incremental correction
 - If a disagreement fundamentally requires real verification, mark it as a validation-dependent disagreement instead of faking resolution
 - If the debate reaches round `10` without stable agreement, stop and return the strongest supported solution plus the remaining caveats to the primary agent
-- If the task also requires implementation, code changes, tests, or file inspection, remember that the paired discussion is a method, not a replacement for execution
+- Keep the discussion focused on solution thinking, trade-offs, risks, and recommended direction rather than directly editing code
 
 ### Step 4: Merge the Discussion Result
 
@@ -124,11 +124,7 @@ After the internal debate stops, the two sub-agents return their debate output t
 - disagreements that still matter and should be visible to the user
 - risks that still require further validation before a high-confidence conclusion
 
-### Step 5: Complete the Real Task
-
-If the request also includes implementation, changes, verification, review, documentation, or concrete execution advice, continue and do that work. Do not stop at "we discussed it".
-
-### Step 6: Return the User-Facing Output
+### Step 5: Return the User-Facing Output
 
 The default output should include:
 
@@ -147,7 +143,7 @@ If a recommendation is still appropriate, also add:
 
 - Never expose the full internal round-by-round transcript
 - Even if the user explicitly asks for the full internal discussion, return only a cleaned structured summary, key disagreements, and the conclusion
-- `Main conclusion` gives the final answer, plan, review opinion, implementation suggestion, or next action
+- `Main conclusion` gives the final answer, plan, review opinion, or recommended next action
 - `Internal discussion summary` explains what the paired discussion corrected, removed, constrained, or added
 - Unless the user explicitly asks for expansion, keep `Internal discussion summary` within `3` bullets and keep them conclusion-level
 - If degraded mode was used, add one short execution note in the summary
@@ -169,7 +165,7 @@ If a recommendation is still appropriate, also add:
 
 - [most important correction or addition 1]
 - [most important correction or addition 2]
-- [optional verification/risk/execution note]
+- [optional risk/validation note]
 ```
 
 ### Structure B: Key Disagreement Remains
@@ -207,4 +203,4 @@ Treat this skill as an explicit paired-discussion layer for small-to-medium soft
 
 ## One-Sentence Rule
 
-When the user explicitly invokes `/pair-program`, let the primary agent build the context and two tailored sub-agent prompts, run a lightweight internal proposer-vs-rebuttal debate for at least `3` rounds and at most `10`, then have the primary agent return the final conclusion plus a concise internal discussion summary.
+When the user explicitly invokes `/pair-program`, let the primary agent build the context and two tailored sub-agent prompts, run a lightweight internal proposer-vs-rebuttal debate for at least `3` rounds and at most `10`, then return the final conclusion plus a concise internal discussion summary without directly editing code.
