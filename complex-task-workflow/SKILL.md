@@ -3,233 +3,166 @@ name: "complex-task-workflow"
 description: "Use when the user explicitly invokes `/complex-task-workflow` for a complex bug, technical problem, or uncertainty-heavy implementation task with cross-module risk, architectural impact, or unclear repair path."
 ---
 
-# Complex Task Analysis and Convergence
+# Complex Task Workflow
 
-This is a **command-triggered** workflow for complex software tasks. Use it only when the user explicitly invokes `/complex-task-workflow`, then define scope, converge key decisions, implement toward the result, and validate outcomes after delivery.
+This is a command-triggered workflow for complex software tasks. Use it only when the user explicitly invokes `/complex-task-workflow`.
 
 ## Trigger Rules
 
-- Trigger only on explicit `/complex-task-workflow` use. Do not intercept normal replies automatically.
+- Trigger only on explicit `/complex-task-workflow` use.
 - Standard form: `/complex-task-workflow <task>`
-- Use this skill for complex bugs, technical problems, or uncertainty-heavy implementation work where the main agent judges complexity from the codebase and task reality.
-- If the user invokes this skill for a trivial issue, compress it into the minimal path instead of forcing the full workflow.
+- If the user invokes it for a small, obvious, low-risk change, compress the workflow to the minimum useful path.
 
-## Best Fit After Explicit Invocation
+## Default Stance
 
-After the user explicitly invokes `/complex-task-workflow`, this workflow is a good fit when any of the following is true:
+- Be result-oriented. If the user expects a fix, inspect, change, and validate instead of stopping at analysis.
+- Keep the heavy workflow mostly internal. Think deeply, but do not dump the full reasoning trace, terminal log, or step-by-step scratch work into the user-facing reply.
+- Prefer acting on the most likely correct path over presenting a menu of possibilities.
+- If the user already proposed a concrete and viable direction, treat that as the default path and verify it in code before considering alternatives.
 
-- The task is medium complexity or higher
-- There is meaningful technical uncertainty or implementation risk
-- The work spans modules, layers, or dependencies
-- There are multiple viable approaches that need comparison and convergence
-- The task requires official docs, community references, or similar-project research
-- The decision is worth recording for future reuse
-- The main agent judges that a bug is complex rather than routine
+## What Counts as a Real Decision
 
-Treat a bug as complex when one or more of the following is true:
+Elevate something into a user-visible decision only if it would materially change one of these:
 
-- The expected fix is likely to touch more than `10` files
-- The fix is likely to change project architecture, module boundaries, or cross-layer behavior
-- The root cause or repair path is materially unclear or non-routine
-- The current technical approach does not satisfy the project well enough and may need a deeper solution change
-- The bug spans multiple modules, dependencies, integrations, or compatibility concerns
+- the implementation direction
+- the success boundary
+- the required validation
+- the risk profile in a way the user should consciously approve
 
-The main agent should judge bug complexity from the codebase and task reality instead of relying on whether the user labels it as complex.
+Do not elevate ordinary implementation details into a decision. Examples:
 
-## Compress the Workflow When
+- package placement
+- local version pinning
+- small config shape changes
+- obvious dependency compatibility repairs
+- routine refactors that do not change product behavior
 
-After explicit invocation, do not run the full workflow when:
+If one option is clearly best after inspection, choose it and move forward.
 
-- It is a low-risk small change
-- The scope is clear and the codebase already has an established pattern
-- There is no decision that would affect solution choice, success boundaries, or test goals
+## User Confirmation Rules
 
-In these cases, keep only the minimal loop:
+Ask the user only when at least one of these is true:
 
-- Requirement analysis and boundaries
-- Pre-implementation thinking
-- Minimal necessary validation
+- multiple options remain genuinely equal after self-review
+- the choice affects product behavior, architecture, or maintenance cost in a non-obvious way
+- the needed information cannot be inferred safely from the codebase, docs, or the user request
+- the proposed change has destructive or hard-to-reverse consequences
 
-## Inputs
+When user confirmation is not required:
 
-Gather these inputs before starting:
+- do not ask a question just to show thoroughness
+- do not output A/B/C options for completeness
+- do not ask the user to choose among options you can eliminate yourself
 
-- User goal
-- Current scope and limits
-- Known constraints
-- Ambiguities
-- Relevant code context
+When user confirmation is required:
 
-## Workflow
+- ask one narrow question
+- include the recommendation
+- keep alternatives brief
+- ask only after you have already inspected the codebase and ruled out the easy path
 
-### 1. Define the Task
+## Internal Workflow
 
-Start with a short checklist:
+### 1. Frame the Task Internally
 
-- Requirement analysis: goals, scope, constraints, ambiguities
-- Success boundaries: what counts as done, what is out of scope
-- Test goals: checks that must pass
+Privately determine:
 
-### 2. Identify Key Decisions
+- goal
+- constraints
+- likely success boundary
+- minimal validation target
 
-Only elevate a question into a key technical decision if it affects:
+Do not mirror this checklist back to the user unless they asked for a plan.
 
-- Solution choice
-- Success boundaries
-- Test goals
-
-Do not elevate ordinary implementation details, low-risk syntax issues, or problems with an obvious existing pattern.
-
-### 3. Collect Candidate Options
+### 2. Inspect Before Deciding
 
 Collect information in this order:
 
-1. Relevant implementations, tests, comments, and patterns in the current codebase
-2. Official docs, official examples, or standards
-3. Similar GitHub projects and code
-4. Community discussions or broader web results as supporting evidence, not primary authority
-5. A fit assessment against current project constraints
+1. current code, config, tests, and workspace patterns
+2. official docs or standards when needed
+3. outside references only when they materially affect correctness
 
-### 4. Review and Converge
+Summarize findings for the user. Do not narrate raw command output unless the exact output is the point.
 
-Run an explicit review for each key question. Prefer at least two roles:
+### 3. Converge Internally
 
-- One proposes a solution
-- One raises objections, counterexamples, or boundary conditions
+Run at least one internal challenge pass:
 
-Continue until one of the following is true:
+- what is the simplest viable repair
+- what could make it wrong
+- what evidence would disprove it
 
-- The solution is stable
-- No new valid objections remain
-- Multiple equally viable options remain and require user confirmation
+If the user's proposed direction still holds up, proceed with it.
 
-A valid objection is one that changes solution choice, success boundaries, or test goals.
+### 4. Implement
 
-### 5. Focused Self-Review and User Confirmation
+Make the smallest coherent change that solves the actual issue.
 
-Perform `1` focused self-review pass based on the current analysis. If the solution is still unstable or a high-risk boundary remains unclear, extend this step to at most `2` focused passes before asking the user or moving on. Focus on:
+If new facts discovered during implementation invalidate the chosen path, loop back internally and adjust. Do not restart the whole visible workflow unless the user needs to make a decision.
 
-- Whether the solution satisfies the required boundaries
-- Whether the test goals are covered
-- Whether there is a simpler implementation path
-- Whether equally viable unhandled options still exist
+### 5. Validate
 
-Ask the user only when necessary, and provide all of the following:
+Run the narrowest meaningful validation first, then broaden only if risk justifies it.
 
-- Current question
-- Candidate options
-- Trade-offs
-- Recommended option
-- Recommendation rationale
+Always check:
 
-### 6. Record the Conclusion
+- the original failure mode
+- the expected success path
+- obvious regressions near the touched area
 
-Maintain an updatable decision record when uncertainty is meaningful or the conclusion should be reused later.
+## Communication Contract
 
-Use a fixed file path in the current workspace:
+Default user-facing style:
+
+- short progress updates
+- concise summaries of findings
+- clear statement of the chosen path
+- concrete validation results
+
+Do not:
+
+- paste long execution traces into the response
+- echo the full workflow headings such as "Define the Task" or "Identify Key Decisions" unless the user explicitly wants a formal write-up
+- present candidate options when no decision is needed from the user
+- expose chain-of-thought style internal deliberation
+
+## Output Shape
+
+By default, keep the visible output close to this shape:
+
+1. what was wrong
+2. what you changed
+3. how you validated it
+4. any remaining risk or one blocking question
+
+Only include options, trade-offs, or a decision record when they are genuinely needed for the task.
+
+## Reuse and Recording
+
+Record a reusable decision only when the conclusion is likely to matter again. Keep records concise and avoid creating paperwork for routine fixes.
+
+Use this path when a reusable record is warranted:
 
 - `docs/decision-records/complex-task-workflow.md`
 
-Record maintenance rules:
-
-- Always update the same file instead of scattering records across multiple documents
-- Create the `docs/decision-records/` directory if it does not exist
-- Keep one current answer for each decision question in that file
-- Before writing, check whether the same problem content is already answered in the file
-- Problem content is the primary identity rule for a decision record
-- If two phrasings are trying to answer the same underlying problem content, treat them as the same decision record even when wording or framing differs
-- If it exists, merge and replace the older content instead of leaving multiple conflicting answers for the same question
-- Append a new section only when the question is genuinely different
-- If the environment is read-only or the user explicitly does not want files written, include the record in the response and state that the file was not updated
-
-Each record should include at least:
-
-- Question
-- Triggering scenario
-- Research process
-- Candidate options
-- Final decision
-- Rationale
-- Applicability assumptions
-- Invalidation conditions
-
-### 7. Think Before Implementation
-
-Before implementation, make these explicit:
-
-- What is assumed
-- What is still ambiguous
-- Whether a simpler method exists
-- Whether reusable prior conclusions already exist
-
-If a new issue changes solution choice, success boundaries, or test goals, go back to the earlier analysis and convergence steps.
-
-### 8. Implement Toward the Result
-
-After convergence, implement the chosen path in code, structure, configuration, or related artifacts.
-
-- This workflow is result-oriented. Do not stop at analysis if the user expects a fix or implementation.
-- Keep the implementation aligned with the requirement analysis, chosen decision, and project constraints.
-- If implementation reveals new facts that change solution choice, success boundaries, or test goals, return to the earlier analysis steps before continuing.
-
-### 9. Validate and Roll Back
-
-After implementation, run at least these checks:
-
-- `1` full validation pass
-- Check that the result matches the requirement analysis and success boundaries
-- Check that the test goals are complete
-- Check for obvious regressions
-
-If the change is high-risk, cross-module, architectural, production-sensitive, or still validation-uncertain, extend validation to at most `3` focused passes instead of stopping after the first one.
-
-If the result is off target, roll back based on the source:
-
-- Requirement-definition issue: return to task definition
-- Solution issue: return to analysis and convergence
-- Implementation issue: return to implementation changes
-
-## Outputs
-
-After using this skill, output all or part of the following:
-
-- Requirement analysis
-- Success boundaries
-- Test goals
-- Key technical decisions
-- Candidate options and final conclusions
-- User confirmation items
-- Decision record
-- Validation results and rollback conclusions
-
-If a reusable decision was recorded, mention the fixed file path explicitly in the output.
-
-## Output Template
-
-Recommended output structure:
-
-1. Requirement Analysis and Success Boundaries
-2. Key Technical Decisions
-3. Candidate Options and Trade-offs
-4. Final Plan
-5. Test Goals and Validation Results
-6. Risks, Rollback Points, or Pending Confirmations
+Do not create or update the record for every invocation by default.
 
 ## Do
 
-- Define boundaries before discussing solutions
-- Converge on the real problem before coding
-- Ask the user with options and a recommendation
-- Preserve reusable conclusions
+- think broadly, speak concisely
+- inspect before proposing
+- implement the user's likely intent when it is safe
+- ask for confirmation only when the choice is real
+- summarize findings instead of replaying the whole investigation
 
 ## Don't
 
-- Do not force trivial tasks into a complex workflow
-- Do not skip task definition and jump straight to coding
-- Do not discuss options without doing self-review
-- Do not ask the user to choose before comparing options
-- Do not mix ordinary implementation details into key technical decisions
+- do not force a complex-looking write-up for every complex task
+- do not ask the user to choose among options you can rule out yourself
+- do not surface internal checklists as user-facing sections by default
+- do not turn routine implementation details into decision points
+- do not stop at analysis when the user expects a repair
 
 ## One-Sentence Rule
 
-When the user explicitly invokes `/complex-task-workflow`, use this result-oriented workflow to analyze, implement, and validate a fix or solution for a complex bug or technical problem.
+When the user explicitly invokes `/complex-task-workflow`, do the necessary deep work internally, then implement and validate the fix while keeping the user-facing communication concise and decision-focused.
