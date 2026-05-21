@@ -1,17 +1,17 @@
 ---
-name: pair-program
+name: yeizi-command-pair-program
 description: |
-  Use when the user explicitly invokes `/pair-program` for a small-to-medium software question involving requirement review, solution comparison, architecture slices, refactor planning, testing strategy, integration planning, or release preparation.
+  Use when the user explicitly invokes `/yeizi-command-pair-program` for a small-to-medium software question involving requirement review, solution comparison, architecture slices, refactor planning, testing strategy, integration planning, or release preparation.
 ---
 
-# Pair Program
+# Yeizi Command Pair Program
 
 This explicit paired-discussion skill uses **two distinct sub-agents** to pressure-test a small-to-medium software question, then returns a more mature answer or plan without exposing raw internal reasoning.
 
 ## Trigger Rules
 
-- Trigger only on explicit `/pair-program` use. Do not intercept normal replies automatically.
-- Standard form: `/pair-program <task>`
+- Trigger only on explicit `/yeizi-command-pair-program` use. Do not intercept normal replies automatically.
+- Standard form: `/yeizi-command-pair-program <task>`
 - Use this skill for small-to-medium issue discussion, not for broad multi-decision exploration across large uncertain scopes
 - Debate length is internal to the skill. Do not accept user-configured round counts
 - Always run at least `3` internal debate rounds between the two sub-agents
@@ -68,7 +68,7 @@ If no strong complementary lens is needed, Sub-agent B should still act as an in
 
 ### Step 0: Parse the Command
 
-- Recognize `/pair-program`
+- Recognize `/yeizi-command-pair-program`
 - Extract the task body
 - If the user also gave format, scope, or other limits, record them as hard constraints first
 
@@ -203,4 +203,4 @@ Treat this skill as an explicit paired-discussion layer for small-to-medium soft
 
 ## One-Sentence Rule
 
-When the user explicitly invokes `/pair-program`, let the primary agent build the context and two tailored sub-agent prompts, run a lightweight internal proposer-vs-rebuttal debate for at least `3` rounds and at most `10`, then return the final conclusion plus a concise internal discussion summary without directly editing code.
+When the user explicitly invokes `/yeizi-command-pair-program`, let the primary agent build the context and two tailored sub-agent prompts, run a lightweight internal proposer-vs-rebuttal debate for at least `3` rounds and at most `10`, then return the final conclusion plus a concise internal discussion summary without directly editing code.

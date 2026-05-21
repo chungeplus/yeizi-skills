@@ -1,12 +1,12 @@
 ---
-name: dev-refine-and-self-review
+name: yeizi-auto-self-review
 description: |
-  Use when a long software-delivery request signals post-task refinement, review, validation, or release-readiness work on the delivered result.
+  Use when a long software-delivery request signals post-task refinement, review, validation, or release-readiness work on the delivered result through auto-trigger conditions.
 ---
 
-# Dev Refine And Self Review
+# Yeizi Auto Self Review
 
-It is a **keyword-triggered** post-task review skill. Its initial trigger is armed by a long software-delivery request plus an explicit review-oriented keyword, then executed only after the main long task has been completed. It also supports a narrow continuation mode for the immediately previous self-review result in the same thread. It does **not** require an explicit command such as `/dev-refine-and-self-review`, and it should not be used as a standalone user-triggered review command.
+It is an **auto-triggered** post-task review skill. Its initial trigger is armed by a long software-delivery request plus an explicit review-oriented keyword, then executed only after the main long task has been completed. It also supports a narrow continuation mode for the immediately previous self-review result in the same thread. It does **not** require an explicit command, and it should not be used as a standalone user-triggered review command.
 
 ## Trigger Logic
 
@@ -27,7 +27,7 @@ Required conditions:
 2. The very next user reply in the same thread clearly continues, accepts, or asks to execute that self-review suggestion
 3. No unrelated task or topic change appears between the self-review and that follow-up reply
 
-Do **not** wait for an explicit `/dev-refine-and-self-review` command. Do **not** activate this skill as a standalone manual review request from the user. Keywords alone are not enough for the initial trigger, and a long task without review-oriented keywords is not enough either. Continuation mode is allowed only for the immediately previous self-review in the same thread.
+Do **not** wait for an explicit command. Do **not** activate this skill as a standalone manual review request from the user. Keywords alone are not enough for the initial trigger, and a long task without review-oriented keywords is not enough either. Continuation mode is allowed only for the immediately previous self-review in the same thread.
 
 Typical deliverables include:
 
