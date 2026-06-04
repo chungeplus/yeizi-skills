@@ -1,4 +1,4 @@
-# rules-project 维护规则
+﻿# rules-project 维护规则
 
 这个文件约束 `rules-project` 中的规则源、场景规则源和 `generate-scene-rules`。
 
