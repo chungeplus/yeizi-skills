@@ -66,7 +66,7 @@ The skill must still confirm both the final scene and the final technology-rule 
    - If all current matches are weak, ambiguous, or not plausibly aligned to the request, do not assign a default candidate. Stop and direct the project manager to add or repair `rules-project/rules/scenes/*-rules.md`.
    - Present the ranked plausible scene candidates from the current `rules-project/rules/scenes/*-rules.md` scan, not only the default candidate.
    - Show the candidate scene file path, whether it is the default candidate, and the match reasons for every candidate you present.
-   - Match reasons must be explainable. Use only signals such as scene file-name matches, scene-title matches, business-keyword matches, directory-skeleton matches, and command-word matches.
+   - Match reasons must be explainable. Use only signals available from the current scan boundary, such as scene file-name matches, scene-title matches when the title is available as lightweight metadata, and direct string alignment between the current request and the scanned scene metadata.
 6. Ask the project manager to confirm the scene.
    - Allow confirming the default candidate.
    - Allow choosing another presented candidate.
