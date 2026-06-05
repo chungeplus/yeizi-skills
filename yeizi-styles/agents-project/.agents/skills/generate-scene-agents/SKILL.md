@@ -47,19 +47,23 @@ The skill must still confirm both the final scene and the final technology-rule 
 - `agents-project/README.md`
 - `agents-project/AGENTS.md`
 - `rules-project/rules/projects/shared-rules.md`
-- all current `rules-project/rules/scenes/*-rules.md`
-- all current top-level directories under `rules-project/rules/technologies/`
+- the current file paths and file names for `rules-project/rules/scenes/*-rules.md`
+- the current top-level directory names under `rules-project/rules/technologies/`
+- Before confirmation, limit scene and technology discovery to lightweight scanning and metadata available from those file paths, file names, directory names, and the current request.
+- Do not fully read unconfirmed scene rule bodies or unconfirmed technology-rule contents before the corresponding confirmation step.
 
 ## Process
 
 1. Read the `agents-project` guidance first.
 2. Read `rules-project/rules/projects/shared-rules.md` as the shared-rule bucket.
 3. Scan all current `rules-project/rules/scenes/*-rules.md`.
+   - At this step, scan only lightweight discovery signals such as file paths, file names, and other metadata available without fully reading unconfirmed scene rule bodies.
 4. Extract the user's business-scene description from the current request.
    - Do not assume the user's wording is already the final scene id.
 5. Match all scene rule sources against the user's request.
    - Rank candidates by descending match quality.
-   - The highest-confidence match becomes the default candidate.
+   - Assign a default candidate only when at least one plausible current match exists.
+   - If all current matches are weak, ambiguous, or not plausibly aligned to the request, do not assign a default candidate. Stop and direct the project manager to add or repair `rules-project/rules/scenes/*-rules.md`.
    - Present the ranked plausible scene candidates from the current `rules-project/rules/scenes/*-rules.md` scan, not only the default candidate.
    - Show the candidate scene file path, whether it is the default candidate, and the match reasons for every candidate you present.
    - Match reasons must be explainable. Use only signals such as scene file-name matches, scene-title matches, business-keyword matches, directory-skeleton matches, and command-word matches.
@@ -74,12 +78,14 @@ The skill must still confirm both the final scene and the final technology-rule 
    - Do not treat tools or libraries such as `vite`, `axios`, `commander`, `zod`, or `eslint` as technology-rule categories.
    - If the scene `技术方案` does not provide clear code-technology categories, stop and direct the project manager to repair the scene rule source.
 9. Scan all current top-level directories under `rules-project/rules/technologies/`.
+   - At this step, scan only lightweight discovery signals such as directory names and other metadata available without reading unconfirmed technology-rule contents.
 10. For each extracted code-technology category, match the available technology-rule directories.
     - Rank candidates by descending match quality.
-    - The highest-confidence match becomes the default candidate for that technology category.
+    - Assign a default candidate for that technology category only when at least one plausible current match exists.
+    - If all current matches for a technology category are weak, ambiguous, or not plausibly aligned to that category, do not assign a default candidate. Stop and direct the project manager to add or repair `rules-project/rules/technologies/*`.
     - Present the ranked plausible technology-rule candidates for that category from the current `rules-project/rules/technologies/*` scan, not only the default candidate.
     - Show the technology category, the candidate technology-rule directory, whether it is the default candidate, and the match reasons for every candidate you present.
-    - Match reasons must be explainable. Use only signals such as technology-name matches, rule-title matches, and direct coverage of the language or framework.
+    - Match reasons must be explainable. Use only signals available from the current scan boundary, such as technology-name matches, directory-name matches, and direct string alignment between the extracted technology category and the directory name.
     - If a technology category has no suitable technology-rule directory, stop and direct the project manager to add or repair `rules-project/rules/technologies/*`.
 11. Confirm technology rules one category at a time.
     - Allow accepting the default candidate.
@@ -194,6 +200,7 @@ Before output, confirm these things:
 - the chosen technology-rule range was explicitly confirmed by the project manager
 - every extracted code-technology category maps to a confirmed technology-rule directory
 - no tool or library was incorrectly treated as a technology-rule category
+- every confirmed scene execution fact is preserved in final `项目规则`
 - every confirmed scene tech choice appears in the final `技术方案`
 - every confirmed scene business rule is preserved in final `项目规则`
 - every confirmed scene implementation boundary is preserved in final `项目规则`
