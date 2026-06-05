@@ -141,20 +141,20 @@ The skill must still confirm both the final scene and the final technology-rule 
 
 Write `agents-project/agents/<scene>.md` with exactly these sections:
 
-- `## 椤圭洰瑙勫垯`
-- `## 鎶€鏈柟妗坄
-- `## 閫氱敤寮€鍙戣鍒檂
-- `## 鎶€鏈笌浠ｇ爜瑙勫垯`
-- `## 鐩綍鍙傝€僠
+- `## 项目规则`
+- `## 技术方案`
+- `## 通用开发规则`
+- `## 技术与代码规则`
+- `## 目录参考`
 
 Do not add any extra top-level `#` title above these sections.
 
 Use them like this:
-- `椤圭洰瑙勫垯`: confirmed execution facts, scene-specific business rules, and scene-specific implementation boundaries only
-- `鎶€鏈柟妗坄: confirmed tech choices and responsibilities only
-- `閫氱敤寮€鍙戣鍒檂: shared project rules only
-- `鎶€鏈笌浠ｇ爜瑙勫垯`: selected technology rules only
-- `鐩綍鍙傝€僠: final scene structure reference only
+- `项目规则`: confirmed execution facts, scene-specific business rules, and scene-specific implementation boundaries only
+- `技术方案`: confirmed tech choices and responsibilities only
+- `通用开发规则`: shared project rules only
+- `技术与代码规则`: selected technology rules only
+- `目录参考`: final scene structure reference only
 
 ## Guardrails
 
