@@ -39,5 +39,14 @@
 ### 不扩展未确认范围
 > 不顺手补未确认主题，不重写当前任务以外的章节。
 
+### final scene-rules 的唯一内容来源是同名 prototype
+> `rules/scenes/*-rules.md` 的最终内容只来自同名 `rules/scenes/prototypes/*-prototype.md`。
+
+### 改 scene 内容只改 prototype
+> 需要调整 scene-rules 的业务内容、结构语义或文案时，只修改同名 prototype，不把 `rules/scenes/*-rules.md` 当长期手改源。
+
+### 改渲染、校验、命名、生成方式才改 skill
+> 只有在调整渲染方式、校验逻辑、命名规则或生成方式时，才修改对应 skill，不把 skill 当 scene 内容上游。
+
 ### scene-rules 调整回正确上游
 > `rules/scenes/*-rules.md` 的内容调整回同名 prototype；输出格式、章节结构、渲染检查点、校验逻辑、命名和生成方式调整回对应 skill 与输出契约副本；不把产物文件当长期手改源。
