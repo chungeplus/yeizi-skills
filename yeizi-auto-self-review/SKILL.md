@@ -1,5 +1,6 @@
 ---
 name: yeizi-auto-self-review
+version: 1.0.0
 description: |
   Use when a long software-delivery request signals post-task refinement, review, validation, or release-readiness work on the delivered result through auto-trigger conditions.
 ---

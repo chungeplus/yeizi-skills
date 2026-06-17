@@ -1,5 +1,6 @@
 ---
 name: yeizi-command-pair-program
+version: 1.0.0
 description: |
   Use when the user explicitly invokes `/yeizi-command-pair-program` for a small-to-medium software question involving requirement review, solution comparison, architecture slices, refactor planning, testing strategy, integration planning, or release preparation.
 ---

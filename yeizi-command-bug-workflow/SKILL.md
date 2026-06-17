@@ -1,5 +1,6 @@
 ---
 name: "yeizi-command-bug-workflow"
+version: 1.0.0
 description: "Use when the user explicitly invokes `/yeizi-command-bug-workflow` for a complex bug, regression, or technical repair where the failure is real, but the root cause or safest fix path is still unclear."
 ---
 

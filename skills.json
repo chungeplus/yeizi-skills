@@ -1,0 +1,16 @@
+{
+  "skills": [
+    {
+      "name": "yeizi-auto-self-review",
+      "version": "1.0.0"
+    },
+    {
+      "name": "yeizi-command-bug-workflow",
+      "version": "1.0.0"
+    },
+    {
+      "name": "yeizi-command-pair-program",
+      "version": "1.0.0"
+    }
+  ]
+}
