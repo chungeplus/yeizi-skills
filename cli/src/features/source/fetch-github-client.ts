@@ -92,7 +92,7 @@ export class FetchGitHubClient implements IGitHubClient {
         AppErrorCode.GITHUB_REQUEST_FAILED,
         "远端请求失败",
         "GitHub 请求失败。",
-        { cause: error },
+        { cause: new Error(String(error)) },
       )
     }
     finally {

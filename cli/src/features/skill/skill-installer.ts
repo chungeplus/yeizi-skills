@@ -107,12 +107,13 @@ export class SkillInstaller {
         }
         catch (restoreError) {
           canRemoveTemporaryRootDirectory = false
+          const cause = restoreError instanceof Error ? restoreError : new Error(String(restoreError))
 
           throw new AppError(
             AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED,
             "技能安装异常",
             `技能“${skillIndexEntry.name}”安装失败后，原始技能目录无法自动恢复，请手动检查本地 skills 目录。`,
-            { cause: restoreError },
+            { cause },
           )
         }
       }

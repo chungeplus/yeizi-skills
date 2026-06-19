@@ -13,6 +13,8 @@ import { githubContentsEntryListSchema } from "@/schemas"
 
 import { FetchGitHubClient } from "./fetch-github-client"
 
+type GitHubContentsPayload = Parameters<typeof githubContentsEntryListSchema.parse>[0]
+
 /**
  * 解析 GitHub Contents API 条目。
  *
@@ -20,7 +22,7 @@ import { FetchGitHubClient } from "./fetch-github-client"
  * @returns 归一化后的 GitHub 条目列表。
  * @example parseGitHubContentsEntries([{ type: "file", path: "yeizi-demo/SKILL.md", download_url: "https://example.com" }]) => [{ type: "file", path: "yeizi-demo/SKILL.md", downloadUrl: "https://example.com" }]
  */
-function parseGitHubContentsEntries(githubContentsPayload: unknown): IGitHubContentsEntry[] {
+function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload): IGitHubContentsEntry[] {
   try {
     const parsedEntries = githubContentsEntryListSchema.parse(githubContentsPayload)
 
@@ -31,11 +33,13 @@ function parseGitHubContentsEntries(githubContentsPayload: unknown): IGitHubCont
     }))
   }
   catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error))
+
     throw new AppError(
       AppErrorCode.GITHUB_CONTENTS_INVALID,
       "远端数据异常",
       "GitHub 内容响应格式不正确。",
-      { cause: error },
+      { cause },
     )
   }
 }
@@ -59,7 +63,7 @@ export class GitHubSkillSource implements ISkillSource {
   public async loadSkillIndex(): Promise<ISkillIndex> {
     const skillIndexUrl = `https://raw.githubusercontent.com/${this.repositoryOwner}/${this.repositoryName}/${this.repositoryBranch}/skills.json`
 
-    return parseSkillIndex(await this.gitHubClient.loadJson<unknown>(skillIndexUrl))
+    return parseSkillIndex(await this.gitHubClient.loadJson<Parameters<typeof parseSkillIndex>[0]>(skillIndexUrl))
   }
 
   /**
@@ -174,7 +178,7 @@ export class GitHubSkillSource implements ISkillSource {
    * 加载 GitHub 指定目录下的条目列表。
    */
   private async loadGitHubContentsDirectory(githubContentPath: string): Promise<IGitHubContentsEntry[]> {
-    const githubContentsPayload = await this.gitHubClient.loadJson<unknown>(this.buildContentsApiUrl(githubContentPath))
+    const githubContentsPayload = await this.gitHubClient.loadJson<GitHubContentsPayload>(this.buildContentsApiUrl(githubContentPath))
 
     return parseGitHubContentsEntries(githubContentsPayload)
   }

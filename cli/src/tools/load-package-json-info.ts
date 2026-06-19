@@ -6,6 +6,7 @@ import { AppError, AppErrorCode } from "@/errors"
 import { packageJsonInfoSchema } from "@/schemas"
 
 const packageJsonPath = resolvePackageJsonPath()
+type PackageJsonPayload = Parameters<typeof packageJsonInfoSchema.parse>[0]
 
 /**
  * 加载并校验 package.json 中会用到的程序信息。
@@ -14,16 +15,18 @@ const packageJsonPath = resolvePackageJsonPath()
  */
 export function loadPackageJsonInfo(): ReturnType<typeof packageJsonInfoSchema.parse> {
   try {
-    const packageJsonPayload: unknown = JSON.parse(readFileSync(packageJsonPath, "utf8"))
+    const packageJsonPayload = JSON.parse(readFileSync(packageJsonPath, "utf8")) as PackageJsonPayload
 
     return packageJsonInfoSchema.parse(packageJsonPayload)
   }
   catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error))
+
     throw new AppError(
       AppErrorCode.PACKAGE_CONFIG_INVALID,
       "程序配置错误",
       "package.json 配置格式不正确。",
-      { cause: error },
+      { cause },
     )
   }
 }

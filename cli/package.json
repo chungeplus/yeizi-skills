@@ -19,6 +19,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "check": "bun run typecheck && bun run lint",

@@ -1,44 +1,51 @@
-import type { AppErrorCodeName } from "./error-code"
+import type { AppErrorCodeName, AppErrorOptions, AppErrorParamsMap } from "./error-code"
 
-import { APP_ERROR_TITLE_BY_CODE } from "./error-title"
+import { getAppErrorDefinition } from "./error-code"
 
-interface IAppErrorOptions {
-  cause?: unknown
+interface LegacyAppErrorOptions {
+  cause?: Error
 }
 
-class AppError extends Error {
-  public readonly code: AppErrorCodeName
+export class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error {
+  public readonly code: TCode
 
   public readonly title: string
 
   public constructor(
-    code: AppErrorCodeName,
-    message: string,
-    options?: IAppErrorOptions,
+    code: TCode,
+    options?: AppErrorOptions<TCode>,
   )
   public constructor(
-    code: AppErrorCodeName,
+    code: TCode,
     title: string,
     message: string,
-    options?: IAppErrorOptions,
+    options?: LegacyAppErrorOptions,
   )
   public constructor(
-    code: AppErrorCodeName,
-    titleOrMessage: string,
-    messageOrOptions?: string | IAppErrorOptions,
-    options?: IAppErrorOptions,
+    code: TCode,
+    titleOrOptions?: string | AppErrorOptions<TCode>,
+    message?: string,
+    legacyOptions?: LegacyAppErrorOptions,
   ) {
-    const hasExplicitTitle = typeof messageOrOptions === "string"
-    const title = hasExplicitTitle ? titleOrMessage : APP_ERROR_TITLE_BY_CODE[code]
-    const message = hasExplicitTitle ? messageOrOptions : titleOrMessage
-    const resolvedOptions = hasExplicitTitle ? options : messageOrOptions
+    if (typeof titleOrOptions === "string") {
+      super(message ?? "", { cause: legacyOptions?.cause })
 
-    super(message, { cause: resolvedOptions?.cause })
+      this.name = new.target.name
+      this.code = code
+      this.title = titleOrOptions
+
+      return
+    }
+
+    const definition = getAppErrorDefinition(code)
+    const params = titleOrOptions?.params as AppErrorParamsMap[TCode]
+
+    super(definition.buildMessage(params), {
+      cause: titleOrOptions?.cause,
+    })
 
     this.name = new.target.name
     this.code = code
-    this.title = title
+    this.title = definition.title
   }
 }
-
-export { AppError }

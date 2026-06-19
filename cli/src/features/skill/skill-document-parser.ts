@@ -22,11 +22,13 @@ export class SkillDocumentParser {
       return skillFrontmatterSchema.parse(frontmatterResult.data)
     }
     catch (error) {
+      const cause = error instanceof Error ? error : new Error(String(error))
+
       throw new AppError(
         AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID,
         "远端数据异常",
         "技能文档 frontmatter 格式不正确。",
-        { cause: error },
+        { cause },
       )
     }
   }

@@ -3,6 +3,8 @@ import type { ISkillIndex } from "@/types/skill"
 import { AppError, AppErrorCode } from "@/errors"
 import { skillIndexSchema } from "@/schemas"
 
+type SkillIndexPayload = Parameters<typeof skillIndexSchema.parse>[0]
+
 /**
  * 解析技能索引数据。
  *
@@ -10,16 +12,18 @@ import { skillIndexSchema } from "@/schemas"
  * @returns 校验后的技能索引结构。
  * @example parseSkillIndex({ skills: [{ name: "yeizi-demo", version: "1.0.0" }] }) => { skills: [{ name: "yeizi-demo", version: "1.0.0" }] }
  */
-export function parseSkillIndex(skillIndexPayload: unknown): ISkillIndex {
+export function parseSkillIndex(skillIndexPayload: SkillIndexPayload): ISkillIndex {
   try {
     return skillIndexSchema.parse(skillIndexPayload)
   }
   catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error))
+
     throw new AppError(
       AppErrorCode.REMOTE_SKILL_INDEX_INVALID,
       "远端数据异常",
       "远端技能索引格式不正确。",
-      { cause: error },
+      { cause },
     )
   }
 }
