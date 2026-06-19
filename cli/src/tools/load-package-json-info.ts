@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 import { AppError, AppErrorCode } from "@/errors"
 import { packageJsonInfoSchema } from "@/schemas"
 
-const packageJsonPath = resolvePackageJsonPath()
+const packageJsonPath = findPackageJsonPath(dirname(fileURLToPath(import.meta.url)))
 type PackageJsonPayload = Parameters<typeof packageJsonInfoSchema.parse>[0]
 
 /**
@@ -39,26 +39,22 @@ function loadPackageJsonInfo(): ReturnType<typeof packageJsonInfoSchema.parse> {
   }
 }
 
-function resolvePackageJsonPath(): string {
-  let currentDirectoryPath = dirname(fileURLToPath(import.meta.url))
+function findPackageJsonPath(currentDirectoryPath: string): string {
+  const candidatePath = resolve(currentDirectoryPath, "package.json")
 
-  while (true) {
-    const candidatePath = resolve(currentDirectoryPath, "package.json")
-
-    if (existsSync(candidatePath)) {
-      return candidatePath
-    }
-
-    const parentDirectoryPath = dirname(currentDirectoryPath)
-
-    if (parentDirectoryPath === currentDirectoryPath) {
-      throw new AppError(AppErrorCode.PACKAGE_CONFIG_INVALID, {
-        params: { kind: "not-found" },
-      })
-    }
-
-    currentDirectoryPath = parentDirectoryPath
+  if (existsSync(candidatePath)) {
+    return candidatePath
   }
+
+  const parentDirectoryPath = dirname(currentDirectoryPath)
+
+  if (parentDirectoryPath === currentDirectoryPath) {
+    throw new AppError(AppErrorCode.PACKAGE_CONFIG_INVALID, {
+      params: { kind: "not-found" },
+    })
+  }
+
+  return findPackageJsonPath(parentDirectoryPath)
 }
 
 export { loadPackageJsonInfo }

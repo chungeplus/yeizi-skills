@@ -144,16 +144,13 @@ class GitHubSkillSource implements ISkillSource {
     githubContentPath: string,
   ): Promise<Array<{ path: string, fileContents: string }>> {
     const githubContentEntries = await this.loadGitHubContentsDirectory(githubContentPath)
-    const loadedFileEntries: Array<{ path: string, fileContents: string }> = []
-
-    for (const githubContentEntry of githubContentEntries) {
+    const loadedFileEntryGroups = await Promise.all(githubContentEntries.map(async (githubContentEntry) => {
       if (githubContentEntry.type === "dir") {
-        loadedFileEntries.push(...(await this.loadGitHubFileEntries(githubContentEntry.path)))
-        continue
+        return this.loadGitHubFileEntries(githubContentEntry.path)
       }
 
       if (githubContentEntry.type !== "file") {
-        continue
+        return []
       }
 
       if (githubContentEntry.downloadUrl === null) {
@@ -162,13 +159,13 @@ class GitHubSkillSource implements ISkillSource {
         })
       }
 
-      loadedFileEntries.push({
+      return [{
         path: githubContentEntry.path,
         fileContents: await this.gitHubClient.loadText(githubContentEntry.downloadUrl),
-      })
-    }
+      }]
+    }))
 
-    return loadedFileEntries
+    return loadedFileEntryGroups.flat()
   }
 
   /**

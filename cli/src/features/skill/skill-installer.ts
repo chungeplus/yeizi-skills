@@ -59,7 +59,7 @@ class SkillInstaller {
     try {
       await mkdir(stagingSkillDirectoryPath, { recursive: true })
 
-      for (const downloadedSkillFile of downloadedSkillFiles) {
+      await Promise.all(downloadedSkillFiles.map(async (downloadedSkillFile) => {
         const destinationFilePath = resolve(stagingSkillDirectoryPath, downloadedSkillFile.relativeFilePath)
         const relativeFilePath = relative(stagingSkillDirectoryPath, destinationFilePath)
 
@@ -75,7 +75,7 @@ class SkillInstaller {
 
         await mkdir(dirname(destinationFilePath), { recursive: true })
         await writeFile(destinationFilePath, downloadedSkillFile.fileContents, "utf8")
-      }
+      }))
 
       try {
         await rename(targetSkillDirectoryPath, backupSkillDirectoryPath)
