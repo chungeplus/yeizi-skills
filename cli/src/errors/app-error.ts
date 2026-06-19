@@ -1,15 +1,20 @@
-import type { AppErrorCodeName, AppErrorOptions, AppErrorParamsMap } from "./error-code"
+import type { AppErrorCodeName, IAppErrorParamsMap } from "./error-code"
 
 import { getAppErrorDefinition } from "./error-code"
 
-export class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error {
-  public readonly code: TCode
+interface IAppErrorOptions {
+  cause?: Error
+  params?: IAppErrorParamsMap[AppErrorCodeName]
+}
+
+class AppError extends Error {
+  public readonly code: AppErrorCodeName
 
   public readonly title: string
 
-  public constructor(code: TCode, options?: AppErrorOptions<TCode>) {
+  public constructor(code: AppErrorCodeName, options?: IAppErrorOptions) {
     const definition = getAppErrorDefinition(code)
-    const params = options?.params as AppErrorParamsMap[TCode]
+    const params = options?.params
 
     super(definition.buildMessage(params), {
       cause: options?.cause,
@@ -20,3 +25,5 @@ export class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends
     this.title = definition.title
   }
 }
+
+export { AppError }
