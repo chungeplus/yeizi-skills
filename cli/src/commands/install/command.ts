@@ -6,10 +6,10 @@ import { homedir } from "node:os"
 import process from "node:process"
 
 import { AppError, AppErrorCode } from "@/errors"
-import { PlatformResolver } from "@/features/platform"
+import { buildPlatformTargets, parsePlatforms } from "@/features/platform"
 import { buildSelectedSkillEntries, parseSkillNames, SkillInstaller } from "@/features/skill"
 import { GitHubSkillSource } from "@/features/source"
-import { OutputFormatter, PromptService } from "@/tools"
+import { isInteractiveTerminal, OutputFormatter, selectPlatforms, selectSkills } from "@/tools"
 import { SupportedPlatform } from "@/types"
 
 /**
@@ -30,24 +30,22 @@ function createInstallCommand(): ICommand<IInstallCommandOptions> {
       description: "逗号分隔的技能列表。",
     },
   ]
-  const platformResolver = new PlatformResolver()
   const gitHubSkillSource = new GitHubSkillSource()
   const skillInstaller = new SkillInstaller()
-  const promptService = new PromptService()
   const outputFormatter = new OutputFormatter()
 
   async function execute(commandOptions: IInstallCommandOptions): Promise<void> {
-    const isInteractiveTerminal = promptService.isInteractiveTerminal()
+    const interactiveTerminal = isInteractiveTerminal()
     let selectedPlatformNames: SupportedPlatformName[] = []
 
     if (commandOptions.platform !== undefined) {
-      const requestedPlatformNames = platformResolver.parsePlatforms(commandOptions.platform)
+      const requestedPlatformNames = parsePlatforms(commandOptions.platform)
 
       selectedPlatformNames = requestedPlatformNames
     }
 
     if (selectedPlatformNames.length === 0) {
-      if (!isInteractiveTerminal) {
+      if (!interactiveTerminal) {
         throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
           params: {
             optionName: "--platform",
@@ -57,7 +55,7 @@ function createInstallCommand(): ICommand<IInstallCommandOptions> {
         })
       }
 
-      selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))
+      selectedPlatformNames = await selectPlatforms(Object.values(SupportedPlatform))
     }
 
     const requestedSkillNames = parseSkillNames(commandOptions.skill)
@@ -65,7 +63,7 @@ function createInstallCommand(): ICommand<IInstallCommandOptions> {
     let skillIndex
 
     if (selectedSkillNames.length === 0) {
-      if (!isInteractiveTerminal) {
+      if (!interactiveTerminal) {
         throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
           params: {
             optionName: "--skill",
@@ -76,10 +74,10 @@ function createInstallCommand(): ICommand<IInstallCommandOptions> {
       }
 
       skillIndex = await gitHubSkillSource.loadSkillIndex()
-      selectedSkillNames = await promptService.selectSkills(skillIndex.skills)
+      selectedSkillNames = await selectSkills(skillIndex.skills)
     }
 
-    const platformTargets = platformResolver.buildPlatformTargets(homedir(), selectedPlatformNames)
+    const platformTargets = buildPlatformTargets(homedir(), selectedPlatformNames)
     const resolvedSkillIndex = skillIndex ?? await gitHubSkillSource.loadSkillIndex()
     const selectedSkillEntries = buildSelectedSkillEntries(resolvedSkillIndex, selectedSkillNames)
     const loadedSkillFilesByName = new Map(

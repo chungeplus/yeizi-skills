@@ -6,10 +6,10 @@ import { homedir } from "node:os"
 import process from "node:process"
 
 import { AppError, AppErrorCode } from "@/errors"
-import { PlatformResolver } from "@/features/platform"
-import { SkillComparator } from "@/features/skill"
+import { buildPlatformTargets, parsePlatforms } from "@/features/platform"
+import { buildComparisonRows } from "@/features/skill"
 import { GitHubSkillSource } from "@/features/source"
-import { OutputFormatter, PromptService } from "@/tools"
+import { isInteractiveTerminal, OutputFormatter, selectPlatforms } from "@/tools"
 import { SupportedPlatform } from "@/types"
 
 /**
@@ -26,19 +26,16 @@ function createListCommand(): ICommand<IListCommandOptions> {
       description: "逗号分隔的平台列表。",
     },
   ]
-  const platformResolver = new PlatformResolver()
   const gitHubSkillSource = new GitHubSkillSource()
-  const skillComparator = new SkillComparator()
-  const promptService = new PromptService()
   const outputFormatter = new OutputFormatter()
 
   async function execute(commandOptions: IListCommandOptions): Promise<void> {
-    const isInteractiveTerminal = promptService.isInteractiveTerminal()
-    const requestedPlatformNames = platformResolver.parsePlatforms(commandOptions.platform)
+    const interactiveTerminal = isInteractiveTerminal()
+    const requestedPlatformNames = parsePlatforms(commandOptions.platform)
     let selectedPlatformNames = requestedPlatformNames
 
     if (selectedPlatformNames.length === 0) {
-      if (!isInteractiveTerminal) {
+      if (!interactiveTerminal) {
         throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
           params: {
             optionName: "--platform",
@@ -48,12 +45,12 @@ function createListCommand(): ICommand<IListCommandOptions> {
         })
       }
 
-      selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))
+      selectedPlatformNames = await selectPlatforms(Object.values(SupportedPlatform))
     }
 
     const skillIndex = await gitHubSkillSource.loadSkillIndex()
-    const platformTargets = platformResolver.buildPlatformTargets(homedir(), selectedPlatformNames)
-    const comparisonRows = skillComparator.buildComparisonRows(skillIndex.skills, platformTargets)
+    const platformTargets = buildPlatformTargets(homedir(), selectedPlatformNames)
+    const comparisonRows = buildComparisonRows(skillIndex.skills, platformTargets)
 
     process.stdout.write(`${outputFormatter.renderComparisonTable(comparisonRows)}\n`)
   }

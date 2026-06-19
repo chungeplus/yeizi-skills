@@ -6,10 +6,10 @@ import { homedir } from "node:os"
 import process from "node:process"
 
 import { AppError, AppErrorCode } from "@/errors"
-import { PlatformResolver } from "@/features/platform"
-import { buildSelectedSkillEntries, parseSkillNames, SkillComparator, SkillInstaller } from "@/features/skill"
+import { buildPlatformTargets, parsePlatforms } from "@/features/platform"
+import { buildComparisonRows, buildSelectedRows, buildSelectedSkillEntries, buildUpdateRows, buildUpdateSkillNames, parseSkillNames, SkillInstaller } from "@/features/skill"
 import { GitHubSkillSource } from "@/features/source"
-import { OutputFormatter, PromptService } from "@/tools"
+import { isInteractiveTerminal, OutputFormatter, selectPlatforms, selectSkillsToUpdate } from "@/tools"
 import { SupportedPlatform } from "@/types"
 
 /**
@@ -30,20 +30,17 @@ function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
       description: "逗号分隔的技能列表。",
     },
   ]
-  const platformResolver = new PlatformResolver()
   const gitHubSkillSource = new GitHubSkillSource()
-  const skillComparator = new SkillComparator()
   const skillInstaller = new SkillInstaller()
-  const promptService = new PromptService()
   const outputFormatter = new OutputFormatter()
 
   async function execute(commandOptions: IUpdateCommandOptions): Promise<void> {
-    const isInteractiveTerminal = promptService.isInteractiveTerminal()
-    const requestedPlatformNames = platformResolver.parsePlatforms(commandOptions.platform)
+    const interactiveTerminal = isInteractiveTerminal()
+    const requestedPlatformNames = parsePlatforms(commandOptions.platform)
     let selectedPlatformNames = requestedPlatformNames
 
     if (selectedPlatformNames.length === 0) {
-      if (!isInteractiveTerminal) {
+      if (!interactiveTerminal) {
         throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
           params: {
             optionName: "--platform",
@@ -53,18 +50,18 @@ function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
         })
       }
 
-      selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))
+      selectedPlatformNames = await selectPlatforms(Object.values(SupportedPlatform))
     }
 
     const requestedSkillNames = parseSkillNames(commandOptions.skill)
-    const platformTargets = platformResolver.buildPlatformTargets(homedir(), selectedPlatformNames)
+    const platformTargets = buildPlatformTargets(homedir(), selectedPlatformNames)
 
     if (platformTargets.length > 0 && platformTargets.every(platformTarget => !platformTarget.hasSkillsDirectory)) {
       process.stdout.write(`${outputFormatter.renderSummary(["所选平台都没有可用的 skills 目录。"])}\n`)
       return
     }
 
-    if (requestedSkillNames.length === 0 && !isInteractiveTerminal) {
+    if (requestedSkillNames.length === 0 && !interactiveTerminal) {
       throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
         params: {
           optionName: "--skill",
@@ -75,8 +72,8 @@ function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
     }
 
     const skillIndex = await gitHubSkillSource.loadSkillIndex()
-    const comparisonRows = skillComparator.buildComparisonRows(skillIndex.skills, platformTargets)
-    const updateRows = skillComparator.buildUpdateRows(comparisonRows)
+    const comparisonRows = buildComparisonRows(skillIndex.skills, platformTargets)
+    const updateRows = buildUpdateRows(comparisonRows)
 
     if (updateRows.length === 0) {
       process.stdout.write(`${outputFormatter.renderSummary(["当前没有可用的更新。"])}\n`)
@@ -86,20 +83,20 @@ function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
     let selectedSkillNames = requestedSkillNames
 
     if (selectedSkillNames.length === 0) {
-      selectedSkillNames = await promptService.selectSkillsToUpdate(
-        skillComparator.buildUpdateSkillNames(updateRows),
+      selectedSkillNames = await selectSkillsToUpdate(
+        buildUpdateSkillNames(updateRows),
       )
     }
 
     const requestedSkillEntries = buildSelectedSkillEntries(skillIndex, selectedSkillNames)
-    const selectedRows = skillComparator.buildSelectedRows(updateRows, selectedSkillNames)
+    const selectedRows = buildSelectedRows(updateRows, selectedSkillNames)
 
     if (selectedRows.length === 0) {
       process.stdout.write(`${outputFormatter.renderSummary(["所选技能当前没有可用更新。"])}\n`)
       return
     }
 
-    const selectedRowSkillNames = skillComparator.buildUpdateSkillNames(selectedRows)
+    const selectedRowSkillNames = buildUpdateSkillNames(selectedRows)
     const selectedSkillNameSet = new Set(selectedRowSkillNames)
     const selectedSkillEntries = requestedSkillEntries.filter(
       requestedSkillEntry => selectedSkillNameSet.has(requestedSkillEntry.name),
