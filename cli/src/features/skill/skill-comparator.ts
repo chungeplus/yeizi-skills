@@ -13,12 +13,12 @@ import { SkillDocumentParser } from "./skill-document-parser"
 const skillDocumentParser = new SkillDocumentParser()
 
 /**
- * 缁勮骞冲彴涓庢妧鑳界殑姣旇緝缁撴灉銆?
+ * 组装平台与技能的比较结果。
  *
- * @param skillIndexEntries - 杩滅鎶€鑳界储寮曟潯鐩垪琛ㄣ€?
- * @param platformTargets - 骞冲彴鐩爣鐩綍鍒楄〃銆?
- * @returns 姣旇緝缁撴灉琛屽垪琛ㄣ€?
- * @example buildComparisonRows([{ name: "yeizi-demo", version: "1.0.0" }], [{ platformName: "codex", skillsDirectoryPath: "/tmp/skills", hasSkillsDirectory: false }]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.0", localVersion: null, statusMessage: "璇ュ钩鍙扮殑 skills 鐩綍涓嶅瓨鍦ㄣ€? }]
+ * @param skillIndexEntries - 远端技能索引条目列表。
+ * @param platformTargets - 平台目标目录列表。
+ * @returns 比较结果行列表。
+ * @example buildComparisonRows([{ name: "yeizi-demo", version: "1.0.0" }], [{ platformName: "codex", skillsDirectoryPath: "/tmp/skills", hasSkillsDirectory: false }]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.0", localVersion: null, statusMessage: "该平台的 skills 目录不存在。" }]
  */
 function buildComparisonRows(
   skillIndexEntries: readonly ISkillIndexEntry[],
@@ -84,11 +84,11 @@ function buildComparisonRows(
 }
 
 /**
- * 缁勮闇€瑕佹洿鏂扮殑姣旇緝缁撴灉琛屻€?
+ * 组装需要更新的比较结果行。
  *
- * @param comparisonRows - 瀹屾暣姣旇緝缁撴灉琛屽垪琛ㄣ€?
- * @returns 浠呭寘鍚彲鏇存柊椤圭殑缁撴灉琛屽垪琛ㄣ€?
- * @example buildUpdateRows([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "璇ยู妧鑳芥湁鍙敤鏇存柊銆? }]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "璇ยู妧鑳芥湁鍙敤鏇存柊銆? }]
+ * @param comparisonRows - 完整比较结果行列表。
+ * @returns 仅包含可更新项的结果行列表。
+ * @example buildUpdateRows([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "该技能有可用更新。" }]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "该技能有可用更新。" }]
  */
 function buildUpdateRows(comparisonRows: readonly ISkillComparisonRow[]): ISkillComparisonRow[] {
   return comparisonRows.filter(
@@ -99,23 +99,23 @@ function buildUpdateRows(comparisonRows: readonly ISkillComparisonRow[]): ISkill
 }
 
 /**
- * 缁勮鍙洿鏂版妧鑳藉悕绉板垪琛ㄣ€?
+ * 组装可更新技能名称列表。
  *
- * @param comparisonRows - 鍙洿鏂扮粨鏋滆鍒楄〃銆?
- * @returns 鍘婚噸鍚庣殑鎶€鑳藉悕绉板垪琛ㄣ€?
- * @example buildUpdateSkillNames([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "璇ยู妧鑳芥湁鍙敤鏇存柊銆? }]) => ["yeizi-demo"]
+ * @param comparisonRows - 可更新结果行列表。
+ * @returns 去重后的技能名称列表。
+ * @example buildUpdateSkillNames([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "该技能有可用更新。" }]) => ["yeizi-demo"]
  */
 function buildUpdateSkillNames(comparisonRows: readonly ISkillComparisonRow[]): string[] {
   return Array.from(new Set(comparisonRows.map(comparisonRow => comparisonRow.skillName)))
 }
 
 /**
- * 缁勮鐢ㄦ埛閫変腑鍚庣殑缁撴灉琛屽垪琛ㄣ€?
+ * 组装用户选中后的结果行列表。
  *
- * @param comparisonRows - 鍙€夌粨鏋滆鍒楄〃銆?
- * @param selectedSkillNames - 閫変腑鐨勬妧鑳藉悕绉板垪琛ㄣ€?
- * @returns 杩囨护鍚庣殑缁撴灉琛屽垪琛ㄣ€?
- * @example buildSelectedRows([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "璇ยู妧鑳芥湁鍙敤鏇存柊銆? }], ["yeizi-demo"]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "璇ยู妧鑳芥湁鍙敤鏇存柊銆? }]
+ * @param comparisonRows - 可选结果行列表。
+ * @param selectedSkillNames - 选中的技能名称列表。
+ * @returns 过滤后的结果行列表。
+ * @example buildSelectedRows([{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "该技能有可用更新。" }], ["yeizi-demo"]) => [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.1", localVersion: "1.0.0", statusMessage: "该技能有可用更新。" }]
  */
 function buildSelectedRows(
   comparisonRows: readonly ISkillComparisonRow[],

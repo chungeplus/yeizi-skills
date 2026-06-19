@@ -8,10 +8,10 @@ import { AppError, AppErrorCode } from "@/errors"
 import { csvOptionValueSchema, supportedPlatformNameSchema } from "@/schemas"
 
 /**
- * 瑙ｆ瀽骞冲彴閫夐」鍊笺€?
+ * 解析平台选项值。
  *
- * @param platformOptionValue - 閫楀彿鍒嗛殧鐨勫钩鍙伴€夐」鍊笺€?
- * @returns 瑙ｆ瀽鍚庣殑骞冲彴鍒楄〃銆?
+ * @param platformOptionValue - 逗号分隔的平台选项值。
+ * @returns 解析后的平台列表。
  * @example parsePlatforms("codex,claude") => ["codex", "claude"]
  */
 function parsePlatforms(platformOptionValue: string | undefined): SupportedPlatformName[] {
@@ -31,11 +31,11 @@ function parsePlatforms(platformOptionValue: string | undefined): SupportedPlatf
 }
 
 /**
- * 缁勮骞冲彴鐩爣鐩綍銆?
+ * 组装平台目标目录。
  *
- * @param homeDirectoryPath - 鐢ㄦ埛涓荤洰褰曡矾寰勩€?
- * @param selectedPlatformNames - 閫変腑鐨勫钩鍙板悕绉板垪琛ㄣ€?
- * @returns 骞冲彴鐩爣鐩綍鍒楄〃銆?
+ * @param homeDirectoryPath - 用户主目录路径。
+ * @param selectedPlatformNames - 选中的平台名称列表。
+ * @returns 平台目标目录列表。
  * @example buildPlatformTargets("/Users/demo", ["codex"]) => [{ platformName: "codex", skillsDirectoryPath: "/Users/demo/.codex/skills", hasSkillsDirectory: false }]
  */
 function buildPlatformTargets(
@@ -54,10 +54,10 @@ function buildPlatformTargets(
 }
 
 /**
- * 瑙ｆ瀽閫楀彿鍒嗛殧閫夐」鍊笺€?
+ * 解析逗号分隔选项值。
  *
- * @param csvOptionValue - 閫楀彿鍒嗛殧鐨勯€夐」瀛楃涓层€?
- * @returns 鍘婚噸鍚庣殑瀛楃涓插垪琛ㄣ€?
+ * @param csvOptionValue - 逗号分隔的选项字符串。
+ * @returns 去重后的字符串列表。
  * @example parseCsvOptionValues("codex,claude") => ["codex", "claude"]
  */
 function parseCsvOptionValues(csvOptionValue: string | undefined): string[] {
