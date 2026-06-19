@@ -1,13 +1,6 @@
 import boxen from "boxen"
 import chalk from "chalk"
 
-/**
- * 渲染 CLI 致命错误展示。
- *
- * @param title - 错误标题。
- * @param message - 错误消息。
- * @example renderErrorDisplay("程序异常", "发生了未知错误。") => void
- */
 export function renderErrorDisplay(title: string, message: string): void {
   console.error(boxen(
     chalk.yellow(message),
