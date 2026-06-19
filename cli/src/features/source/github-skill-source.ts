@@ -144,28 +144,46 @@ class GitHubSkillSource implements ISkillSource {
     githubContentPath: string,
   ): Promise<Array<{ path: string, fileContents: string }>> {
     const githubContentEntries = await this.loadGitHubContentsDirectory(githubContentPath)
-    const loadedFileEntryGroups = await Promise.all(githubContentEntries.map(async (githubContentEntry) => {
-      if (githubContentEntry.type === "dir") {
-        return this.loadGitHubFileEntries(githubContentEntry.path)
-      }
+    return this.loadGitHubFileEntriesSequentially(githubContentEntries)
+  }
 
-      if (githubContentEntry.type !== "file") {
-        return []
-      }
+  private async loadGitHubFileEntriesSequentially(
+    githubContentEntries: readonly IGitHubContentsEntry[],
+    index = 0,
+  ): Promise<Array<{ path: string, fileContents: string }>> {
+    const githubContentEntry = githubContentEntries[index]
 
-      if (githubContentEntry.downloadUrl === null) {
-        throw new AppError(AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING, {
-          params: { contentPath: githubContentEntry.path },
-        })
-      }
+    if (githubContentEntry === undefined) {
+      return []
+    }
 
-      return [{
-        path: githubContentEntry.path,
-        fileContents: await this.gitHubClient.loadText(githubContentEntry.downloadUrl),
-      }]
-    }))
+    const currentEntries = await this.loadGitHubFileEntry(githubContentEntry)
+    const remainingEntries = await this.loadGitHubFileEntriesSequentially(githubContentEntries, index + 1)
 
-    return loadedFileEntryGroups.flat()
+    return [...currentEntries, ...remainingEntries]
+  }
+
+  private async loadGitHubFileEntry(
+    githubContentEntry: IGitHubContentsEntry,
+  ): Promise<Array<{ path: string, fileContents: string }>> {
+    if (githubContentEntry.type === "dir") {
+      return this.loadGitHubFileEntries(githubContentEntry.path)
+    }
+
+    if (githubContentEntry.type !== "file") {
+      return []
+    }
+
+    if (githubContentEntry.downloadUrl === null) {
+      throw new AppError(AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING, {
+        params: { contentPath: githubContentEntry.path },
+      })
+    }
+
+    return [{
+      path: githubContentEntry.path,
+      fileContents: await this.gitHubClient.loadText(githubContentEntry.downloadUrl),
+    }]
   }
 
   /**

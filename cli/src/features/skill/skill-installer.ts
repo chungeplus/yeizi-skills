@@ -58,24 +58,10 @@ class SkillInstaller {
 
     try {
       await mkdir(stagingSkillDirectoryPath, { recursive: true })
-
-      await Promise.all(downloadedSkillFiles.map(async (downloadedSkillFile) => {
-        const destinationFilePath = resolve(stagingSkillDirectoryPath, downloadedSkillFile.relativeFilePath)
-        const relativeFilePath = relative(stagingSkillDirectoryPath, destinationFilePath)
-
-        if (
-          relativeFilePath === ""
-          || relativeFilePath.startsWith("..")
-          || isAbsolute(relativeFilePath)
-        ) {
-          throw new AppError(AppErrorCode.SKILL_INSTALL_PATH_INVALID, {
-            params: { relativeFilePath: downloadedSkillFile.relativeFilePath },
-          })
-        }
-
-        await mkdir(dirname(destinationFilePath), { recursive: true })
-        await writeFile(destinationFilePath, downloadedSkillFile.fileContents, "utf8")
-      }))
+      await this.writeDownloadedSkillFilesSequentially(
+        stagingSkillDirectoryPath,
+        downloadedSkillFiles,
+      )
 
       try {
         await rename(targetSkillDirectoryPath, backupSkillDirectoryPath)
@@ -127,6 +113,40 @@ class SkillInstaller {
         await rm(temporaryRootDirectoryPath, { force: true, recursive: true })
       }
     }
+  }
+
+  private async writeDownloadedSkillFilesSequentially(
+    stagingSkillDirectoryPath: string,
+    downloadedSkillFiles: readonly IDownloadedSkillFile[],
+    index = 0,
+  ): Promise<void> {
+    const downloadedSkillFile = downloadedSkillFiles[index]
+
+    if (downloadedSkillFile === undefined) {
+      return
+    }
+
+    const destinationFilePath = resolve(stagingSkillDirectoryPath, downloadedSkillFile.relativeFilePath)
+    const relativeFilePath = relative(stagingSkillDirectoryPath, destinationFilePath)
+
+    if (
+      relativeFilePath === ""
+      || relativeFilePath.startsWith("..")
+      || isAbsolute(relativeFilePath)
+    ) {
+      throw new AppError(AppErrorCode.SKILL_INSTALL_PATH_INVALID, {
+        params: { relativeFilePath: downloadedSkillFile.relativeFilePath },
+      })
+    }
+
+    await mkdir(dirname(destinationFilePath), { recursive: true })
+    await writeFile(destinationFilePath, downloadedSkillFile.fileContents, "utf8")
+
+    await this.writeDownloadedSkillFilesSequentially(
+      stagingSkillDirectoryPath,
+      downloadedSkillFiles,
+      index + 1,
+    )
   }
 }
 
