@@ -16,11 +16,7 @@ export function parseSkillNames(skillOptionValue?: string): string[] {
   const parsedSkillOptionResult = csvOptionValueSchema.safeParse(skillOptionValue)
 
   if (!parsedSkillOptionResult.success) {
-    throw new AppError(
-      AppErrorCode.SKILL_OPTION_EMPTY,
-      "参数错误",
-      "请至少提供一个技能。",
-    )
+    throw new AppError(AppErrorCode.SKILL_OPTION_EMPTY)
   }
 
   const parsedSkillNames = Array.from(new Set(parsedSkillOptionResult.data
@@ -29,11 +25,7 @@ export function parseSkillNames(skillOptionValue?: string): string[] {
     .filter(skillName => skillName.length > 0)))
 
   if (parsedSkillNames.length === 0) {
-    throw new AppError(
-      AppErrorCode.SKILL_OPTION_EMPTY,
-      "参数错误",
-      "请至少提供一个技能。",
-    )
+    throw new AppError(AppErrorCode.SKILL_OPTION_EMPTY)
   }
 
   return parsedSkillNames.map((skillName) => {
@@ -43,10 +35,6 @@ export function parseSkillNames(skillOptionValue?: string): string[] {
       return parsedSkillNameResult.data
     }
 
-    throw new AppError(
-      AppErrorCode.SKILL_OPTION_INVALID,
-      "参数错误",
-      "技能名称必须以 yeizi- 开头。",
-    )
+    throw new AppError(AppErrorCode.SKILL_OPTION_INVALID)
   })
 }

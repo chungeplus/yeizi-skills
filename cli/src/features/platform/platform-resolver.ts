@@ -28,11 +28,9 @@ export class PlatformResolver {
         return parsedPlatformNameResult.data
       }
 
-      throw new AppError(
-        AppErrorCode.PLATFORM_NOT_SUPPORTED,
-        "平台不受支持",
-        `平台“${platformName}”不受支持。`,
-      )
+      throw new AppError(AppErrorCode.PLATFORM_NOT_SUPPORTED, {
+        params: { platformName },
+      })
     })
   }
 
@@ -74,11 +72,7 @@ export class PlatformResolver {
     const validatedOptionValueResult = csvOptionValueSchema.safeParse(csvOptionValue)
 
     if (!validatedOptionValueResult.success) {
-      throw new AppError(
-        AppErrorCode.PLATFORM_OPTION_EMPTY,
-        "参数错误",
-        "请至少提供一个平台。",
-      )
+      throw new AppError(AppErrorCode.PLATFORM_OPTION_EMPTY)
     }
 
     const parsedOptionValues = Array.from(new Set(validatedOptionValueResult.data
@@ -87,11 +81,7 @@ export class PlatformResolver {
       .filter(optionValue => optionValue.length > 0)))
 
     if (parsedOptionValues.length === 0) {
-      throw new AppError(
-        AppErrorCode.PLATFORM_OPTION_EMPTY,
-        "参数错误",
-        "请至少提供一个平台。",
-      )
+      throw new AppError(AppErrorCode.PLATFORM_OPTION_EMPTY)
     }
 
     return parsedOptionValues

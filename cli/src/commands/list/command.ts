@@ -39,10 +39,13 @@ export function createListCommand(): ICommand<IListCommandOptions> {
 
     if (selectedPlatformNames.length === 0) {
       if (!isInteractiveTerminal) {
-        throw new AppError(
-          AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED,
-          "当前环境不支持交互提示，请使用 --platform 显式指定要查看的平台。",
-        )
+        throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+          params: {
+            optionName: "--platform",
+            actionName: "查看",
+            targetName: "平台",
+          },
+        })
       }
 
       selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))

@@ -33,21 +33,17 @@ export class SkillInstaller {
     )
 
     if (skillDocumentFile === undefined) {
-      throw new AppError(
-        AppErrorCode.SKILL_DOCUMENT_MISSING,
-        "技能文档缺失",
-        `远端技能“${skillIndexEntry.name}”缺少 SKILL.md 文件。`,
-      )
+      throw new AppError(AppErrorCode.SKILL_DOCUMENT_MISSING, {
+        params: { skillName: skillIndexEntry.name },
+      })
     }
 
     const downloadedSkillVersion = this.skillDocumentParser.parseSkillVersion(skillDocumentFile.fileContents)
 
     if (downloadedSkillVersion !== skillIndexEntry.version) {
-      throw new AppError(
-        AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH,
-        "技能版本异常",
-        `远端技能“${skillIndexEntry.name}”的 SKILL.md 版本与索引不一致。`,
-      )
+      throw new AppError(AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH, {
+        params: { skillName: skillIndexEntry.name },
+      })
     }
 
     const temporaryRootDirectoryPath = await mkdtemp(
@@ -72,11 +68,9 @@ export class SkillInstaller {
           || relativeFilePath.startsWith("..")
           || isAbsolute(relativeFilePath)
         ) {
-          throw new AppError(
-            AppErrorCode.SKILL_INSTALL_PATH_INVALID,
-            "技能路径异常",
-            `下载文件路径“${downloadedSkillFile.relativeFilePath}”超出了技能根目录。`,
-          )
+          throw new AppError(AppErrorCode.SKILL_INSTALL_PATH_INVALID, {
+            params: { relativeFilePath: downloadedSkillFile.relativeFilePath },
+          })
         }
 
         await mkdir(dirname(destinationFilePath), { recursive: true })
@@ -111,9 +105,10 @@ export class SkillInstaller {
 
           throw new AppError(
             AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED,
-            "技能安装异常",
-            `技能“${skillIndexEntry.name}”安装失败后，原始技能目录无法自动恢复，请手动检查本地 skills 目录。`,
-            { cause },
+            {
+              params: { skillName: skillIndexEntry.name },
+              cause,
+            },
           )
         }
       }

@@ -21,8 +21,6 @@ export function parseSkillIndex(skillIndexPayload: SkillIndexPayload): ISkillInd
 
     throw new AppError(
       AppErrorCode.REMOTE_SKILL_INDEX_INVALID,
-      "远端数据异常",
-      "远端技能索引格式不正确。",
       { cause },
     )
   }

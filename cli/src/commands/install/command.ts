@@ -48,11 +48,13 @@ export function createInstallCommand(): ICommand<IInstallCommandOptions> {
 
     if (selectedPlatformNames.length === 0) {
       if (!isInteractiveTerminal) {
-        throw new AppError(
-          AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED,
-          "参数缺失",
-          "当前环境不支持交互提示，请使用 --platform 显式指定要安装的平台。",
-        )
+        throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+          params: {
+            optionName: "--platform",
+            actionName: "安装",
+            targetName: "平台",
+          },
+        })
       }
 
       selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))
@@ -64,11 +66,13 @@ export function createInstallCommand(): ICommand<IInstallCommandOptions> {
 
     if (selectedSkillNames.length === 0) {
       if (!isInteractiveTerminal) {
-        throw new AppError(
-          AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED,
-          "参数缺失",
-          "当前环境不支持交互提示，请使用 --skill 显式指定要安装的技能。",
-        )
+        throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+          params: {
+            optionName: "--skill",
+            actionName: "安装",
+            targetName: "技能",
+          },
+        })
       }
 
       skillIndex = await gitHubSkillSource.loadSkillIndex()
@@ -99,10 +103,9 @@ export function createInstallCommand(): ICommand<IInstallCommandOptions> {
         const loadedSkillFiles = loadedSkillFilesByName.get(skillIndexEntry.name)
 
         if (loadedSkillFiles === undefined) {
-          throw new AppError(
-            AppErrorCode.SKILL_FILES_NOT_LOADED,
-            `技能“${skillIndexEntry.name}”的文件尚未加载完成。`,
-          )
+          throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
+            params: { skillName: skillIndexEntry.name },
+          })
         }
 
         await skillInstaller.updateSkillDirectory(

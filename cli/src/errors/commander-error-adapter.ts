@@ -10,7 +10,7 @@ export function isCommanderNonFailure(error: Error): error is CommanderError {
   return error instanceof CommanderError && error.exitCode === 0
 }
 
-export function buildCommanderAppError(error: CommanderError): AppError {
+export function buildCommanderAppError(error: CommanderError): AppError<typeof AppErrorCode.CLI_USAGE_INVALID> {
   return new AppError(AppErrorCode.CLI_USAGE_INVALID, {
     params: {
       detailMessage: buildCommanderErrorMessage(error),

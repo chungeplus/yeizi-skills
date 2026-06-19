@@ -1,10 +1,11 @@
-import process from "node:process"
+import type { AppErrorCodeName } from "./error-code"
 
+import process from "node:process"
 import { CommanderError } from "commander"
 
 import { AppError } from "./app-error"
-import { AppErrorCode } from "./error-code"
 import { buildCommanderAppError, isCommanderNonFailure } from "./commander-error-adapter"
+import { AppErrorCode } from "./error-code"
 import { renderErrorDisplay } from "./error-display"
 
 export function handleFatalError(error: Error): void {
@@ -19,9 +20,9 @@ export function handleFatalError(error: Error): void {
   process.exitCode = 1
 }
 
-export function normalizeFatalError(error: Error): AppError {
+export function normalizeFatalError(error: Error): AppError<AppErrorCodeName> {
   if (error instanceof AppError) {
-    return error
+    return error as AppError<AppErrorCodeName>
   }
 
   if (error instanceof CommanderError) {

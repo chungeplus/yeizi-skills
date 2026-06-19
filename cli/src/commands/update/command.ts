@@ -44,10 +44,13 @@ export function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
 
     if (selectedPlatformNames.length === 0) {
       if (!isInteractiveTerminal) {
-        throw new AppError(
-          AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED,
-          "当前环境不支持交互提示，请使用 --platform 显式指定要更新的平台。",
-        )
+        throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+          params: {
+            optionName: "--platform",
+            actionName: "更新",
+            targetName: "平台",
+          },
+        })
       }
 
       selectedPlatformNames = await promptService.selectPlatforms(Object.values(SupportedPlatform))
@@ -62,10 +65,13 @@ export function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
     }
 
     if (requestedSkillNames.length === 0 && !isInteractiveTerminal) {
-      throw new AppError(
-        AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED,
-        "当前环境不支持交互提示，请使用 --skill 显式指定要更新的技能。",
-      )
+      throw new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+        params: {
+          optionName: "--skill",
+          actionName: "更新",
+          targetName: "技能",
+        },
+      })
     }
 
     const skillIndex = await gitHubSkillSource.loadSkillIndex()
@@ -130,16 +136,17 @@ export function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
         )
 
         if (matchedSkillEntry === undefined) {
-          throw new AppError(AppErrorCode.SKILL_NOT_FOUND, `技能“${matchedRow.skillName}”不存在。`)
+          throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+            params: { skillNames: [matchedRow.skillName] },
+          })
         }
 
         const loadedSkillFiles = loadedSkillFilesByName.get(matchedSkillEntry.name)
 
         if (loadedSkillFiles === undefined) {
-          throw new AppError(
-            AppErrorCode.SKILL_FILES_NOT_LOADED,
-            `技能“${matchedSkillEntry.name}”的文件尚未加载完成。`,
-          )
+          throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
+            params: { skillName: matchedSkillEntry.name },
+          })
         }
 
         await skillInstaller.updateSkillDirectory(

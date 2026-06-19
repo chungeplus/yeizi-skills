@@ -30,17 +30,33 @@ describe("AppError", () => {
     expect(error.message).toBe("GitHub 请求失败，状态码为 404。")
   })
 
-  it("keeps the legacy title and message constructor working", () => {
-    const cause = new Error("legacy")
-    const error = new AppError(
-      AppErrorCode.CLI_USAGE_INVALID,
-      "命令用法错误",
-      "legacy message",
-      { cause },
-    )
+  it("builds command-specific non-interactive guidance", () => {
+    const error = new AppError(AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED, {
+      params: {
+        optionName: "--platform",
+        actionName: "安装",
+        targetName: "平台",
+      },
+    })
 
-    expect(error.title).toBe("命令用法错误")
-    expect(error.message).toBe("legacy message")
-    expect(error.cause).toBe(cause)
+    expect(error.message).toBe("当前环境不支持交互提示，请使用 --platform 显式指定要安装的平台。")
+  })
+
+  it("builds the package-config not-found variant", () => {
+    const error = new AppError(AppErrorCode.PACKAGE_CONFIG_INVALID, {
+      params: { kind: "not-found" },
+    })
+
+    expect(error.message).toBe("未找到 package.json。")
+  })
+
+  it("builds a multi-skill not-found message", () => {
+    const error = new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+      params: {
+        skillNames: ["yeizi-react", "yeizi-vue"],
+      },
+    })
+
+    expect(error.message).toBe("以下技能不存在：yeizi-react、yeizi-vue。")
   })
 })

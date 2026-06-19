@@ -24,9 +24,10 @@ export function loadPackageJsonInfo(): ReturnType<typeof packageJsonInfoSchema.p
 
     throw new AppError(
       AppErrorCode.PACKAGE_CONFIG_INVALID,
-      "程序配置错误",
-      "package.json 配置格式不正确。",
-      { cause },
+      {
+        params: { kind: "invalid-format" },
+        cause,
+      },
     )
   }
 }
@@ -44,11 +45,9 @@ function resolvePackageJsonPath(): string {
     const parentDirectoryPath = dirname(currentDirectoryPath)
 
     if (parentDirectoryPath === currentDirectoryPath) {
-      throw new AppError(
-        AppErrorCode.PACKAGE_CONFIG_INVALID,
-        "程序配置错误",
-        "未找到 package.json。",
-      )
+      throw new AppError(AppErrorCode.PACKAGE_CONFIG_INVALID, {
+        params: { kind: "not-found" },
+      })
     }
 
     currentDirectoryPath = parentDirectoryPath

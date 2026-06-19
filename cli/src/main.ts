@@ -9,18 +9,14 @@ import { loadPackageJsonInfo } from "@/tools"
 /**
  * 创建 CLI 程序实例。
  *
- * @returns: Commander 程序实例
+ * @returns Commander 程序实例
  */
 function createProgram(): Command {
   const packageJsonInfo = loadPackageJsonInfo()
   const programNames = Object.keys(packageJsonInfo.bin)
 
   if (programNames.length === 0) {
-    throw new AppError(
-      AppErrorCode.PACKAGE_BIN_CONFIG_MISSING,
-      "程序配置错误",
-      "package.json 中缺少 bin 配置。",
-    )
+    throw new AppError(AppErrorCode.PACKAGE_BIN_CONFIG_MISSING)
   }
 
   const program = new Command()
@@ -48,7 +44,9 @@ async function runCli(): Promise<void> {
     await program.parseAsync(process.argv)
   }
   catch (error) {
-    handleFatalError(error)
+    const normalizedError = error instanceof Error ? error : new Error(String(error))
+
+    handleFatalError(normalizedError)
   }
 }
 

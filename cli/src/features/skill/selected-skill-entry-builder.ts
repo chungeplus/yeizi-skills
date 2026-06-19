@@ -18,16 +18,30 @@ export function buildSelectedSkillEntries(
   const missingSkillNames = selectedSkillNames.filter(skillName => !skillEntryByName.has(skillName))
 
   if (missingSkillNames.length > 0) {
-    throw new AppError(AppErrorCode.SKILL_NOT_FOUND, `以下技能不存在：${missingSkillNames.join("、")}。`)
+    throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+      params: { skillNames: toNonEmptyStringTuple(missingSkillNames) },
+    })
   }
 
   return selectedSkillNames.map((skillName) => {
     const skillEntry = skillEntryByName.get(skillName)
 
     if (skillEntry === undefined) {
-      throw new AppError(AppErrorCode.SKILL_NOT_FOUND, `技能“${skillName}”不存在。`)
+      throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+        params: { skillNames: [skillName] },
+      })
     }
 
     return skillEntry
   })
+}
+
+function toNonEmptyStringTuple(values: readonly string[]): [string, ...string[]] {
+  const [firstValue, ...remainingValues] = values
+
+  if (firstValue === undefined) {
+    throw new Error("Expected at least one skill name.")
+  }
+
+  return [firstValue, ...remainingValues]
 }

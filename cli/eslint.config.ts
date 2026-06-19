@@ -10,6 +10,7 @@ export default antfu(
       tsconfigPath: "tsconfig.json",
     },
     ignores: [
+      "docs/superpowers/**",
       "dist/**",
     ],
   },

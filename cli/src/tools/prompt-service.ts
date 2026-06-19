@@ -106,11 +106,7 @@ export class PromptService {
    */
   private async runPrompt<TAnswers>(promptRunner: () => Promise<TAnswers>): Promise<TAnswers> {
     if (!this.isInteractiveTerminal()) {
-      throw new AppError(
-        AppErrorCode.PROMPT_UNAVAILABLE,
-        "交互不可用",
-        "当前环境不支持交互提示，请显式传入命令所需参数后重试。",
-      )
+      throw new AppError(AppErrorCode.PROMPT_UNAVAILABLE)
     }
 
     try {
@@ -118,12 +114,7 @@ export class PromptService {
     }
     catch (error) {
       if (error instanceof Error && error.name === "ExitPromptError") {
-        throw new AppError(
-          AppErrorCode.PROMPT_CANCELLED,
-          "已取消操作",
-          "已取消本次操作。",
-          { cause: error },
-        )
+        throw new AppError(AppErrorCode.PROMPT_CANCELLED, { cause: error })
       }
 
       throw error

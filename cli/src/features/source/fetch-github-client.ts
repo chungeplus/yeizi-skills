@@ -56,11 +56,9 @@ export class FetchGitHubClient implements IGitHubClient {
       })
 
       if (!httpResponse.ok) {
-        throw new AppError(
-          AppErrorCode.GITHUB_REQUEST_FAILED,
-          "远端请求失败",
-          `GitHub 请求失败，状态码为 ${httpResponse.status}。`,
-        )
+        throw new AppError(AppErrorCode.GITHUB_REQUEST_FAILED, {
+          params: { kind: "status-code", statusCode: httpResponse.status },
+        })
       }
 
       return httpResponse
@@ -71,29 +69,23 @@ export class FetchGitHubClient implements IGitHubClient {
       }
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new AppError(
-          AppErrorCode.GITHUB_REQUEST_TIMEOUT,
-          "远端请求超时",
-          `GitHub 请求超时，请检查网络后重试（${GITHUB_REQUEST_TIMEOUT_MS / 1000} 秒）。`,
-          { cause: error },
-        )
+        throw new AppError(AppErrorCode.GITHUB_REQUEST_TIMEOUT, {
+          params: { timeoutSeconds: GITHUB_REQUEST_TIMEOUT_MS / 1000 },
+          cause: error,
+        })
       }
 
       if (error instanceof Error) {
-        throw new AppError(
-          AppErrorCode.GITHUB_REQUEST_FAILED,
-          "远端请求失败",
-          "GitHub 请求失败，请检查网络后重试。",
-          { cause: error },
-        )
+        throw new AppError(AppErrorCode.GITHUB_REQUEST_FAILED, {
+          params: { kind: "network-retry" },
+          cause: error,
+        })
       }
 
-      throw new AppError(
-        AppErrorCode.GITHUB_REQUEST_FAILED,
-        "远端请求失败",
-        "GitHub 请求失败。",
-        { cause: new Error(String(error)) },
-      )
+      throw new AppError(AppErrorCode.GITHUB_REQUEST_FAILED, {
+        params: { kind: "generic" },
+        cause: new Error(String(error)),
+      })
     }
     finally {
       clearTimeout(timeoutId)

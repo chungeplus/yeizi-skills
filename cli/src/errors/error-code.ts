@@ -105,63 +105,67 @@ export const AppErrorCode = {
  */
 export type AppErrorCodeName = (typeof AppErrorCode)[keyof typeof AppErrorCode]
 
-type AppErrorDefinition<TParams> = {
+interface AppErrorDefinition<TParams> {
   title: string
   buildMessage: (params: TParams) => string
 }
 
-type AppErrorDefinitions = {
-  [TCode in AppErrorCodeName]: AppErrorDefinition<AppErrorParamsMap[TCode]>
+type GitHubRequestFailedParams
+  = { kind: "status-code", statusCode: number }
+    | { kind: "network-retry" }
+    | { kind: "generic" }
+
+interface GitHubRequestTimeoutParams {
+  timeoutSeconds: number
 }
 
-type GitHubRequestFailedParams
-  = { kind: "status-code"; statusCode: number }
-  | { kind: "network-retry" }
-  | { kind: "generic" }
+interface NonInteractiveOptionRequiredParams {
+  optionName: "--platform" | "--skill"
+  actionName: "查看" | "安装" | "更新"
+  targetName: "平台" | "技能"
+}
 
-type SkillNotFoundParams = {
+type PackageConfigInvalidParams
+  = { kind: "invalid-format" }
+    | { kind: "not-found" }
+
+interface SkillNotFoundParams {
   skillNames: readonly [string, ...string[]]
 }
 
-export type AppErrorParamsMap = {
+export interface AppErrorParamsMap {
   [AppErrorCode.UNEXPECTED_ERROR]: undefined
   [AppErrorCode.CLI_USAGE_INVALID]: { detailMessage: string }
   [AppErrorCode.PACKAGE_BIN_CONFIG_MISSING]: undefined
-  [AppErrorCode.PACKAGE_CONFIG_INVALID]: undefined
+  [AppErrorCode.PACKAGE_CONFIG_INVALID]: PackageConfigInvalidParams
   [AppErrorCode.PLATFORM_OPTION_EMPTY]: undefined
-  [AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]: undefined
-  [AppErrorCode.PLATFORM_NOT_SUPPORTED]: undefined
+  [AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]: NonInteractiveOptionRequiredParams
+  [AppErrorCode.PLATFORM_NOT_SUPPORTED]: { platformName: string }
   [AppErrorCode.SKILL_OPTION_EMPTY]: undefined
   [AppErrorCode.SKILL_OPTION_INVALID]: undefined
   [AppErrorCode.SKILL_NOT_FOUND]: SkillNotFoundParams
   [AppErrorCode.PROMPT_UNAVAILABLE]: undefined
   [AppErrorCode.PROMPT_CANCELLED]: undefined
-  [AppErrorCode.SKILL_DOCUMENT_MISSING]: undefined
-  [AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]: undefined
-  [AppErrorCode.SKILL_FILES_NOT_LOADED]: undefined
-  [AppErrorCode.SKILL_INSTALL_PATH_INVALID]: undefined
-  [AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]: undefined
+  [AppErrorCode.SKILL_DOCUMENT_MISSING]: { skillName: string }
+  [AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]: { skillName: string }
+  [AppErrorCode.SKILL_FILES_NOT_LOADED]: { skillName: string }
+  [AppErrorCode.SKILL_INSTALL_PATH_INVALID]: { relativeFilePath: string }
+  [AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]: { skillName: string }
   [AppErrorCode.REMOTE_SKILL_INDEX_INVALID]: undefined
   [AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID]: undefined
   [AppErrorCode.GITHUB_CONTENTS_INVALID]: undefined
   [AppErrorCode.GITHUB_REQUEST_FAILED]: GitHubRequestFailedParams
-  [AppErrorCode.GITHUB_REQUEST_TIMEOUT]: undefined
-  [AppErrorCode.GITHUB_CONTENT_PATH_INVALID]: undefined
-  [AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]: undefined
+  [AppErrorCode.GITHUB_REQUEST_TIMEOUT]: GitHubRequestTimeoutParams
+  [AppErrorCode.GITHUB_CONTENT_PATH_INVALID]: { contentPath: string }
+  [AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]: { contentPath: string }
 }
 
 export type AppErrorOptions<TCode extends AppErrorCodeName>
   = AppErrorParamsMap[TCode] extends undefined
-    ? { cause?: Error; params?: undefined }
-    : { cause?: Error; params: AppErrorParamsMap[TCode] }
+    ? { cause?: Error, params?: undefined }
+    : { cause?: Error, params: AppErrorParamsMap[TCode] }
 
-export function getAppErrorDefinition<TCode extends AppErrorCodeName>(
-  code: TCode,
-): AppErrorDefinition<AppErrorParamsMap[TCode]> {
-  return APP_ERROR_DEFINITIONS[code]
-}
-
-export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
+export const APP_ERROR_DEFINITIONS = {
   [AppErrorCode.UNEXPECTED_ERROR]: {
     title: "程序异常",
     buildMessage: () => "程序执行失败，请稍后重试。",
@@ -176,7 +180,10 @@ export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
   },
   [AppErrorCode.PACKAGE_CONFIG_INVALID]: {
     title: "程序配置错误",
-    buildMessage: () => "package.json 配置格式不正确。",
+    buildMessage: params =>
+      params.kind === "invalid-format"
+        ? "package.json 配置格式不正确。"
+        : "未找到 package.json。",
   },
   [AppErrorCode.PLATFORM_OPTION_EMPTY]: {
     title: "参数错误",
@@ -184,11 +191,12 @@ export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
   },
   [AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]: {
     title: "参数缺失",
-    buildMessage: () => "当前环境不支持交互提示，请显式指定命令所需参数后重试。",
+    buildMessage: params =>
+      `当前环境不支持交互提示，请使用 ${params.optionName} 显式指定要${params.actionName}的${params.targetName}。`,
   },
   [AppErrorCode.PLATFORM_NOT_SUPPORTED]: {
     title: "平台不受支持",
-    buildMessage: () => "当前平台不受支持。",
+    buildMessage: params => `平台“${params.platformName}”不受支持。`,
   },
   [AppErrorCode.SKILL_OPTION_EMPTY]: {
     title: "参数错误",
@@ -200,7 +208,7 @@ export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
   },
   [AppErrorCode.SKILL_NOT_FOUND]: {
     title: "技能不存在",
-    buildMessage: (params) =>
+    buildMessage: params =>
       params.skillNames.length === 1
         ? `技能“${params.skillNames[0]}”不存在。`
         : `以下技能不存在：${params.skillNames.join("、")}。`,
@@ -215,23 +223,23 @@ export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
   },
   [AppErrorCode.SKILL_DOCUMENT_MISSING]: {
     title: "技能文档缺失",
-    buildMessage: () => "远端技能缺少 SKILL.md 文件。",
+    buildMessage: params => `远端技能“${params.skillName}”缺少 SKILL.md 文件。`,
   },
   [AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]: {
     title: "技能版本异常",
-    buildMessage: () => "远端技能的 SKILL.md 版本与索引不一致。",
+    buildMessage: params => `远端技能“${params.skillName}”的 SKILL.md 版本与索引不一致。`,
   },
   [AppErrorCode.SKILL_FILES_NOT_LOADED]: {
     title: "技能文件异常",
-    buildMessage: () => "技能文件尚未加载完成。",
+    buildMessage: params => `技能“${params.skillName}”的文件尚未加载完成。`,
   },
   [AppErrorCode.SKILL_INSTALL_PATH_INVALID]: {
     title: "技能路径异常",
-    buildMessage: () => "下载文件路径超出了技能根目录。",
+    buildMessage: params => `下载文件路径“${params.relativeFilePath}”超出了技能根目录。`,
   },
   [AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]: {
     title: "技能安装异常",
-    buildMessage: () => "技能安装失败后，原始技能目录无法自动恢复。",
+    buildMessage: params => `技能“${params.skillName}”安装失败后，原始技能目录无法自动恢复，请手动检查本地 skills 目录。`,
   },
   [AppErrorCode.REMOTE_SKILL_INDEX_INVALID]: {
     title: "远端数据异常",
@@ -261,14 +269,22 @@ export const APP_ERROR_DEFINITIONS: AppErrorDefinitions = {
   },
   [AppErrorCode.GITHUB_REQUEST_TIMEOUT]: {
     title: "远端请求超时",
-    buildMessage: () => "GitHub 请求超时，请检查网络后重试。",
+    buildMessage: params => `GitHub 请求超时，请检查网络后重试（${params.timeoutSeconds} 秒）。`,
   },
   [AppErrorCode.GITHUB_CONTENT_PATH_INVALID]: {
     title: "远端路径异常",
-    buildMessage: () => "GitHub 内容条目的路径超出了技能根目录。",
+    buildMessage: params => `GitHub 内容条目的路径“${params.contentPath}”超出了技能根目录。`,
   },
   [AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]: {
     title: "远端文件异常",
-    buildMessage: () => "GitHub 内容条目缺少下载地址。",
+    buildMessage: params => `GitHub 内容条目“${params.contentPath}”缺少下载地址。`,
   },
+} satisfies {
+  [TCode in AppErrorCodeName]: AppErrorDefinition<AppErrorParamsMap[TCode]>
+}
+
+export function getAppErrorDefinition<TCode extends AppErrorCodeName>(
+  code: TCode,
+): AppErrorDefinition<AppErrorParamsMap[TCode]> {
+  return APP_ERROR_DEFINITIONS[code] as AppErrorDefinition<AppErrorParamsMap[TCode]>
 }

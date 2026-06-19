@@ -26,8 +26,6 @@ export class SkillDocumentParser {
 
       throw new AppError(
         AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID,
-        "远端数据异常",
-        "技能文档 frontmatter 格式不正确。",
         { cause },
       )
     }

@@ -37,8 +37,6 @@ function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload
 
     throw new AppError(
       AppErrorCode.GITHUB_CONTENTS_INVALID,
-      "远端数据异常",
-      "GitHub 内容响应格式不正确。",
       { cause },
     )
   }
@@ -79,11 +77,9 @@ export class GitHubSkillSource implements ISkillSource {
 
     return loadedGitHubFiles.map((loadedGitHubFile) => {
       if (!loadedGitHubFile.path.startsWith(skillRootPrefix)) {
-        throw new AppError(
-          AppErrorCode.GITHUB_CONTENT_PATH_INVALID,
-          "远端路径异常",
-          `GitHub 内容条目的路径“${loadedGitHubFile.path}”超出了技能根目录。`,
-        )
+        throw new AppError(AppErrorCode.GITHUB_CONTENT_PATH_INVALID, {
+          params: { contentPath: loadedGitHubFile.path },
+        })
       }
 
       return {
@@ -116,21 +112,17 @@ export class GitHubSkillSource implements ISkillSource {
     )
 
     if (skillDocumentFile === undefined) {
-      throw new AppError(
-        AppErrorCode.SKILL_DOCUMENT_MISSING,
-        "技能文档缺失",
-        `远端技能“${skillIndexEntry.name}”缺少 SKILL.md 文件。`,
-      )
+      throw new AppError(AppErrorCode.SKILL_DOCUMENT_MISSING, {
+        params: { skillName: skillIndexEntry.name },
+      })
     }
 
     const remoteSkillVersion = this.skillDocumentParser.parseSkillVersion(skillDocumentFile.fileContents)
 
     if (remoteSkillVersion !== skillIndexEntry.version) {
-      throw new AppError(
-        AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH,
-        "技能版本异常",
-        `远端技能“${skillIndexEntry.name}”的 SKILL.md 版本与索引不一致。`,
-      )
+      throw new AppError(AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH, {
+        params: { skillName: skillIndexEntry.name },
+      })
     }
   }
 
@@ -158,11 +150,9 @@ export class GitHubSkillSource implements ISkillSource {
       }
 
       if (githubContentEntry.downloadUrl === null) {
-        throw new AppError(
-          AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING,
-          "远端文件异常",
-          `GitHub 内容条目“${githubContentEntry.path}”缺少下载地址。`,
-        )
+        throw new AppError(AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING, {
+          params: { contentPath: githubContentEntry.path },
+        })
       }
 
       loadedFileEntries.push({
