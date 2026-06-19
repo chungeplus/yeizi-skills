@@ -7,7 +7,7 @@ const GITHUB_REQUEST_TIMEOUT_MS = 15_000
 /**
  * 基于 fetch 的 GitHub 客户端。
  */
-export class FetchGitHubClient implements IGitHubClient {
+class FetchGitHubClient implements IGitHubClient {
   /**
    * 加载 JSON 响应。
    *
@@ -92,3 +92,5 @@ export class FetchGitHubClient implements IGitHubClient {
     }
   }
 }
+
+export { FetchGitHubClient }

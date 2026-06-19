@@ -3,7 +3,7 @@ import type { ISkillComparisonRow } from "@/types/skill"
 /**
  * 输出格式化器。
  */
-export class OutputFormatter {
+class OutputFormatter {
   /**
    * 渲染技能比较表格。
    *
@@ -37,3 +37,5 @@ export class OutputFormatter {
     return summaryMessages.join("\n")
   }
 }
+
+export { OutputFormatter }

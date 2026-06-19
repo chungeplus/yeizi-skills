@@ -9,8 +9,10 @@ import { createUpdateCommand } from "./update"
  *
  * @param program - Commander 程序实例。
  */
-export function registerCommands(program: Command): void {
+function registerCommands(program: Command): void {
   createListCommand().register(program)
   createInstallCommand().register(program)
   createUpdateCommand().register(program)
 }
+
+export { registerCommands }

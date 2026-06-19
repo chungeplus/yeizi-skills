@@ -1,7 +1,7 @@
 import boxen from "boxen"
 import chalk from "chalk"
 
-export function renderErrorDisplay(title: string, message: string): void {
+function renderErrorDisplay(title: string, message: string): void {
   console.error(boxen(
     chalk.yellow(message),
     {
@@ -15,3 +15,5 @@ export function renderErrorDisplay(title: string, message: string): void {
     },
   ))
 }
+
+export { renderErrorDisplay }

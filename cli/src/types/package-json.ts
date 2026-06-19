@@ -1,7 +1,7 @@
 /**
  * package.json 中会用到的字段结构。
  */
-export interface IPackageJsonInfo {
+interface IPackageJsonInfo {
   // 命令行入口映射。
   bin: Record<string, string>
 
@@ -11,3 +11,5 @@ export interface IPackageJsonInfo {
   // 程序版本。
   version: string
 }
+
+export type { IPackageJsonInfo }

@@ -3,7 +3,7 @@ import type { ISkillIndex, ISkillIndexEntry } from "../skill"
 /**
  * 下载后的技能文件。
  */
-export interface IDownloadedSkillFile {
+interface IDownloadedSkillFile {
   // 相对技能根目录的文件路径。
   relativeFilePath: string
 
@@ -14,7 +14,7 @@ export interface IDownloadedSkillFile {
 /**
  * GitHub 请求客户端接口。
  */
-export interface IGitHubClient {
+interface IGitHubClient {
   // 加载 JSON 响应。
   loadJson: <T>(url: string) => Promise<T>
 
@@ -25,7 +25,7 @@ export interface IGitHubClient {
 /**
  * 技能源接口。
  */
-export interface ISkillSource {
+interface ISkillSource {
   // 加载技能索引。
   loadSkillIndex: () => Promise<ISkillIndex>
 
@@ -42,7 +42,7 @@ export interface ISkillSource {
 /**
  * GitHub Contents API 条目结构。
  */
-export interface IGitHubContentsEntry {
+interface IGitHubContentsEntry {
   // 条目类型。
   type: string
 
@@ -52,3 +52,5 @@ export interface IGitHubContentsEntry {
   // 文件下载地址。
   downloadUrl: string | null
 }
+
+export type { IDownloadedSkillFile, IGitHubClient, IGitHubContentsEntry, ISkillSource }

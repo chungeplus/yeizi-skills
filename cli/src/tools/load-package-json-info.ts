@@ -13,14 +13,21 @@ type PackageJsonPayload = Parameters<typeof packageJsonInfoSchema.parse>[0]
  *
  * @returns 通过 schema 校验后的 package.json 信息。
  */
-export function loadPackageJsonInfo(): ReturnType<typeof packageJsonInfoSchema.parse> {
+function loadPackageJsonInfo(): ReturnType<typeof packageJsonInfoSchema.parse> {
   try {
     const packageJsonPayload = JSON.parse(readFileSync(packageJsonPath, "utf8")) as PackageJsonPayload
 
     return packageJsonInfoSchema.parse(packageJsonPayload)
   }
   catch (error) {
-    const cause = error instanceof Error ? error : new Error(String(error))
+    let cause: Error
+
+    if (error instanceof Error) {
+      cause = error
+    }
+    else {
+      cause = new Error(String(error))
+    }
 
     throw new AppError(
       AppErrorCode.PACKAGE_CONFIG_INVALID,
@@ -53,3 +60,5 @@ function resolvePackageJsonPath(): string {
     currentDirectoryPath = parentDirectoryPath
   }
 }
+
+export { loadPackageJsonInfo }

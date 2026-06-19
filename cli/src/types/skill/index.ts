@@ -3,7 +3,7 @@ import type { SupportedPlatformName } from "../platform"
 /**
  * 技能比较状态常量。
  */
-export const SkillComparisonStatus = {
+const SkillComparisonStatus = {
   NOT_INSTALLED: "该技能尚未安装。",
   LOCAL_SKILL_INVALID: "本地技能已损坏，可通过 update 重新安装。",
   UP_TO_DATE: "该技能已经是最新版本。",
@@ -14,7 +14,7 @@ export const SkillComparisonStatus = {
 /**
  * 技能索引条目。
  */
-export interface ISkillIndexEntry {
+interface ISkillIndexEntry {
   // 技能名称。
   name: string
 
@@ -25,7 +25,7 @@ export interface ISkillIndexEntry {
 /**
  * 技能索引结构。
  */
-export interface ISkillIndex {
+interface ISkillIndex {
   // 可用技能列表。
   skills: ISkillIndexEntry[]
 }
@@ -33,7 +33,7 @@ export interface ISkillIndex {
 /**
  * 技能文档 frontmatter 结构。
  */
-export interface ISkillFrontmatter {
+interface ISkillFrontmatter {
   // 技能名称。
   name: string
 
@@ -47,12 +47,12 @@ export interface ISkillFrontmatter {
 /**
  * 技能比较状态消息类型。
  */
-export type SkillComparisonStatusMessage = (typeof SkillComparisonStatus)[keyof typeof SkillComparisonStatus]
+type SkillComparisonStatusMessage = (typeof SkillComparisonStatus)[keyof typeof SkillComparisonStatus]
 
 /**
  * 技能比较结果行。
  */
-export interface ISkillComparisonRow {
+interface ISkillComparisonRow {
   // 平台名称。
   platformName: SupportedPlatformName
 
@@ -68,3 +68,6 @@ export interface ISkillComparisonRow {
   // 当前技能状态消息。
   statusMessage: SkillComparisonStatusMessage
 }
+
+export { SkillComparisonStatus }
+export type { ISkillComparisonRow, ISkillFrontmatter, ISkillIndex, ISkillIndexEntry, SkillComparisonStatusMessage }

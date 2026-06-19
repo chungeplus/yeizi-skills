@@ -17,7 +17,7 @@ import { SupportedPlatform } from "@/types"
  *
  * @returns update 命令对象。
  */
-export function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
+function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
   const command = "update"
   const description = "更新已安装技能。"
   const options: readonly ICommandOptionDefinition[] = [
@@ -181,3 +181,5 @@ export function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
     register,
   }
 }
+
+export { createUpdateCommand }

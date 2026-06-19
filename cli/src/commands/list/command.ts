@@ -17,7 +17,7 @@ import { SupportedPlatform } from "@/types"
  *
  * @returns list 命令对象。
  */
-export function createListCommand(): ICommand<IListCommandOptions> {
+function createListCommand(): ICommand<IListCommandOptions> {
   const command = "list"
   const description = "查看技能列表。"
   const options: readonly ICommandOptionDefinition[] = [
@@ -78,3 +78,5 @@ export function createListCommand(): ICommand<IListCommandOptions> {
     register,
   }
 }
+
+export { createListCommand }

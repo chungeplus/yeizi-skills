@@ -1,7 +1,7 @@
 /**
  * 支持的平台名称常量。
  */
-export const SupportedPlatform = {
+const SupportedPlatform = {
   CODEX: "codex",
   CLAUDE: "claude",
   TRAE: "trae",
@@ -10,12 +10,12 @@ export const SupportedPlatform = {
 /**
  * 支持的平台名称类型。
  */
-export type SupportedPlatformName = (typeof SupportedPlatform)[keyof typeof SupportedPlatform]
+type SupportedPlatformName = (typeof SupportedPlatform)[keyof typeof SupportedPlatform]
 
 /**
  * 平台技能目录目标。
  */
-export interface IPlatformTarget {
+interface IPlatformTarget {
   // 平台名称。
   platformName: SupportedPlatformName
 
@@ -25,3 +25,6 @@ export interface IPlatformTarget {
   // 平台的 skills 目录是否存在。
   hasSkillsDirectory: boolean
 }
+
+export { SupportedPlatform }
+export type { IPlatformTarget, SupportedPlatformName }

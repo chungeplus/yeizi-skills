@@ -13,7 +13,7 @@ import { SkillDocumentParser } from "./skill-document-parser"
 /**
  * 技能比较器。
  */
-export class SkillComparator {
+class SkillComparator {
   private readonly skillDocumentParser = new SkillDocumentParser()
 
   /**
@@ -130,3 +130,5 @@ export class SkillComparator {
     return comparisonRows.filter(comparisonRow => selectedSkillNameSet.has(comparisonRow.skillName))
   }
 }
+
+export { SkillComparator }

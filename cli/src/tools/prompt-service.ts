@@ -10,7 +10,7 @@ import { AppError, AppErrorCode } from "@/errors"
 /**
  * 交互式提示服务。
  */
-export class PromptService {
+class PromptService {
   /**
    * 当前终端是否支持交互提示。
    */
@@ -121,3 +121,5 @@ export class PromptService {
     }
   }
 }
+
+export { PromptService }

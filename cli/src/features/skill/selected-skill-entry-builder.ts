@@ -10,7 +10,7 @@ import { AppError, AppErrorCode } from "@/errors"
  * @returns 对应的技能索引条目列表。
  * @example buildSelectedSkillEntries({ skills: [{ name: "yeizi-demo", version: "1.0.0" }] }, ["yeizi-demo"]) => [{ name: "yeizi-demo", version: "1.0.0" }]
  */
-export function buildSelectedSkillEntries(
+function buildSelectedSkillEntries(
   skillIndex: ISkillIndex,
   selectedSkillNames: readonly string[],
 ): ISkillIndexEntry[] {
@@ -45,3 +45,5 @@ function toNonEmptyStringTuple(values: readonly string[]): [string, ...string[]]
 
   return [firstValue, ...remainingValues]
 }
+
+export { buildSelectedSkillEntries }

@@ -33,7 +33,14 @@ function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload
     }))
   }
   catch (error) {
-    const cause = error instanceof Error ? error : new Error(String(error))
+    let cause: Error
+
+    if (error instanceof Error) {
+      cause = error
+    }
+    else {
+      cause = new Error(String(error))
+    }
 
     throw new AppError(
       AppErrorCode.GITHUB_CONTENTS_INVALID,
@@ -45,7 +52,7 @@ function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload
 /**
  * 基于 GitHub 仓库的技能源实现。
  */
-export class GitHubSkillSource implements ISkillSource {
+class GitHubSkillSource implements ISkillSource {
   private readonly gitHubClient: IGitHubClient = new FetchGitHubClient()
   private readonly repositoryOwner = REPOSITORY_CONFIG.owner
   private readonly repositoryName = REPOSITORY_CONFIG.repo
@@ -177,8 +184,14 @@ export class GitHubSkillSource implements ISkillSource {
    * 组装 GitHub Contents API 地址。
    */
   private buildContentsApiUrl(githubContentPath: string): string {
-    const encodedGitHubContentPath = githubContentPath.length > 0 ? `/${githubContentPath}` : ""
+    let encodedGitHubContentPath = ""
+
+    if (githubContentPath.length > 0) {
+      encodedGitHubContentPath = `/${githubContentPath}`
+    }
 
     return `https://api.github.com/repos/${this.repositoryOwner}/${this.repositoryName}/contents${encodedGitHubContentPath}?ref=${this.repositoryBranch}`
   }
 }
+
+export { GitHubSkillSource }

@@ -1,5 +1,3 @@
-import type { AppErrorCodeName } from "./error-code"
-
 import process from "node:process"
 import { CommanderError } from "commander"
 
@@ -8,7 +6,7 @@ import { buildCommanderAppError, isCommanderNonFailure } from "./commander-error
 import { AppErrorCode } from "./error-code"
 import { renderErrorDisplay } from "./error-display"
 
-export function handleFatalError(error: Error): void {
+function handleFatalError(error: Error): void {
   if (isCommanderNonFailure(error)) {
     process.exitCode = error.exitCode
     return
@@ -20,9 +18,9 @@ export function handleFatalError(error: Error): void {
   process.exitCode = 1
 }
 
-export function normalizeFatalError(error: Error): AppError<AppErrorCodeName> {
+function normalizeFatalError(error: Error): AppError {
   if (error instanceof AppError) {
-    return error as AppError<AppErrorCodeName>
+    return error
   }
 
   if (error instanceof CommanderError) {
@@ -35,3 +33,5 @@ export function normalizeFatalError(error: Error): AppError<AppErrorCodeName> {
 
   return new AppError(AppErrorCode.UNEXPECTED_ERROR, { cause: error })
 }
+
+export { handleFatalError, normalizeFatalError }

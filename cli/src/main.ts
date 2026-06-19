@@ -44,7 +44,14 @@ async function runCli(): Promise<void> {
     await program.parseAsync(process.argv)
   }
   catch (error) {
-    const normalizedError = error instanceof Error ? error : new Error(String(error))
+    let normalizedError: Error
+
+    if (error instanceof Error) {
+      normalizedError = error
+    }
+    else {
+      normalizedError = new Error(String(error))
+    }
 
     handleFatalError(normalizedError)
   }

@@ -12,12 +12,19 @@ type SkillIndexPayload = Parameters<typeof skillIndexSchema.parse>[0]
  * @returns 校验后的技能索引结构。
  * @example parseSkillIndex({ skills: [{ name: "yeizi-demo", version: "1.0.0" }] }) => { skills: [{ name: "yeizi-demo", version: "1.0.0" }] }
  */
-export function parseSkillIndex(skillIndexPayload: SkillIndexPayload): ISkillIndex {
+function parseSkillIndex(skillIndexPayload: SkillIndexPayload): ISkillIndex {
   try {
     return skillIndexSchema.parse(skillIndexPayload)
   }
   catch (error) {
-    const cause = error instanceof Error ? error : new Error(String(error))
+    let cause: Error
+
+    if (error instanceof Error) {
+      cause = error
+    }
+    else {
+      cause = new Error(String(error))
+    }
 
     throw new AppError(
       AppErrorCode.REMOTE_SKILL_INDEX_INVALID,
@@ -25,3 +32,5 @@ export function parseSkillIndex(skillIndexPayload: SkillIndexPayload): ISkillInd
     )
   }
 }
+
+export { parseSkillIndex }

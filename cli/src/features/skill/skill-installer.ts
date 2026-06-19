@@ -11,7 +11,7 @@ import { SkillDocumentParser } from "./skill-document-parser"
 /**
  * 技能安装器。
  */
-export class SkillInstaller {
+class SkillInstaller {
   private readonly skillDocumentParser = new SkillDocumentParser()
 
   /**
@@ -101,7 +101,14 @@ export class SkillInstaller {
         }
         catch (restoreError) {
           canRemoveTemporaryRootDirectory = false
-          const cause = restoreError instanceof Error ? restoreError : new Error(String(restoreError))
+          let cause: Error
+
+          if (restoreError instanceof Error) {
+            cause = restoreError
+          }
+          else {
+            cause = new Error(String(restoreError))
+          }
 
           throw new AppError(
             AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED,
@@ -122,3 +129,5 @@ export class SkillInstaller {
     }
   }
 }
+
+export { SkillInstaller }

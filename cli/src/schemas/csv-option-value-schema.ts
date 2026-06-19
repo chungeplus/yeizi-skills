@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-export const csvOptionValueSchema = z
+const csvOptionValueSchema = z
   .string()
   .trim()
   .min(1, "逗号分隔选项值不能为空。")
+
+export { csvOptionValueSchema }

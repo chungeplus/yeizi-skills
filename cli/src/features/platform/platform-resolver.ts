@@ -10,7 +10,7 @@ import { csvOptionValueSchema, supportedPlatformNameSchema } from "@/schemas"
 /**
  * 平台参数解析器。
  */
-export class PlatformResolver {
+class PlatformResolver {
   /**
    * 解析平台选项值。
    *
@@ -87,3 +87,5 @@ export class PlatformResolver {
     return parsedOptionValues
   }
 }
+
+export { PlatformResolver }

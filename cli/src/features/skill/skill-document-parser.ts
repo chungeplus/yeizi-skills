@@ -7,7 +7,7 @@ import { skillFrontmatterSchema } from "@/schemas"
 /**
  * 技能文档解析器。
  */
-export class SkillDocumentParser {
+class SkillDocumentParser {
   /**
    * 解析技能文档 frontmatter。
    *
@@ -22,7 +22,14 @@ export class SkillDocumentParser {
       return skillFrontmatterSchema.parse(frontmatterResult.data)
     }
     catch (error) {
-      const cause = error instanceof Error ? error : new Error(String(error))
+      let cause: Error
+
+      if (error instanceof Error) {
+        cause = error
+      }
+      else {
+        cause = new Error(String(error))
+      }
 
       throw new AppError(
         AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID,
@@ -42,3 +49,5 @@ export class SkillDocumentParser {
     return this.parseFrontmatter(skillDocumentContent).version
   }
 }
+
+export { SkillDocumentParser }

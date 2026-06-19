@@ -3,7 +3,7 @@ import type { Command } from "commander"
 /**
  * 命令选项定义。
  */
-export interface ICommandOptionDefinition {
+interface ICommandOptionDefinition {
   // 命令行选项声明。
   flags: string
 
@@ -14,20 +14,19 @@ export interface ICommandOptionDefinition {
 /**
  * 命令选项允许的值类型。
  */
-export type CommandOptionValue = boolean | string | string[] | undefined
+type CommandOptionValue = boolean | string | string[] | undefined
 
 /**
  * 命令选项对象。
  */
-export type CommandOptionsRecord = Record<string, CommandOptionValue>
+type CommandOptionsRecord = Record<string, CommandOptionValue>
 
 /**
  * 命令对象公共接口。
  *
  * @typeParam TOptions - 命令选项类型。
- * @typeParam TResult - 命令执行结果类型。
  */
-export interface ICommand<TOptions extends CommandOptionsRecord, TResult = void> {
+interface ICommand<TOptions extends CommandOptionsRecord> {
   // 用于注册到 Commander 的命令名称。
   readonly command: string
 
@@ -41,5 +40,7 @@ export interface ICommand<TOptions extends CommandOptionsRecord, TResult = void>
   register: (program: Command) => void
 
   // 执行当前命令的业务逻辑。
-  execute: (options: TOptions) => Promise<TResult>
+  execute: (options: TOptions) => Promise<void>
 }
+
+export type { CommandOptionsRecord, CommandOptionValue, ICommand, ICommandOptionDefinition }

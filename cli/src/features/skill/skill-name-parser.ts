@@ -8,7 +8,7 @@ import { csvOptionValueSchema, skillNameSchema } from "@/schemas"
  * @returns 解析后的技能名称列表。
  * @example parseSkillNames("yeizi-demo,yeizi-helper") => ["yeizi-demo", "yeizi-helper"]
  */
-export function parseSkillNames(skillOptionValue?: string): string[] {
+function parseSkillNames(skillOptionValue?: string): string[] {
   if (skillOptionValue === undefined) {
     return []
   }
@@ -38,3 +38,5 @@ export function parseSkillNames(skillOptionValue?: string): string[] {
     throw new AppError(AppErrorCode.SKILL_OPTION_INVALID)
   })
 }
+
+export { parseSkillNames }

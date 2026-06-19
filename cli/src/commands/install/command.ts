@@ -17,7 +17,7 @@ import { SupportedPlatform } from "@/types"
  *
  * @returns install 命令对象。
  */
-export function createInstallCommand(): ICommand<IInstallCommandOptions> {
+function createInstallCommand(): ICommand<IInstallCommandOptions> {
   const command = "install"
   const description = "安装技能。"
   const options: readonly ICommandOptionDefinition[] = [
@@ -140,3 +140,5 @@ export function createInstallCommand(): ICommand<IInstallCommandOptions> {
     register,
   }
 }
+
+export { createInstallCommand }

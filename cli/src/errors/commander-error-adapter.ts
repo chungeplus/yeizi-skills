@@ -6,11 +6,11 @@ import { AppErrorCode } from "./error-code"
 type CommanderMessageBuilder = (error: CommanderError) => string
 type CommanderMessageBuilders = Record<string, CommanderMessageBuilder>
 
-export function isCommanderNonFailure(error: Error): error is CommanderError {
+function isCommanderNonFailure(error: Error): error is CommanderError {
   return error instanceof CommanderError && error.exitCode === 0
 }
 
-export function buildCommanderAppError(error: CommanderError): AppError<typeof AppErrorCode.CLI_USAGE_INVALID> {
+function buildCommanderAppError(error: CommanderError): AppError {
   return new AppError(AppErrorCode.CLI_USAGE_INVALID, {
     params: {
       detailMessage: buildCommanderErrorMessage(error),
@@ -19,7 +19,7 @@ export function buildCommanderAppError(error: CommanderError): AppError<typeof A
   })
 }
 
-export function buildCommanderErrorMessage(error: CommanderError): string {
+function buildCommanderErrorMessage(error: CommanderError): string {
   const builders: CommanderMessageBuilders = {
     "commander.unknownCommand": currentError =>
       `命令“${extractQuotedValue(currentError.message) ?? "未知命令"}”不存在，请使用 --help 查看可用命令。`,
@@ -59,3 +59,5 @@ function extractQuotedValue(message: string): string | null {
 
   return matchedResult?.[1] ?? null
 }
+
+export { buildCommanderAppError, buildCommanderErrorMessage, isCommanderNonFailure }
