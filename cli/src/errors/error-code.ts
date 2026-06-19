@@ -154,7 +154,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.CLI_USAGE_INVALID]: {
       title: "命令用法错误",
       buildMessage: (params) => {
-        const cliUsageInvalidParams = params as AppErrorParamsMap[typeof AppErrorCode.CLI_USAGE_INVALID]
+        const cliUsageInvalidParams = params as IAppErrorParamsMap[typeof AppErrorCode.CLI_USAGE_INVALID]
 
         return cliUsageInvalidParams.detailMessage
       },
@@ -166,7 +166,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.PACKAGE_CONFIG_INVALID]: {
       title: "程序配置错误",
       buildMessage: (params) => {
-        const packageConfigInvalidParams = params as AppErrorParamsMap[typeof AppErrorCode.PACKAGE_CONFIG_INVALID]
+        const packageConfigInvalidParams = params as IAppErrorParamsMap[typeof AppErrorCode.PACKAGE_CONFIG_INVALID]
 
         if (packageConfigInvalidParams.kind === "invalid-format") {
           return "package.json 配置格式不正确。"
@@ -182,7 +182,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]: {
       title: "参数缺失",
       buildMessage: (params) => {
-        const nonInteractiveOptionRequiredParams = params as AppErrorParamsMap[typeof AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]
+        const nonInteractiveOptionRequiredParams = params as IAppErrorParamsMap[typeof AppErrorCode.NON_INTERACTIVE_OPTION_REQUIRED]
 
         return `当前环境不支持交互提示，请使用 ${nonInteractiveOptionRequiredParams.optionName} 显式指定要${nonInteractiveOptionRequiredParams.actionName}的${nonInteractiveOptionRequiredParams.targetName}。`
       },
@@ -190,7 +190,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.PLATFORM_NOT_SUPPORTED]: {
       title: "平台不受支持",
       buildMessage: (params) => {
-        const platformNotSupportedParams = params as AppErrorParamsMap[typeof AppErrorCode.PLATFORM_NOT_SUPPORTED]
+        const platformNotSupportedParams = params as IAppErrorParamsMap[typeof AppErrorCode.PLATFORM_NOT_SUPPORTED]
 
         return `平台“${platformNotSupportedParams.platformName}”不受支持。`
       },
@@ -206,7 +206,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_NOT_FOUND]: {
       title: "技能不存在",
       buildMessage: (params) => {
-        const skillNotFoundParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_NOT_FOUND]
+        const skillNotFoundParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_NOT_FOUND]
 
         if (skillNotFoundParams.skillNames.length === 1) {
           return `技能“${skillNotFoundParams.skillNames[0]}”不存在。`
@@ -226,7 +226,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_DOCUMENT_MISSING]: {
       title: "技能文档缺失",
       buildMessage: (params) => {
-        const skillDocumentMissingParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_DOCUMENT_MISSING]
+        const skillDocumentMissingParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_DOCUMENT_MISSING]
 
         return `远端技能“${skillDocumentMissingParams.skillName}”缺少 SKILL.md 文件。`
       },
@@ -234,7 +234,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]: {
       title: "技能版本异常",
       buildMessage: (params) => {
-        const skillDocumentVersionMismatchParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]
+        const skillDocumentVersionMismatchParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_DOCUMENT_VERSION_MISMATCH]
 
         return `远端技能“${skillDocumentVersionMismatchParams.skillName}”的 SKILL.md 版本与索引不一致。`
       },
@@ -242,7 +242,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_FILES_NOT_LOADED]: {
       title: "技能文件异常",
       buildMessage: (params) => {
-        const skillFilesNotLoadedParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_FILES_NOT_LOADED]
+        const skillFilesNotLoadedParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_FILES_NOT_LOADED]
 
         return `技能“${skillFilesNotLoadedParams.skillName}”的文件尚未加载完成。`
       },
@@ -250,7 +250,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_INSTALL_PATH_INVALID]: {
       title: "技能路径异常",
       buildMessage: (params) => {
-        const skillInstallPathInvalidParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_INSTALL_PATH_INVALID]
+        const skillInstallPathInvalidParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_INSTALL_PATH_INVALID]
 
         return `下载文件路径“${skillInstallPathInvalidParams.relativeFilePath}”超出了技能根目录。`
       },
@@ -258,7 +258,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]: {
       title: "技能安装异常",
       buildMessage: (params) => {
-        const skillDirectoryRestoreFailedParams = params as AppErrorParamsMap[typeof AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]
+        const skillDirectoryRestoreFailedParams = params as IAppErrorParamsMap[typeof AppErrorCode.SKILL_DIRECTORY_RESTORE_FAILED]
 
         return `技能“${skillDirectoryRestoreFailedParams.skillName}”安装失败后，原始技能目录无法自动恢复，请手动检查本地 skills 目录。`
       },
@@ -278,7 +278,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.GITHUB_REQUEST_FAILED]: {
       title: "远端请求失败",
       buildMessage: (params) => {
-        const gitHubRequestFailedParams = params as AppErrorParamsMap[typeof AppErrorCode.GITHUB_REQUEST_FAILED]
+        const gitHubRequestFailedParams = params as IAppErrorParamsMap[typeof AppErrorCode.GITHUB_REQUEST_FAILED]
 
         if (gitHubRequestFailedParams.kind === "status-code") {
           return `GitHub 请求失败，状态码为 ${gitHubRequestFailedParams.statusCode}。`
@@ -294,7 +294,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.GITHUB_REQUEST_TIMEOUT]: {
       title: "远端请求超时",
       buildMessage: (params) => {
-        const gitHubRequestTimeoutParams = params as AppErrorParamsMap[typeof AppErrorCode.GITHUB_REQUEST_TIMEOUT]
+        const gitHubRequestTimeoutParams = params as IAppErrorParamsMap[typeof AppErrorCode.GITHUB_REQUEST_TIMEOUT]
 
         return `GitHub 请求超时，请检查网络后重试（${gitHubRequestTimeoutParams.timeoutSeconds} 秒）。`
       },
@@ -302,7 +302,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.GITHUB_CONTENT_PATH_INVALID]: {
       title: "远端路径异常",
       buildMessage: (params) => {
-        const gitHubContentPathInvalidParams = params as AppErrorParamsMap[typeof AppErrorCode.GITHUB_CONTENT_PATH_INVALID]
+        const gitHubContentPathInvalidParams = params as IAppErrorParamsMap[typeof AppErrorCode.GITHUB_CONTENT_PATH_INVALID]
 
         return `GitHub 内容条目的路径“${gitHubContentPathInvalidParams.contentPath}”超出了技能根目录。`
       },
@@ -310,7 +310,7 @@ function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
     [AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]: {
       title: "远端文件异常",
       buildMessage: (params) => {
-        const gitHubDownloadUrlMissingParams = params as AppErrorParamsMap[typeof AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]
+        const gitHubDownloadUrlMissingParams = params as IAppErrorParamsMap[typeof AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]
 
         return `GitHub 内容条目“${gitHubDownloadUrlMissingParams.contentPath}”缺少下载地址。`
       },
