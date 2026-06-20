@@ -1,6 +1,13 @@
 import type { Command } from "commander"
 import type { IUpdateCommandOptions } from "./types"
-import type { ICommand, ICommandOptionDefinition } from "@/types"
+import type {
+  ICommand,
+  ICommandOptionDefinition,
+  IDownloadedSkillFile,
+  IPlatformTarget,
+  ISkillComparisonRow,
+  ISkillIndexEntry,
+} from "@/types"
 
 import { homedir } from "node:os"
 import process from "node:process"
@@ -11,6 +18,101 @@ import { buildComparisonRows, buildSelectedRows, buildSelectedSkillEntries, buil
 import { GitHubSkillSource } from "@/features/source"
 import { isInteractiveTerminal, OutputFormatter, selectPlatforms, selectSkillsToUpdate } from "@/tools"
 import { SupportedPlatform } from "@/types"
+
+async function updateRowsSequentially(
+  platformTarget: IPlatformTarget,
+  matchedRows: readonly ISkillComparisonRow[],
+  selectedSkillEntries: readonly ISkillIndexEntry[],
+  loadedSkillFilesByName: ReadonlyMap<string, readonly IDownloadedSkillFile[]>,
+  skillInstaller: SkillInstaller,
+  summaryMessages: string[],
+  rowIndex = 0,
+): Promise<void> {
+  const matchedRow = matchedRows[rowIndex]
+
+  if (matchedRow === undefined) {
+    return
+  }
+
+  const matchedSkillEntry = selectedSkillEntries.find(
+    skillIndexEntry => skillIndexEntry.name === matchedRow.skillName,
+  )
+
+  if (matchedSkillEntry === undefined) {
+    throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+      params: { skillNames: [matchedRow.skillName] },
+    })
+  }
+
+  const loadedSkillFiles = loadedSkillFilesByName.get(matchedSkillEntry.name)
+
+  if (loadedSkillFiles === undefined) {
+    throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
+      params: { skillName: matchedSkillEntry.name },
+    })
+  }
+
+  await skillInstaller.updateSkillDirectory(
+    platformTarget.skillsDirectoryPath,
+    matchedSkillEntry,
+    loadedSkillFiles,
+  )
+  summaryMessages.push(`已为平台“${platformTarget.platformName}”更新技能“${matchedSkillEntry.name}”。`)
+
+  await updateRowsSequentially(
+    platformTarget,
+    matchedRows,
+    selectedSkillEntries,
+    loadedSkillFilesByName,
+    skillInstaller,
+    summaryMessages,
+    rowIndex + 1,
+  )
+}
+
+async function updatePlatformsSequentially(
+  platformTargets: readonly IPlatformTarget[],
+  selectedRows: readonly ISkillComparisonRow[],
+  selectedSkillEntries: readonly ISkillIndexEntry[],
+  loadedSkillFilesByName: ReadonlyMap<string, readonly IDownloadedSkillFile[]>,
+  skillInstaller: SkillInstaller,
+  summaryMessages: string[],
+  platformIndex = 0,
+): Promise<void> {
+  const platformTarget = platformTargets[platformIndex]
+
+  if (platformTarget === undefined) {
+    return
+  }
+
+  if (!platformTarget.hasSkillsDirectory) {
+    summaryMessages.push(`已跳过平台“${platformTarget.platformName}”，因为它的 skills 目录不存在。`)
+  }
+  else {
+    const matchedRows = selectedRows.filter(
+      selectedRow => selectedRow.platformName === platformTarget.platformName,
+    )
+
+    await updateRowsSequentially(
+      platformTarget,
+      matchedRows,
+      selectedSkillEntries,
+      loadedSkillFilesByName,
+      skillInstaller,
+      summaryMessages,
+    )
+  }
+
+  await updatePlatformsSequentially(
+    platformTargets,
+    selectedRows,
+    selectedSkillEntries,
+    loadedSkillFilesByName,
+    skillInstaller,
+    summaryMessages,
+    platformIndex + 1,
+  )
+}
 
 /**
  * 创建 update 命令。
@@ -117,43 +219,14 @@ function createUpdateCommand(): ICommand<IUpdateCommandOptions> {
       skippedSkillName => `已跳过技能“${skippedSkillName}”，因为它当前没有可用更新。`,
     )
 
-    for (const platformTarget of platformTargets) {
-      if (!platformTarget.hasSkillsDirectory) {
-        summaryMessages.push(`已跳过平台“${platformTarget.platformName}”，因为它的 skills 目录不存在。`)
-        continue
-      }
-
-      const matchedRows = selectedRows.filter(
-        selectedRow => selectedRow.platformName === platformTarget.platformName,
-      )
-
-      for (const matchedRow of matchedRows) {
-        const matchedSkillEntry = selectedSkillEntries.find(
-          skillIndexEntry => skillIndexEntry.name === matchedRow.skillName,
-        )
-
-        if (matchedSkillEntry === undefined) {
-          throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
-            params: { skillNames: [matchedRow.skillName] },
-          })
-        }
-
-        const loadedSkillFiles = loadedSkillFilesByName.get(matchedSkillEntry.name)
-
-        if (loadedSkillFiles === undefined) {
-          throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
-            params: { skillName: matchedSkillEntry.name },
-          })
-        }
-
-        await skillInstaller.updateSkillDirectory(
-          platformTarget.skillsDirectoryPath,
-          matchedSkillEntry,
-          loadedSkillFiles,
-        )
-        summaryMessages.push(`已为平台“${platformTarget.platformName}”更新技能“${matchedSkillEntry.name}”。`)
-      }
-    }
+    await updatePlatformsSequentially(
+      platformTargets,
+      selectedRows,
+      selectedSkillEntries,
+      loadedSkillFilesByName,
+      skillInstaller,
+      summaryMessages,
+    )
 
     process.stdout.write(`${outputFormatter.renderSummary(summaryMessages)}\n`)
   }

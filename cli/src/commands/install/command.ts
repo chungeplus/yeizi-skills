@@ -1,6 +1,13 @@
 import type { Command } from "commander"
 import type { IInstallCommandOptions } from "./types"
-import type { ICommand, ICommandOptionDefinition, SupportedPlatformName } from "@/types"
+import type {
+  ICommand,
+  ICommandOptionDefinition,
+  IDownloadedSkillFile,
+  IPlatformTarget,
+  ISkillIndexEntry,
+  SupportedPlatformName,
+} from "@/types"
 
 import { homedir } from "node:os"
 import process from "node:process"
@@ -11,6 +18,82 @@ import { buildSelectedSkillEntries, parseSkillNames, SkillInstaller } from "@/fe
 import { GitHubSkillSource } from "@/features/source"
 import { isInteractiveTerminal, OutputFormatter, selectPlatforms, selectSkills } from "@/tools"
 import { SupportedPlatform } from "@/types"
+
+async function installSkillsSequentially(
+  platformTarget: IPlatformTarget,
+  selectedSkillEntries: readonly ISkillIndexEntry[],
+  loadedSkillFilesByName: ReadonlyMap<string, readonly IDownloadedSkillFile[]>,
+  skillInstaller: SkillInstaller,
+  summaryMessages: string[],
+  skillIndex = 0,
+): Promise<void> {
+  const skillIndexEntry = selectedSkillEntries[skillIndex]
+
+  if (skillIndexEntry === undefined) {
+    return
+  }
+
+  const loadedSkillFiles = loadedSkillFilesByName.get(skillIndexEntry.name)
+
+  if (loadedSkillFiles === undefined) {
+    throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
+      params: { skillName: skillIndexEntry.name },
+    })
+  }
+
+  await skillInstaller.updateSkillDirectory(
+    platformTarget.skillsDirectoryPath,
+    skillIndexEntry,
+    loadedSkillFiles,
+  )
+  summaryMessages.push(`已为平台“${platformTarget.platformName}”安装技能“${skillIndexEntry.name}”。`)
+
+  await installSkillsSequentially(
+    platformTarget,
+    selectedSkillEntries,
+    loadedSkillFilesByName,
+    skillInstaller,
+    summaryMessages,
+    skillIndex + 1,
+  )
+}
+
+async function installToPlatformsSequentially(
+  platformTargets: readonly IPlatformTarget[],
+  selectedSkillEntries: readonly ISkillIndexEntry[],
+  loadedSkillFilesByName: ReadonlyMap<string, readonly IDownloadedSkillFile[]>,
+  skillInstaller: SkillInstaller,
+  summaryMessages: string[],
+  platformIndex = 0,
+): Promise<void> {
+  const platformTarget = platformTargets[platformIndex]
+
+  if (platformTarget === undefined) {
+    return
+  }
+
+  if (!platformTarget.hasSkillsDirectory) {
+    summaryMessages.push(`已跳过平台“${platformTarget.platformName}”，因为它的 skills 目录不存在。`)
+  }
+  else {
+    await installSkillsSequentially(
+      platformTarget,
+      selectedSkillEntries,
+      loadedSkillFilesByName,
+      skillInstaller,
+      summaryMessages,
+    )
+  }
+
+  await installToPlatformsSequentially(
+    platformTargets,
+    selectedSkillEntries,
+    loadedSkillFilesByName,
+    skillInstaller,
+    summaryMessages,
+    platformIndex + 1,
+  )
+}
 
 /**
  * 创建 install 命令。
@@ -91,29 +174,13 @@ function createInstallCommand(): ICommand<IInstallCommandOptions> {
     )
     const summaryMessages: string[] = []
 
-    for (const platformTarget of platformTargets) {
-      if (!platformTarget.hasSkillsDirectory) {
-        summaryMessages.push(`已跳过平台“${platformTarget.platformName}”，因为它的 skills 目录不存在。`)
-        continue
-      }
-
-      for (const skillIndexEntry of selectedSkillEntries) {
-        const loadedSkillFiles = loadedSkillFilesByName.get(skillIndexEntry.name)
-
-        if (loadedSkillFiles === undefined) {
-          throw new AppError(AppErrorCode.SKILL_FILES_NOT_LOADED, {
-            params: { skillName: skillIndexEntry.name },
-          })
-        }
-
-        await skillInstaller.updateSkillDirectory(
-          platformTarget.skillsDirectoryPath,
-          skillIndexEntry,
-          loadedSkillFiles,
-        )
-        summaryMessages.push(`已为平台“${platformTarget.platformName}”安装技能“${skillIndexEntry.name}”。`)
-      }
-    }
+    await installToPlatformsSequentially(
+      platformTargets,
+      selectedSkillEntries,
+      loadedSkillFilesByName,
+      skillInstaller,
+      summaryMessages,
+    )
 
     process.stdout.write(`${outputFormatter.renderSummary(summaryMessages)}\n`)
   }
