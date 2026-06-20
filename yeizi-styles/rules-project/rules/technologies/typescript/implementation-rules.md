@@ -110,7 +110,7 @@ export class UserProfile {
 
 ## 错误实现规则
 
-### 抛错只用 `Error` 实例
+### 抛错只用 `Error` 或其子类实例
 
 > 需要抛错时，只使用 `Error` 或继承 `Error` 的错误实例，不抛字符串，也不抛临时对象。
 
