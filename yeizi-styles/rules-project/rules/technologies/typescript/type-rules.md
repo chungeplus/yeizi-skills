@@ -102,6 +102,41 @@ function getUserName(userInfo: any): string {
 let retryCount: unknown = 0
 ```
 
+### 类型明确时禁止额外使用泛型
+
+> 当字段、类、函数参数或返回值已经可以直接写成明确类型时，禁止为了形式统一、预留扩展或书写习惯额外引入泛型。泛型只在需要表达多个位置之间的类型关联、根据输入推导输出类型，或复用同一套类型约束时使用。
+
+推荐写法
+```typescript
+class AppError extends Error {
+  public readonly code: AppErrorCodeName
+
+  public constructor(code: AppErrorCodeName) {
+    super(code)
+    this.code = code
+  }
+}
+
+function getObjectValue<TObject, TKey extends keyof TObject>(
+  objectValue: TObject,
+  objectKey: TKey,
+): TObject[TKey] {
+  return objectValue[objectKey]
+}
+```
+
+不推荐写法
+```typescript
+class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error {
+  public readonly code: TCode
+
+  public constructor(code: TCode) {
+    super(code)
+    this.code = code
+  }
+}
+```
+
 ### `as` 只补明确类型
 
 > `as SomeType` 只在你已经明确知道值是什么类型、只是 TypeScript 这里没推出来时使用。不把未校验输入直接断成业务类型。

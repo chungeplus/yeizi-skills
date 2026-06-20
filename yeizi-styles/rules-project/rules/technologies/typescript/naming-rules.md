@@ -1,54 +1,5 @@
 # TypeScript 命名规则
 
-## 文件命名规则
-
-### 文件名使用小写中划线
-
-> TypeScript 文件名统一使用小写中划线命名法。
-
-推荐写法
-```text
-user-info.ts
-request-options.ts
-default-timeout.ts
-```
-
-### 文件名和内容保持一致
-
-> 文件名和主导出或共同主题保持一致。
-
-推荐写法
-`user-info.ts`
-```typescript
-interface IUserInfo {
-  id: string
-  name: string
-}
-export type { IUserInfo }
-```
-
-`parse-user-info.ts`
-```typescript
-function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
-}
-export { parseUserInfo }
-```
-
-### 禁止使用泛化文件名
-
-> 不使用 `helpers.ts`、`utils.ts`、`common.ts`、`temp.ts` 这类泛化文件名。
-
-推荐写法
-```text
-read-config-file.ts
-parse-user-info.ts
-request-options.ts
-```
-
 ## 变量命名规则
 
 ### 普通变量命名使用小驼峰命名法

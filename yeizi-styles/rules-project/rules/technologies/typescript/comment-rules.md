@@ -1,119 +1,10 @@
 # TypeScript 注释规则
 
-## 多行注释
+## TSDoc 注释
 
-### 不使用单行 `/** 内容 */`
+### 注释使用 TSDoc 规范
 
-> 多行注释写成独立的 `/** */` 结构。
-
-推荐写法
-```typescript
-/**
- * 获取用户的显示名称。
- */
-function getUserDisplayName(): string {
-  return "Alice"
-}
-```
-
-不推荐写法
-```typescript
-/** 获取用户的显示名称。 */
-function getUserDisplayName(): string {
-  return "Alice"
-}
-```
-
-### 共享内容使用 `/** */`
-
-> 对外共享的类型、配置、常量、错误定义、校验结构和复用逻辑使用 `/** */`，函数、类、方法内部需要解释原因、顺序或影响的逻辑除外。
-
-推荐写法
-```typescript
-/**
- * 应用错误码定义。
- */
-const AppErrorCode = {
-  /**
-   * package.json 中缺少 bin 配置。
-   */
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
-
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-export { AppErrorCode }
-export type { AppErrorCode }
-
-/**
- * 用户信息。
- */
-interface IUserInfo {
-  /**
-   * 用户唯一标识。
-   */
-  id: string
-  /**
-   * 用户显示名称。
-   */
-  name: string
-}
-
-export type { IUserInfo }
-```
-
-不推荐写法
-```typescript
-const AppErrorCode = {
-  // package.json 中缺少 bin 配置。
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
-
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-export { AppErrorCode }
-export type { AppErrorCode }
-
-interface IUserInfo {
-  // 用户唯一标识。
-  id: string
-  // 用户显示名称。
-  name: string
-}
-
-export type { IUserInfo }
-```
-
-### 业务代码中的函数、类、方法使用 `/** */`
-
-> 场景专属业务文件和入口文件中的函数、类、方法使用 `/** */`。
-
-推荐写法
-```typescript
-/**
- * 运行 CLI 主流程。
- */
-function runCli(): void {}
-
-/**
- * 安装命令。
- */
-class InstallCommand {
-  /**
-   * 执行安装流程。
-   */
-  execute(): void {}
-}
-```
-
-不推荐写法
-```typescript
-function runCli(): void {}
-
-class InstallCommand {
-  execute(): void {}
-}
-```
+> TypeScript 注释统一使用 TSDoc 规范。文档注释结构和 `@param`、`@returns`、`@throws`、`@example` 等标签写法遵守 TSDoc，再按本文件补充项目约束。
 
 ### 有参数时写 `@param`
 
@@ -201,9 +92,9 @@ function loadConfigFileContent(filePath: string): string {
 }
 ```
 
-### 共享函数和方法写 `@example`
+### 可复用函数和方法写 `@example`
 
-> 只有会被别的文件调用的共享函数和方法写 `@example`。场景专属流程函数、入口函数和当前模块内部私有函数不写 `@example`。每行写一个“调用 => 输出”示例。
+> 不是所有函数和方法都写 `@example`。只有可复用函数和方法写 `@example`，并且至少写一个。业务复杂、参数多样性大或需要覆盖不同调用结果时，写多个 `@example`。入口流程函数、只服务当前文件的函数，以及没有参数也没有返回值的流程函数不写 `@example`。
 
 推荐写法
 ```typescript
@@ -252,4 +143,136 @@ function parseUserInfo(content: string): IUserInfo {
  * runCli() => 启动 CLI 主流程
  */
 function runCli(): void {}
+```
+
+## 多行注释
+
+### 不使用单行 `/** 内容 */`
+
+> 多行注释写成独立的 `/** */` 结构。
+
+推荐写法
+```typescript
+/**
+ * 获取用户的显示名称。
+ */
+function getUserDisplayName(): string {
+  return "Alice"
+}
+```
+
+不推荐写法
+```typescript
+/** 获取用户的显示名称。 */
+function getUserDisplayName(): string {
+  return "Alice"
+}
+```
+
+### 类型、常量、配置、函数、类、方法使用 `/** */`
+
+> 类型、常量、配置、函数、类、方法统一使用 `/** */`。接口字段、对象成员和类字段需要说明语义时，也使用 `/** */`。
+
+推荐写法
+```typescript
+/**
+ * 应用错误码定义。
+ */
+const AppErrorCode = {
+  /**
+   * package.json 中缺少 bin 配置。
+   */
+  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+} as const
+
+type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+
+export { AppErrorCode }
+export type { AppErrorCode }
+
+/**
+ * 用户信息。
+ */
+interface IUserInfo {
+  /**
+   * 用户唯一标识。
+   */
+  id: string
+  /**
+   * 用户显示名称。
+   */
+  name: string
+}
+
+export type { IUserInfo }
+
+/**
+ * 运行 CLI 主流程。
+ */
+function runCli(): void {}
+
+/**
+ * 安装命令。
+ */
+class InstallCommand {
+  /**
+   * 执行安装流程。
+   */
+  execute(): void {}
+}
+```
+
+不推荐写法
+```typescript
+const AppErrorCode = {
+  // package.json 中缺少 bin 配置。
+  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+} as const
+
+type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+
+export { AppErrorCode }
+export type { AppErrorCode }
+
+interface IUserInfo {
+  // 用户唯一标识。
+  id: string
+  // 用户显示名称。
+  name: string
+}
+
+export type { IUserInfo }
+function runCli(): void {}
+
+class InstallCommand {
+  execute(): void {}
+}
+```
+
+## 单行注释
+
+### 函数体和方法体内部说明使用单行注释
+
+> 函数体、方法体和流程片段内部，需要补充原因、顺序、前提或影响时，使用单行注释。
+
+推荐写法
+```typescript
+function syncUserInfo(userInfoList: IUserInfo[]): void {
+  // 保留原始顺序，避免输出结果和平台目录顺序不一致。
+  for (let userInfo of userInfoList) {
+    console.log(userInfo.name)
+  }
+}
+```
+
+不推荐写法
+```typescript
+function syncUserInfo(userInfoList: IUserInfo[]): void {
+  /**
+   * 保留原始顺序，避免输出结果和平台目录顺序不一致。
+   */
+  for (let userInfo of userInfoList) {
+    console.log(userInfo.name)
+  }
+}
 ```
