@@ -188,6 +188,9 @@ class GitHubSkillSource implements ISkillSource {
 
   /**
    * 加载 GitHub 指定目录下的条目列表。
+   *
+   * @param githubContentPath - GitHub 仓库内的目录路径。
+   * @returns 解析后的 GitHub 条目列表。
    */
   private async loadGitHubContentsDirectory(githubContentPath: string): Promise<IGitHubContentsEntry[]> {
     const githubContentsPayload = await this.gitHubClient.loadJson<GitHubContentsPayload>(this.buildContentsApiUrl(githubContentPath))
@@ -197,6 +200,9 @@ class GitHubSkillSource implements ISkillSource {
 
   /**
    * 组装 GitHub Contents API 地址。
+   *
+   * @param githubContentPath - GitHub 仓库内的目录路径。
+   * @returns 对应的 GitHub Contents API 地址。
    */
   private buildContentsApiUrl(githubContentPath: string): string {
     let encodedGitHubContentPath = ""

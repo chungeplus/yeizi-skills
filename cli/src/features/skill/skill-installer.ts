@@ -21,6 +21,7 @@ class SkillInstaller {
    * @param skillIndexEntry - 目标技能索引条目。
    * @param downloadedSkillFiles - 已下载的技能文件列表。
    * @returns 安装完成后的 Promise。
+   * @throws 技能文档缺失、版本不一致、路径非法或目录恢复失败时抛出错误。
    * @example updateSkillDirectory("/tmp/skills", { name: "yeizi-demo", version: "1.0.0" }, [{ relativeFilePath: "SKILL.md", fileContents: "---\\nname: yeizi-demo\\nversion: 1.0.0\\n---" }]) => Promise<void>
    */
   public async updateSkillDirectory(

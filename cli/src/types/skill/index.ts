@@ -15,10 +15,14 @@ const SkillComparisonStatus = {
  * 技能索引条目。
  */
 interface ISkillIndexEntry {
-  // 技能名称。
+  /**
+   * 技能名称。
+   */
   name: string
 
-  // 技能版本。
+  /**
+   * 技能版本。
+   */
   version: string
 }
 
@@ -26,7 +30,9 @@ interface ISkillIndexEntry {
  * 技能索引结构。
  */
 interface ISkillIndex {
-  // 可用技能列表。
+  /**
+   * 可用技能列表。
+   */
   skills: ISkillIndexEntry[]
 }
 
@@ -34,13 +40,19 @@ interface ISkillIndex {
  * 技能文档 frontmatter 结构。
  */
 interface ISkillFrontmatter {
-  // 技能名称。
+  /**
+   * 技能名称。
+   */
   name: string
 
-  // 技能版本。
+  /**
+   * 技能版本。
+   */
   version: string
 
-  // 技能说明。
+  /**
+   * 技能说明。
+   */
   description?: string
 }
 
@@ -53,19 +65,29 @@ type SkillComparisonStatusMessage = (typeof SkillComparisonStatus)[keyof typeof 
  * 技能比较结果行。
  */
 interface ISkillComparisonRow {
-  // 平台名称。
+  /**
+   * 平台名称。
+   */
   platformName: SupportedPlatformName
 
-  // 技能名称。
+  /**
+   * 技能名称。
+   */
   skillName: ISkillIndexEntry["name"]
 
-  // 远端版本号。
+  /**
+   * 远端版本号。
+   */
   remoteVersion: ISkillIndexEntry["version"]
 
-  // 本地版本号。
+  /**
+   * 本地版本号。
+   */
   localVersion: string | null
 
-  // 当前技能状态消息。
+  /**
+   * 当前技能状态消息。
+   */
   statusMessage: SkillComparisonStatusMessage
 }
 

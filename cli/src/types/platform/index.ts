@@ -16,13 +16,19 @@ type SupportedPlatformName = (typeof SupportedPlatform)[keyof typeof SupportedPl
  * 平台技能目录目标。
  */
 interface IPlatformTarget {
-  // 平台名称。
+  /**
+   * 平台名称。
+   */
   platformName: SupportedPlatformName
 
-  // 平台 skills 目录绝对路径。
+  /**
+   * 平台 skills 目录绝对路径。
+   */
   skillsDirectoryPath: string
 
-  // 平台的 skills 目录是否存在。
+  /**
+   * 平台的 skills 目录是否存在。
+   */
   hasSkillsDirectory: boolean
 }
 

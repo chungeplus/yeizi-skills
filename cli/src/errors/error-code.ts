@@ -105,11 +105,24 @@ const AppErrorCode = {
  */
 type AppErrorCodeName = (typeof AppErrorCode)[keyof typeof AppErrorCode]
 
+/**
+ * 错误定义结构。
+ */
 interface IAppErrorDefinition {
+  /**
+   * 面向用户展示的错误标题。
+   */
   title: string
+
+  /**
+   * 根据参数构建错误消息。
+   */
   buildMessage: (params: IAppErrorParamsMap[AppErrorCodeName]) => string
 }
 
+/**
+ * 错误代码与参数结构映射。
+ */
 interface IAppErrorParamsMap {
   [AppErrorCode.UNEXPECTED_ERROR]: undefined
   [AppErrorCode.CLI_USAGE_INVALID]: { detailMessage: string }
@@ -145,6 +158,12 @@ interface IAppErrorParamsMap {
   [AppErrorCode.GITHUB_DOWNLOAD_URL_MISSING]: { contentPath: string }
 }
 
+/**
+ * 根据错误代码获取统一错误定义。
+ *
+ * @param code - 错误代码。
+ * @returns 对应的错误定义。
+ */
 function getAppErrorDefinition(code: AppErrorCodeName): IAppErrorDefinition {
   return ({
     [AppErrorCode.UNEXPECTED_ERROR]: {
