@@ -124,9 +124,9 @@ throw new Error("平台选项不能为空。")
 throw "平台选项不能为空。"
 ```
 
-### `catch` 里用类型守卫、`as` 只补明确类型
+### `catch` 里先用类型守卫收窄
 
-> `catch (error)` 收到的 `error` 默认是 `unknown`。先用 `instanceof`、自定义类型谓词或 `typeof` 把它收窄到 `Error` 或业务错误类；只有在已经做过运行时检查、TypeScript 还推不出目标业务类型时，才补一道 `as`。不把 `unknown` 直接断成业务类型。
+> `catch (error)` 收到的 `error` 默认是 `unknown`。先用 `instanceof`、自定义类型谓词或 `typeof` 把它收窄到 `Error` 或业务错误类。不把 `unknown` 直接断成业务类型。
 
 推荐写法
 ```typescript
@@ -137,14 +137,13 @@ throw "平台选项不能为空。"
   throw error
 }
 
-function hasAppErrorShape(error: Error): error is Error & { name: "AppError"; code: string } {
-  return error.name === "AppError" && "code" in error && typeof error.code === "string"
+function isAppError(error: Error): error is AppError {
+  return error.name === "AppError"
 }
 
 } catch (error) {
-  if (error instanceof Error && hasAppErrorShape(error)) {
-    const appError = error as AppError
-    return appError.code
+  if (error instanceof Error && isAppError(error)) {
+    return error.code
   }
   throw error
 }
