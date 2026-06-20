@@ -134,7 +134,6 @@ throw "平台选项不能为空。"
   if (error instanceof AppError) {
     return error.code
   }
-  throw error
 }
 
 function isAppError(error: Error): error is AppError {
@@ -145,7 +144,6 @@ function isAppError(error: Error): error is AppError {
   if (error instanceof Error && isAppError(error)) {
     return error.code
   }
-  throw error
 }
 ```
 
