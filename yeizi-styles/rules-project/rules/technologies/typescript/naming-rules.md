@@ -8,14 +8,14 @@
 
 推荐写法
 ```typescript
-let currentUserName = "Alice"
-let isDialogVisible = true
+const currentName = "Alice"
+const isVisible = true
 ```
 
 不推荐写法
 ```typescript
-let CurrentUserName = "Alice"
-let is_dialog_visible = true
+const CurrentName = "Alice"
+const is_visible = true
 ```
 
 ### 布尔变量命名使用逻辑判断词
@@ -28,16 +28,16 @@ let is_dialog_visible = true
 
 推荐写法
 ```typescript
-let isDialogVisible = true
-let hasPermission = false
-let canSubmit = true
+const isVisible = true
+const hasPermission = false
+const canSubmit = true
 ```
 
 不推荐写法
 ```typescript
-let dialogVisible = true
-let permissionStatus = false
-let submitAble = true
+const visible = true
+const permissionStatus = false
+const submitAble = true
 ```
 
 ## 常量命名规则
@@ -48,14 +48,14 @@ let submitAble = true
 
 推荐写法
 ```typescript
-const MAX_RETRY_COUNT = 3
-const DEFAULT_TIMEOUT_MS = 30000
+const MAX_LENGTH = 100
+const DEFAULT_TIMEOUT_MS = 3000
 ```
 
 不推荐写法
 ```typescript
-const maxRetryCount = 3
-const defaultTimeoutMs = 30000
+const maxLength = 100
+const defaultTimeoutMs = 3000
 ```
 
 ## 配置对象命名规则
@@ -67,7 +67,6 @@ const defaultTimeoutMs = 30000
 推荐写法
 ```typescript
 const requestConfig = {
-  baseUrl: "",
   timeoutMs: 3000,
 }
 ```
@@ -75,7 +74,6 @@ const requestConfig = {
 不推荐写法
 ```typescript
 const REQUEST_CONFIG = {
-  baseUrl: "",
   timeoutMs: 3000,
 }
 ```
@@ -88,23 +86,23 @@ const REQUEST_CONFIG = {
 
 推荐写法
 ```typescript
-function getUserName(): string {
-  return "Alice"
+function getName(): string {
+  return ""
 }
 
 class UserService {
-  public loadUserInfo(): void {}
+  public loadInfo(): void {}
 }
 ```
 
 不推荐写法
 ```typescript
-function GetUserName(): string {
-  return "Alice"
+function GetName(): string {
+  return ""
 }
 
 class UserService {
-  public LoadUserInfo(): void {}
+  public LoadInfo(): void {}
 }
 ```
 
@@ -114,26 +112,26 @@ class UserService {
 
 推荐写法
 ```typescript
-function getUserName(userInfo: IUserInfo): string {
-  return userInfo.name
+function getName(info: IConfig): string {
+  return info.value
 }
 
-function buildRequestParams(userInfo: IUserInfo): IRequestOptions {
+function buildRequestParams(info: IConfig): IRequestOptions {
   return {
-    timeout: 3000,
+    timeoutMs: 3000,
   }
 }
 ```
 
 不推荐写法
 ```typescript
-function userName(userInfo: IUserInfo): string {
-  return userInfo.name
+function name(info: IConfig): string {
+  return info.value
 }
 
-function requestParams(userInfo: IUserInfo): IRequestOptions {
+function requestParams(info: IConfig): IRequestOptions {
   return {
-    timeout: 3000,
+    timeoutMs: 3000,
   }
 }
 ```
@@ -145,27 +143,15 @@ function requestParams(userInfo: IUserInfo): IRequestOptions {
 推荐写法
 ```typescript
 async function runCli(): Promise<void> {}
-
 async function runMigration(): Promise<void> {}
-
-function runSyncScript(): void {}
+function runSync(): void {}
 ```
 
 不推荐写法
 ```typescript
-async function runConfigFileContent(filePath: string): Promise<string> {
-  return ""
-}
-
-function runRequestParams(userInfo: IUserInfo): IRequestOptions {
-  return {
-    timeout: 3000,
-  }
-}
-
-function runDialogFooter(): string {
-  return ""
-}
+async function startCli(): Promise<void> {}
+async function startMigration(): Promise<void> {}
+function startSync(): void {}
 ```
 
 ### 已有值用 `get`，外部内容用 `load`
@@ -174,47 +160,31 @@ function runDialogFooter(): string {
 
 推荐写法
 ```typescript
-function getUserName(): string {
-  return currentUser.name
+function getName(): string {
+  return ""
 }
 
-function getLoginDialogVisible(): boolean {
-  return true
+async function loadProfile(): Promise<IConfig> {
+  return await requestProfile()
 }
 
-async function loadUserProfile(): Promise<IUserInfo> {
-  return await requestUserProfile()
-}
-
-async function loadConfigFileContent(filePath: string): Promise<string> {
+async function loadConfig(filePath: string): Promise<string> {
   return await readFile(filePath, "utf8")
-}
-
-async function loadUploadPermission(): Promise<boolean> {
-  return await requestUploadPermission()
 }
 ```
 
 不推荐写法
 ```typescript
-function loadUserName(): string {
-  return currentUser.name
+function loadName(): string {
+  return ""
 }
 
-function isLoginDialogVisible(): boolean {
-  return true
+async function getProfile(): Promise<IConfig> {
+  return await requestProfile()
 }
 
-async function getUserProfile(): Promise<IUserInfo> {
-  return await requestUserProfile()
-}
-
-async function getConfigFileContent(filePath: string): Promise<string> {
+async function getConfig(filePath: string): Promise<string> {
   return await readFile(filePath, "utf8")
-}
-
-async function getUploadPermission(): Promise<boolean> {
-  return await requestUploadPermission()
 }
 ```
 
@@ -224,16 +194,14 @@ async function getUploadPermission(): Promise<boolean> {
 
 推荐写法
 ```typescript
-function setDialogVisible(visible: boolean): void {}
-
-function updateUserInfo(userInfo: IUserInfo): void {}
+function setVisible(visible: boolean): void {}
+function updateInfo(info: IConfig): void {}
 ```
 
 不推荐写法
 ```typescript
-function updateDialogVisible(visible: boolean): void {}
-
-function setUserInfo(userInfo: IUserInfo): void {}
+function updateVisible(visible: boolean): void {}
+function setInfo(info: IConfig): void {}
 ```
 
 ### 创建用 `create`，组装用 `build`
@@ -242,30 +210,30 @@ function setUserInfo(userInfo: IUserInfo): void {}
 
 推荐写法
 ```typescript
-function createUploadContext(): IUploadContext {
+function createContext(): IContext {
   return {
-    userInfoList: [],
+    items: [],
   }
 }
 
-function buildRequestParams(userInfo: IUserInfo): IRequestOptions {
+function buildRequestParams(info: IConfig): IRequestOptions {
   return {
-    timeout: 3000,
+    timeoutMs: 3000,
   }
 }
 ```
 
 不推荐写法
 ```typescript
-function buildUploadContext(): IUploadContext {
+function buildContext(): IContext {
   return {
-    userInfoList: [],
+    items: [],
   }
 }
 
-function createRequestParams(userInfo: IUserInfo): IRequestOptions {
+function createRequestParams(info: IConfig): IRequestOptions {
   return {
-    timeout: 3000,
+    timeoutMs: 3000,
   }
 }
 ```
@@ -276,23 +244,23 @@ function createRequestParams(userInfo: IUserInfo): IRequestOptions {
 
 推荐写法
 ```typescript
-function parseUserInfo(content: string): IUserInfo {
-  return validateUserInfo(JSON.parse(content))
+function parseInfo(content: string): IConfig {
+  return validateInfo(JSON.parse(content))
 }
 
 function formatPrice(price: number): string {
-  return `¥${price}`
+  return `${price}`
 }
 ```
 
 不推荐写法
 ```typescript
-function formatUserInfo(content: string): IUserInfo {
-  return validateUserInfo(JSON.parse(content))
+function formatInfo(content: string): IConfig {
+  return validateInfo(JSON.parse(content))
 }
 
 function parsePrice(price: number): string {
-  return `¥${price}`
+  return `${price}`
 }
 ```
 
@@ -302,23 +270,15 @@ function parsePrice(price: number): string {
 
 推荐写法
 ```typescript
-function renderDialogFooter(): string {
-  return "<footer>...</footer>"
-}
-
-function renderUserCard(): string {
-  return "<section>...</section>"
+function renderFooter(): string {
+  return ""
 }
 ```
 
 不推荐写法
 ```typescript
-function buildDialogFooter(): string {
-  return "<footer>...</footer>"
-}
-
-function createUserCard(): string {
-  return "<section>...</section>"
+function buildFooter(): string {
+  return ""
 }
 ```
 
@@ -328,16 +288,14 @@ function createUserCard(): string {
 
 推荐写法
 ```typescript
-function addUserRole(roleName: string): void {}
-
-function removeUserRole(roleName: string): void {}
+function addRole(name: string): void {}
+function removeRole(name: string): void {}
 ```
 
 不推荐写法
 ```typescript
-function createUserRole(roleName: string): void {}
-
-function deleteUserRole(roleName: string): void {}
+function createRole(name: string): void {}
+function deleteRole(name: string): void {}
 ```
 
 ### `clear`、`reset`、`init` 分开用
@@ -346,20 +304,16 @@ function deleteUserRole(roleName: string): void {}
 
 推荐写法
 ```typescript
-function clearSearchHistory(): void {}
-
-function resetSearchForm(): void {}
-
-function initUploadContext(uploadContext: IUploadContext): void {}
+function clearHistory(): void {}
+function resetForm(): void {}
+function initContext(ctx: IContext): void {}
 ```
 
 不推荐写法
 ```typescript
-function resetSearchHistory(): void {}
-
-function clearSearchForm(): void {}
-
-function createUploadContext(uploadContext: IUploadContext): void {}
+function resetHistory(): void {}
+function clearForm(): void {}
+function createContext(ctx: IContext): void {}
 ```
 
 ### 绑定用 `bind`，解绑用 `unbind`
@@ -369,18 +323,14 @@ function createUploadContext(uploadContext: IUploadContext): void {}
 推荐写法
 ```typescript
 function bindEvents(): void {}
-
 function bindKeyboardEvents(): void {}
-
 function unbindEvents(): void {}
 ```
 
 不推荐写法
 ```typescript
 function handleEvents(): void {}
-
 function initEvents(): void {}
-
 function removeEvents(): void {}
 ```
 
@@ -391,18 +341,14 @@ function removeEvents(): void {}
 推荐写法
 ```typescript
 function handleItemClick(): void {}
-
 function handleFormSubmit(): void {}
-
 function handleDialogClose(): void {}
 ```
 
 不推荐写法
 ```typescript
 function clickItem(): void {}
-
 function submitForm(): void {}
-
 function dialogClose(): void {}
 ```
 
@@ -456,13 +402,12 @@ class userService {}
 
 推荐写法
 ```typescript
-interface IUserInfo {
-  id: string
-  name: string
+interface IConfig {
+  value: string
 }
 
 interface IRequestOptions {
-  timeout: number
+  timeoutMs: number
 }
 
 interface IUploadHandler {
@@ -472,12 +417,12 @@ interface IUploadHandler {
 
 不推荐写法
 ```typescript
-interface UserInfo {
-  id: string
+interface Config {
+  value: string
 }
 
 interface iRequestOptions {
-  timeout: number
+  timeoutMs: number
 }
 
 interface IuploadHandler {
@@ -512,21 +457,19 @@ type requestMode = "sync" | "async"
 
 推荐写法
 ```typescript
-const AppScene = {
-  TEST: 'test',
-  PRODUCTION: 'production',
+const ItemStatus = {
+  IDLE: "idle",
+  UPLOADING: "uploading",
 } as const
 
-type AppScene = typeof AppScene[keyof typeof AppScene]
+type ItemStatus = typeof ItemStatus[keyof typeof ItemStatus]
 ```
 
 不推荐写法
 ```typescript
-const APP_SCENE = {
-  Test: 'test',
-  Production: 'production',
-} as const
-
-type AppSceneType = typeof APP_SCENE[keyof typeof APP_SCENE]
+enum ItemStatus {
+  IDLE = "idle",
+  UPLOADING = "uploading",
+}
 ```
 
