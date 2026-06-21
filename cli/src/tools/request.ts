@@ -1,79 +1,17 @@
-/**
- * Maximum total attempts (initial + retries) for a single request.
- */
+import type { AxiosInstance } from "axios"
+import axios from "axios"
+
 const MAX_ATTEMPTS = 3
-
-/**
- * Base delay in milliseconds before the first retry.
- */
 const BASE_DELAY_MS = 500
-
-/**
- * Exponential backoff multiplier applied per retry attempt.
- */
 const BACKOFF_MULTIPLIER = 2
-
-/**
- * Upper cap on the backoff delay in milliseconds.
- */
 const MAX_DELAY_MS = 5_000
-
-/**
- * Maximum jitter as a fraction of the computed delay.
- */
 const JITTER_RATIO = 0.25
+const USER_AGENT = "yeizi-skills"
 
-/**
- * Predicate: whether the given retryable error should be retried at the
- * given attempt number.
- *
- * @param retryable - Whether the underlying error is marked retryable.
- * @param attempt - The attempt number being evaluated (1 = first retry).
- * @returns true if the request should be retried, false otherwise.
- */
-function shouldRetry(retryable: boolean, attempt: number): boolean {
-  if (attempt >= MAX_ATTEMPTS) {
-    return false
-  }
-  return retryable
-}
-
-/**
- * Compute the backoff delay (with jitter) before the given retry attempt.
- *
- * @param attempt - The retry attempt number (1 = first retry).
- * @returns Delay in milliseconds.
- */
-function getRetryDelayMs(attempt: number): number {
-  const baseDelay = Math.min(
-    BASE_DELAY_MS * BACKOFF_MULTIPLIER ** attempt,
-    MAX_DELAY_MS,
-  )
-  const jitter = baseDelay * JITTER_RATIO * Math.random()
-  return Math.round(baseDelay + jitter)
-}
-
-/**
- * Normalised HTTP error. Carries the response status and a retryability flag
- * so the caller can decide how to surface or map the error.
- */
 class HttpRequestError extends Error {
-  /**
-   * HTTP status code, or null for network-level failures.
-   */
   public readonly status: number | null
-
-  /**
-   * Whether this error is considered safe to retry.
-   */
   public readonly retryable: boolean
-
-  constructor(
-    message: string,
-    status: number | null,
-    retryable: boolean,
-    options?: { cause?: unknown },
-  ) {
+  constructor(message: string, status: number | null, retryable: boolean, options?: { cause?: unknown }) {
     super(message, options)
     this.name = "HttpRequestError"
     this.status = status
@@ -81,9 +19,110 @@ class HttpRequestError extends Error {
   }
 }
 
+function shouldRetry(retryable: boolean, attempt: number): boolean {
+  if (attempt >= MAX_ATTEMPTS)
+    return false
+  return retryable
+}
+
+function getRetryDelayMs(attempt: number): number {
+  const baseDelay = Math.min(BASE_DELAY_MS * BACKOFF_MULTIPLIER ** attempt, MAX_DELAY_MS)
+  const jitter = baseDelay * JITTER_RATIO * Math.random()
+  return Math.round(baseDelay + jitter)
+}
+
+function isRetryableStatus(status: number | null): boolean {
+  if (status === null)
+    return true
+  if (status >= 500 && status < 600)
+    return true
+  if (status === 408 || status === 429)
+    return true
+  return false
+}
+
+function wrapError(error: unknown): HttpRequestError {
+  if (error instanceof HttpRequestError)
+    return error
+  if (axios.isAxiosError(error)) {
+    const axiosError = error
+    const status = axiosError.response?.status ?? null
+    const message = axiosError.message
+    return new HttpRequestError(message, status, isRetryableStatus(status), { cause: axiosError })
+  }
+  if (error instanceof Error) {
+    const message = error.message
+    const maybeResponse = (error as { response?: { status?: number } }).response
+    const status = maybeResponse?.status ?? null
+    return new HttpRequestError(message, status, isRetryableStatus(status), { cause: error })
+  }
+  return new HttpRequestError(String(error), null, false)
+}
+
+async function executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+  let attempt = 0
+  while (true) {
+    try {
+      return await operation()
+    }
+    catch (error) {
+      const wrapped = wrapError(error)
+      if (!shouldRetry(wrapped.retryable, attempt + 1))
+        throw wrapped
+      attempt++
+      await new Promise(resolve => setTimeout(resolve, getRetryDelayMs(attempt)))
+    }
+  }
+}
+
+interface CreateRequestClientOptions {
+  baseURL?: string
+  headers?: Record<string, string>
+  timeoutMs?: number
+}
+
+interface RequestClient {
+  loadJson: (url: string) => Promise<unknown>
+  loadText: (url: string) => Promise<string>
+}
+
+function createRequestClient(options: CreateRequestClientOptions = {}): RequestClient {
+  const axiosClient: AxiosInstance = axios.create({
+    baseURL: options.baseURL,
+    headers: options.headers,
+    timeout: options.timeoutMs,
+  })
+
+  axiosClient.interceptors.request.use((config) => {
+    config.headers.set("User-Agent", USER_AGENT)
+    return config
+  })
+
+  async function loadJson(url: string): Promise<unknown> {
+    return executeWithRetry(async () => {
+      const response = await axiosClient.get<unknown>(url, { adapter: axios.defaults.adapter })
+      return response.data
+    })
+  }
+
+  async function loadText(url: string): Promise<string> {
+    return executeWithRetry(async () => {
+      const response = await axiosClient.get<string>(url, { responseType: "text", adapter: axios.defaults.adapter })
+      return response.data
+    })
+  }
+
+  return { loadJson, loadText }
+}
+
 export {
+  createRequestClient,
   getRetryDelayMs,
   HttpRequestError,
   MAX_ATTEMPTS,
   shouldRetry,
+}
+export type {
+  CreateRequestClientOptions,
+  RequestClient,
 }
