@@ -142,6 +142,77 @@ function parseValue(rawInput: string): string {
 function runCli(): void {}
 ```
 
+### 同一块内容不写空行
+
+> 同一块内容内部不写空行。描述句之间不写空行，连续 `@param`、连续 `@returns`、连续 `@throws`、同一个 `@example` 里的连续示例之间也不写空行。切换到新的块内容时，在块与块之间保留一行空行。
+
+推荐写法
+```typescript
+/**
+ * 解析平台选项值。
+ *
+ * @param platformOptionValue 平台选项值。
+ * @returns 平台名列表。
+ * @throws 平台选项值格式错误时抛出错误。
+ *
+ * @example
+ * parsePlatforms("codex")
+ * parsePlatforms("codex,claude")
+ */
+function parsePlatforms(platformOptionValue: string): string[] {
+  return platformOptionValue.split(",")
+}
+```
+
+不推荐写法
+```typescript
+/**
+ * 解析平台选项值。
+ *
+ * @param platformOptionValue 平台选项值。
+ *
+ * @returns 平台名列表。
+ * @throws 平台选项值格式错误时抛出错误。
+ *
+ * @example
+ * parsePlatforms("codex")
+ *
+ * parsePlatforms("codex,claude")
+ */
+function parsePlatforms(platformOptionValue: string): string[] {
+  return platformOptionValue.split(",")
+}
+```
+
+### `@example` 内容写在 `@example` 标签下一行
+
+> `@example` 的代码示例写在 `@example` 标签下一行，不写在同一行尾。
+
+推荐写法
+```typescript
+/**
+ * 解析平台选项值。
+ *
+ * @example
+ * parsePlatforms("codex,claude") => ["codex", "claude"]
+ */
+function parsePlatforms(platformOptionValue: string): string[] {
+  return platformOptionValue.split(",")
+}
+```
+
+不推荐写法
+```typescript
+/**
+ * 解析平台选项值。
+ *
+ * @example parsePlatforms("codex,claude") => ["codex", "claude"]
+ */
+function parsePlatforms(platformOptionValue: string): string[] {
+  return platformOptionValue.split(",")
+}
+```
+
 ## 多行注释
 
 ### 不使用单行 `/** 内容 */`
