@@ -31,13 +31,6 @@ interface IGitHubApi {
 }
 
 /**
- * 临时的迁移别名，将在 Task 9 中移除。
- *
- * @internal
- */
-type IGitHubClient = IGitHubApi
-
-/**
  * 技能源接口。
  */
 interface ISkillSource {
@@ -83,7 +76,6 @@ interface IGitHubContentsEntry {
 export type {
   IDownloadedSkillFile,
   IGitHubApi,
-  IGitHubClient,
   IGitHubContentsEntry,
   ISkillSource,
 }
