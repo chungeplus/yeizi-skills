@@ -880,207 +880,7 @@ git commit -m "feat(apis): add github endpoint builders"
 
 ---
 
-## Task 6: `createGitHubApi` factory + default instance (TDD)
-
-**Files:**
-- Create: `src/apis/github/index.ts`
-- Create: `src/apis/github/index.test.ts`
-
-**Interfaces:**
-- Consumes: `createRequestClient`, `IGitHubApi` (defined in next task as a structural type with `{ loadJson, loadText }`).
-- Produces: `createGitHubApi(options?): IGitHubApi`; default `githubApi: IGitHubApi` constant.
-
-For this task, declare `IGitHubApi` locally (the type) so the factory can compile before Task 7 adds the official interface. Task 7 will replace the local declaration with the import from `@/types/source`.
-
-- [ ] **Step 1: Write the failing tests**
-
-Create `src/apis/github/index.test.ts`:
-
-```typescript
-import axios from "axios"
-import MockAdapter from "axios-mock-adapter"
-
-import { createGitHubApi, githubApi } from "./index"
-
-describe("createGitHubApi", () => {
-  test("loadJson fetches JSON from api.github.com by default", async () => {
-    const client = createGitHubApi()
-    const mock = new MockAdapter(axios)
-    mock.onGet("https://api.github.com/repos/foo/bar/contents/skills?ref=main").reply(200, [{ name: "codex" }])
-
-    const result = await client.loadJson("https://api.github.com/repos/foo/bar/contents/skills?ref=main")
-    expect(result).toEqual([{ name: "codex" }])
-
-    mock.restore()
-  })
-
-  test("injects User-Agent header", async () => {
-    const client = createGitHubApi()
-    const mock = new MockAdapter(axios)
-    let capturedHeaders: Record<string, string> | undefined
-    mock.onGet("https://api.github.com/test").reply((config) => {
-      capturedHeaders = config.headers as Record<string, string>
-      return [200, {}]
-    })
-
-    await client.loadJson("https://api.github.com/test")
-    expect(capturedHeaders?.["User-Agent"]).toBe("yeizi-skills")
-
-    mock.restore()
-  })
-
-  test("loadText returns text body", async () => {
-    const client = createGitHubApi()
-    const mock = new MockAdapter(axios)
-    mock.onGet("https://raw.githubusercontent.com/foo/bar/main/skills/codex/SKILL.md").reply(200, "# codex")
-
-    const result = await client.loadText("https://raw.githubusercontent.com/foo/bar/main/skills/codex/SKILL.md")
-    expect(result).toBe("# codex")
-
-    mock.restore()
-  })
-
-  test("retries 500 like the underlying transport", async () => {
-    const client = createGitHubApi()
-    const mock = new MockAdapter(axios)
-    let calls = 0
-    mock.onGet("https://api.github.com/flaky").reply(() => {
-      calls++
-      return [500, {}]
-    })
-
-    await expect(client.loadJson("https://api.github.com/flaky")).rejects.toThrow()
-    expect(calls).toBe(3)
-
-    mock.restore()
-  })
-
-  test("accepts custom baseURL via options", async () => {
-    const client = createGitHubApi({ baseURL: "https://github.test" })
-    const mock = new MockAdapter(axios)
-    let capturedUrl: string | undefined
-    mock.onGet("https://github.test/repos/foo/bar").reply((config) => {
-      capturedUrl = config.url
-      return [200, {}]
-    })
-
-    await client.loadJson("https://github.test/repos/foo/bar")
-    expect(capturedUrl).toBe("/repos/foo/bar")
-
-    mock.restore()
-  })
-})
-
-describe("githubApi", () => {
-  test("is a usable IGitHubApi instance with default config", () => {
-    expect(typeof githubApi.loadJson).toBe("function")
-    expect(typeof githubApi.loadText).toBe("function")
-  })
-})
-```
-
-- [ ] **Step 2: Run the tests to verify they fail**
-
-```bash
-bun test src/apis/github/index.test.ts
-```
-Expected: FAIL — module not found.
-
-- [ ] **Step 3: Implement the factory and default instance**
-
-Create `src/apis/github/index.ts`:
-
-```typescript
-import {
-  type CreateRequestClientOptions,
-  createRequestClient,
-} from "@/tools/request"
-
-/**
- * Per-source HTTP client interface for GitHub. Structurally compatible with
- * {@link import("@/tools/request").RequestClient}.
- */
-interface IGitHubApi {
-  /**
-   * Fetch a URL and parse the response body as JSON.
-   */
-  loadJson: (url: string) => Promise<unknown>
-
-  /**
-   * Fetch a URL and return the response body as text.
-   */
-  loadText: (url: string) => Promise<string>
-}
-
-/**
- * Configuration options for {@link createGitHubApi}.
- */
-interface CreateGitHubApiOptions {
-  /**
-   * Override the default GitHub API base URL.
-   */
-  baseURL?: string
-
-  /**
-   * Additional headers to attach to every request.
-   */
-  headers?: Record<string, string>
-
-  /**
-   * Per-request timeout in milliseconds.
-   */
-  timeoutMs?: number
-}
-
-/**
- * Create a configured GitHub HTTP client.
- *
- * @param options - Optional per-source overrides.
- * @returns A GitHub API client.
- */
-function createGitHubApi(options: CreateGitHubApiOptions = {}): IGitHubApi {
-  return createRequestClient({
-    baseURL: options.baseURL ?? "https://api.github.com",
-    headers: {
-      "User-Agent": "yeizi-skills",
-      ...options.headers,
-    },
-    timeoutMs: options.timeoutMs ?? 15_000,
-  })
-}
-
-/**
- * Default GitHub API client used across the project.
- */
-const githubApi: IGitHubApi = createGitHubApi()
-
-export {
-  createGitHubApi,
-  githubApi,
-}
-export type {
-  CreateGitHubApiOptions,
-  IGitHubApi,
-}
-```
-
-- [ ] **Step 4: Run the tests to verify they pass**
-
-```bash
-bun test src/apis/github/index.test.ts
-```
-Expected: all tests pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/apis/github/index.ts src/apis/github/index.test.ts
-git commit -m "feat(apis): add createGitHubApi factory and default githubApi"
-```
-
----
-
-## Task 7: Add `IGitHubApi` to types and transient `IGitHubClient` alias
+## Task 6: Add `IGitHubApi` to types and transient `IGitHubClient` alias
 
 **Files:**
 - Modify: `src/types/source/index.ts`
@@ -1204,6 +1004,185 @@ git commit -m "refactor(types): introduce IGitHubApi, keep IGitHubClient as tran
 
 ---
 
+## Task 7: `createGitHubApi` factory + default instance (TDD)
+
+**Files:**
+- Create: `src/apis/github/index.ts`
+- Create: `src/apis/github/index.test.ts`
+
+**Interfaces:**
+- Consumes: `createRequestClient` from `@/tools/request`; `IGitHubApi` from `@/types/source` (added in Task 6).
+- Produces: `createGitHubApi(options?): IGitHubApi`; default `githubApi: IGitHubApi` constant.
+
+Note: `createGitHubApi` does NOT pass `User-Agent` in its `headers` option — the request interceptor inside `createRequestClient` injects it. Setting it twice would be redundant.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `src/apis/github/index.test.ts`:
+
+```typescript
+import axios from "axios"
+import MockAdapter from "axios-mock-adapter"
+
+import { createGitHubApi, githubApi } from "./index"
+
+describe("createGitHubApi", () => {
+  test("loadJson fetches JSON from api.github.com by default", async () => {
+    const client = createGitHubApi()
+    const mock = new MockAdapter(axios)
+    mock.onGet("https://api.github.com/repos/foo/bar/contents/skills?ref=main").reply(200, [{ name: "codex" }])
+
+    const result = await client.loadJson("https://api.github.com/repos/foo/bar/contents/skills?ref=main")
+    expect(result).toEqual([{ name: "codex" }])
+
+    mock.restore()
+  })
+
+  test("injects User-Agent header", async () => {
+    const client = createGitHubApi()
+    const mock = new MockAdapter(axios)
+    let capturedHeaders: Record<string, string> | undefined
+    mock.onGet("https://api.github.com/test").reply((config) => {
+      capturedHeaders = config.headers as Record<string, string>
+      return [200, {}]
+    })
+
+    await client.loadJson("https://api.github.com/test")
+    expect(capturedHeaders?.["User-Agent"]).toBe("yeizi-skills")
+
+    mock.restore()
+  })
+
+  test("loadText returns text body", async () => {
+    const client = createGitHubApi()
+    const mock = new MockAdapter(axios)
+    mock.onGet("https://raw.githubusercontent.com/foo/bar/main/skills/codex/SKILL.md").reply(200, "# codex")
+
+    const result = await client.loadText("https://raw.githubusercontent.com/foo/bar/main/skills/codex/SKILL.md")
+    expect(result).toBe("# codex")
+
+    mock.restore()
+  })
+
+  test("retries 500 like the underlying transport", async () => {
+    const client = createGitHubApi()
+    const mock = new MockAdapter(axios)
+    let calls = 0
+    mock.onGet("https://api.github.com/flaky").reply(() => {
+      calls++
+      return [500, {}]
+    })
+
+    await expect(client.loadJson("https://api.github.com/flaky")).rejects.toThrow()
+    expect(calls).toBe(3)
+
+    mock.restore()
+  })
+
+  test("accepts custom baseURL via options", async () => {
+    const client = createGitHubApi({ baseURL: "https://github.test" })
+    const mock = new MockAdapter(axios)
+    let capturedUrl: string | undefined
+    mock.onGet("https://github.test/repos/foo/bar").reply((config) => {
+      capturedUrl = config.url
+      return [200, {}]
+    })
+
+    await client.loadJson("https://github.test/repos/foo/bar")
+    expect(capturedUrl).toBe("/repos/foo/bar")
+
+    mock.restore()
+  })
+})
+
+describe("githubApi", () => {
+  test("is a usable IGitHubApi instance with default config", () => {
+    expect(typeof githubApi.loadJson).toBe("function")
+    expect(typeof githubApi.loadText).toBe("function")
+  })
+})
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+```bash
+bun test src/apis/github/index.test.ts
+```
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Implement the factory and default instance**
+
+Create `src/apis/github/index.ts`:
+
+```typescript
+import type { IGitHubApi } from "@/types/source"
+
+import { createRequestClient } from "@/tools/request"
+
+/**
+ * Configuration options for {@link createGitHubApi}.
+ */
+interface CreateGitHubApiOptions {
+  /**
+   * Override the default GitHub API base URL.
+   */
+  baseURL?: string
+
+  /**
+   * Additional headers to attach to every request.
+   */
+  headers?: Record<string, string>
+
+  /**
+   * Per-request timeout in milliseconds.
+   */
+  timeoutMs?: number
+}
+
+/**
+ * Create a configured GitHub HTTP client.
+ *
+ * @param options - Optional per-source overrides.
+ * @returns A GitHub API client.
+ */
+function createGitHubApi(options: CreateGitHubApiOptions = {}): IGitHubApi {
+  return createRequestClient({
+    baseURL: options.baseURL ?? "https://api.github.com",
+    headers: options.headers,
+    timeoutMs: options.timeoutMs ?? 15_000,
+  })
+}
+
+/**
+ * Default GitHub API client used across the project.
+ */
+const githubApi: IGitHubApi = createGitHubApi()
+
+export {
+  createGitHubApi,
+  githubApi,
+}
+export type {
+  CreateGitHubApiOptions,
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+```bash
+bun test src/apis/github/index.test.ts
+```
+Expected: all tests pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/apis/github/index.ts src/apis/github/index.test.ts
+git commit -m "feat(apis): add createGitHubApi factory and default githubApi"
+```
+
+---
+
 ## Task 8: Migrate `github-skill-source.ts` to use `githubApi`
 
 **Files:**
@@ -1231,35 +1210,6 @@ import type {
   IGitHubContentsEntry,
 } from "@/types/source"
 
-import { REPOSITORY_CONFIG } from "@/config"
-import { AppError, AppErrorCode } from "@/errors"
-import { parseSkillIndex, parseSkillVersionFromDocument } from "@/features/skill"
-import { githubApi } from "@/apis/github"
-import {
-  buildContentsApiUrl,
-  buildRawFileUrl,
-  buildSkillsJsonUrl,
-} from "@/apis/github/github-endpoint-builder"
-import { githubContentsEntryListSchema } from "@/schemas"
-
-import type { IGitHubApi as _IGitHubApiTypeGuard } from "@/types/source"
-
-const _typecheckGithubApiUsage: IGitHubApi = githubApi
-void _typecheckGithubApiUsage
-void (null as unknown as _IGitHubApiTypeGuard)
-```
-
-Wait, the trailing `_typecheck*` lines are unnecessary — TypeScript will catch any mismatch when the rest of the file uses `githubApi` typed against `IGitHubApi`. Remove them. Final imports:
-
-```typescript
-import type { ISkillIndex, ISkillIndexEntry } from "@/types/skill"
-import type {
-  IDownloadedSkillFile,
-  IGitHubApi,
-  IGitHubContentsEntry,
-} from "@/types/source"
-
-import { REPOSITORY_CONFIG } from "@/config"
 import { AppError, AppErrorCode } from "@/errors"
 import { parseSkillIndex, parseSkillVersionFromDocument } from "@/features/skill"
 import { githubApi } from "@/apis/github"
@@ -1270,6 +1220,8 @@ import {
 } from "@/apis/github/github-endpoint-builder"
 import { githubContentsEntryListSchema } from "@/schemas"
 ```
+
+Note: `REPOSITORY_CONFIG` is no longer imported directly — `buildXxxUrl` reads from it internally.
 
 - [ ] **Step 3: Remove the old REPOSITORY_* and gitHubClient locals**
 
@@ -1489,12 +1441,12 @@ After writing this plan I checked:
    - Component contracts → Tasks 2, 3, 4, 5, 6 produce each named export
    - Data flow → Tasks 8 stitches it together (loadSkillIndex uses buildSkillsJsonUrl + githubApi.loadJson + parseSkillIndex)
    - Error handling → Task 4 covers HttpRequestError wrapping and retry rules
-   - Naming → Task 7's `IGitHubApi` matches spec; Task 6's `githubApi` matches spec
+   - Naming → Task 6's `IGitHubApi` matches spec; Task 7's `githubApi` matches spec
    - Testing → Tasks 2-6 all have colocated `*.test.ts`
    - Migration plan → Tasks 7-9 follow the 10-step migration from the spec
 
 2. **Placeholder scan** — no "TBD"/"TODO"/"implement later" in any step. The `_typecheckGithubApiUsage` placeholders in Task 8 Step 2 are explicitly noted as removable; the final code block removes them.
 
-3. **Type consistency** — `IGitHubApi` is declared once in Task 7 with shape `{ loadJson: (url: string) => Promise<unknown>, loadText: (url: string) => Promise<string> }`. Task 6's local `IGitHubApi` declaration matches; Task 8 imports the canonical one. Task 9 removes the duplicate. `HttpRequestError`, `RequestClient`, `CreateRequestClientOptions` definitions are stable from Task 3 onward.
+3. **Type consistency** — `IGitHubApi` is declared once in Task 6 with shape `{ loadJson: (url: string) => Promise<unknown>, loadText: (url: string) => Promise<string> }`. Task 7 imports the canonical one for its return type. `HttpRequestError`, `RequestClient`, `CreateRequestClientOptions` definitions are stable from Task 3 onward.
 
 4. **One open design note** — the retry mechanism is implemented as an `executeWithRetry` wrapper inside `createRequestClient`, not as a response error interceptor as the spec literally described. This is a deliberate interpretation to keep the implementation `as`-free per Global Constraints. The behavior matches the spec (5xx retried, 4xx not, MAX_ATTEMPTS=3, exponential backoff with jitter). If the user wants interceptor-based retry, that requires `as` and conflicts with the Global Constraints — flag it before implementing.
