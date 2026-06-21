@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 
-import { getRetryDelayMs, shouldRetry } from "./request"
+import { getRetryDelayMs, HttpRequestError, shouldRetry } from "./request"
 
 describe("shouldRetry", () => {
   test("returns true when retryable and under max attempts", () => {
@@ -45,5 +45,33 @@ describe("getRetryDelayMs", () => {
       expect(delay).toBeGreaterThanOrEqual(5000)
       expect(delay).toBeLessThanOrEqual(6250)
     }
+  })
+})
+
+describe("HttpRequestError", () => {
+  test("constructs with status, retryable, and message", () => {
+    const error = new HttpRequestError("boom", 500, true)
+    expect(error.message).toBe("boom")
+    expect(error.status).toBe(500)
+    expect(error.retryable).toBe(true)
+    expect(error.name).toBe("HttpRequestError")
+  })
+
+  test("accepts null status for network-level failures", () => {
+    const error = new HttpRequestError("network down", null, true)
+    expect(error.status).toBeNull()
+    expect(error.retryable).toBe(true)
+  })
+
+  test("is an instance of Error", () => {
+    const error = new HttpRequestError("x", 404, false)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).toBeInstanceOf(HttpRequestError)
+  })
+
+  test("preserves cause when provided", () => {
+    const cause = new Error("original")
+    const error = new HttpRequestError("wrapped", 500, true, { cause })
+    expect(error.cause).toBe(cause)
   })
 })

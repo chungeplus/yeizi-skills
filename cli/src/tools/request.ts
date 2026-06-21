@@ -53,8 +53,37 @@ function getRetryDelayMs(attempt: number): number {
   return Math.round(baseDelay + jitter)
 }
 
+/**
+ * Normalised HTTP error. Carries the response status and a retryability flag
+ * so the caller can decide how to surface or map the error.
+ */
+class HttpRequestError extends Error {
+  /**
+   * HTTP status code, or null for network-level failures.
+   */
+  public readonly status: number | null
+
+  /**
+   * Whether this error is considered safe to retry.
+   */
+  public readonly retryable: boolean
+
+  constructor(
+    message: string,
+    status: number | null,
+    retryable: boolean,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options)
+    this.name = "HttpRequestError"
+    this.status = status
+    this.retryable = retryable
+  }
+}
+
 export {
   getRetryDelayMs,
+  HttpRequestError,
   MAX_ATTEMPTS,
   shouldRetry,
 }
