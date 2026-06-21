@@ -91,7 +91,7 @@ interface CreateRequestClientOptions {
 }
 
 interface RequestClient {
-  loadJson: (url: string) => Promise<unknown>
+  loadJson: <T = unknown>(url: string) => Promise<T>
   loadText: (url: string) => Promise<string>
 }
 
@@ -107,9 +107,9 @@ function createRequestClient(options: CreateRequestClientOptions = {}): RequestC
     return config
   })
 
-  async function loadJson(url: string): Promise<unknown> {
+  async function loadJson<T = unknown>(url: string): Promise<T> {
     return executeWithRetry(async () => {
-      const response = await axiosClient.get<unknown>(url, { adapter: axios.defaults.adapter })
+      const response = await axiosClient.get<T>(url, { adapter: axios.defaults.adapter })
       return response.data
     })
   }
