@@ -8,29 +8,18 @@
 
 推荐写法
 ```typescript
-function parseCsvOptionValues(csvOptionValue: string): string[] {
-  return Array.from(new Set(
-    csvOptionValue
-      .split(",")
-      .map((optionItem) => optionItem.trim())
-      .filter((optionItem) => optionItem.length > 0),
-  ))
+function parseValue(rawInput: string): string {
+  return rawInput.trim()
 }
 ```
 
 不推荐写法
 ```typescript
-function parseCsvOptionValues(csvOptionValue?: string): string[] {
-  if (csvOptionValue === undefined) {
-    return []
+function parseValue(rawInput?: string): string {
+  if (rawInput === undefined) {
+    return ""
   }
-
-  return Array.from(new Set(
-    csvOptionValue
-      .split(",")
-      .map((optionItem) => optionItem.trim())
-      .filter((optionItem) => optionItem.length > 0),
-  ))
+  return rawInput.trim()
 }
 ```
 
@@ -42,39 +31,16 @@ function parseCsvOptionValues(csvOptionValue?: string): string[] {
 
 推荐写法
 ```typescript
-function parseCsvOptionValues(csvOptionValue: string): string[] {
-  return csvOptionValue
-    .split(",")
-    .map((optionItem) => optionItem.trim())
-    .filter((optionItem) => optionItem.length > 0)
-}
-
-class UploadTask {
-  public filePath: string
-
-  public constructor(filePath: string) {
-    this.filePath = filePath
-  }
-
-  public start(): void {}
-
-  public cancel(): void {}
+function renderError(title: string, message: string): void {
+  console.error(`[${title}] ${message}`)
 }
 ```
 
 不推荐写法
 ```typescript
-function createUploadTask(filePath: string) {
-  let currentFilePath = filePath
-
-  function start(): void {}
-
-  function cancel(): void {}
-
-  return {
-    currentFilePath,
-    start,
-    cancel,
+class ErrorRenderer {
+  public render(title: string, message: string): void {
+    console.error(`[${title}] ${message}`)
   }
 }
 ```
@@ -87,24 +53,19 @@ function createUploadTask(filePath: string) {
 
 推荐写法
 ```typescript
-export class UserProfile {
-  public name: string
+class InputData {
+  public value: string
 
-  public constructor(
-    name: string,
-  ) {
-    this.name = name
+  public constructor(value: string) {
+    this.value = value
   }
 }
 ```
 
 不推荐写法
 ```typescript
-export class UserProfile {
-  public constructor(
-    public name: string,
-  ) {
-  }
+class InputData {
+  public constructor(public value: string) {}
 }
 ```
 
@@ -116,12 +77,12 @@ export class UserProfile {
 
 推荐写法
 ```typescript
-throw new Error("平台选项不能为空。")
+throw new ParseError("输入不能为空")
 ```
 
 不推荐写法
 ```typescript
-throw "平台选项不能为空。"
+throw "输入不能为空"
 ```
 
 ### `catch` 里先用类型守卫收窄
@@ -131,25 +92,29 @@ throw "平台选项不能为空。"
 推荐写法
 ```typescript
 } catch (error) {
-  if (error instanceof AppError) {
+  if (error instanceof ParseError) {
     return error.code
   }
-}
-
-function isAppError(error: Error): error is AppError {
-  return error.name === "AppError"
-}
-
-} catch (error) {
-  if (error instanceof Error && isAppError(error)) {
-    return error.code
+  if (error instanceof Error) {
+    return ErrorCode.UNKNOWN
   }
+  throw error
 }
 ```
 
 不推荐写法
 ```typescript
 } catch (error) {
-  return (error as AppError).code
+  return (error as ParseError).code
+}
+
+function isParseError(error: Error): error is ParseError {
+  return error.name === "ParseError"
+}
+
+} catch (error) {
+  if (error instanceof Error && isParseError(error)) {
+    return error.code
+  }
 }
 ```
