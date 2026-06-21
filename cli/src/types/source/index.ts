@@ -16,19 +16,26 @@ interface IDownloadedSkillFile {
 }
 
 /**
- * GitHub 请求客户端接口。
+ * GitHub HTTP client 接口。
  */
-interface IGitHubClient {
+interface IGitHubApi {
   /**
    * 加载 JSON 响应。
    */
-  loadJson: <T>(url: string) => Promise<T>
+  loadJson: <T = unknown>(url: string) => Promise<T>
 
   /**
    * 加载文本响应。
    */
   loadText: (url: string) => Promise<string>
 }
+
+/**
+ * 临时的迁移别名，将在 Task 9 中移除。
+ *
+ * @internal
+ */
+type IGitHubClient = IGitHubApi
 
 /**
  * 技能源接口。
@@ -49,7 +56,7 @@ interface ISkillSource {
    */
   validateRemoteSkillVersion: (
     skillIndexEntry: ISkillIndexEntry,
-    loadedSkillFiles?: readonly IDownloadedSkillFile[],
+    loadedSkillFiles?: IDownloadedSkillFile[],
   ) => Promise<void>
 }
 
@@ -73,4 +80,10 @@ interface IGitHubContentsEntry {
   downloadUrl: string | null
 }
 
-export type { IDownloadedSkillFile, IGitHubClient, IGitHubContentsEntry, ISkillSource }
+export type {
+  IDownloadedSkillFile,
+  IGitHubApi,
+  IGitHubClient,
+  IGitHubContentsEntry,
+  ISkillSource,
+}
