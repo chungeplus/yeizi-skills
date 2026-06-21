@@ -6,6 +6,24 @@
 
 > TypeScript 注释统一使用 TSDoc 规范。文档注释结构和 `@param`、`@returns`、`@throws`、`@example` 等标签写法遵守 TSDoc，再按本文件补充项目约束。
 
+推荐写法
+```typescript
+/**
+ * 描述 Xxx。
+ */
+function parseValue(rawInput: string): string {
+  return rawInput.trim()
+}
+```
+
+不推荐写法
+```typescript
+// 描述 Xxx
+function parseValue(rawInput: string): string {
+  return rawInput.trim()
+}
+```
+
 ### 有参数时写 `@param`
 
 > 函数和方法有参数时写 `@param`。
@@ -13,22 +31,22 @@
 推荐写法
 ```typescript
 /**
- * 获取用户的显示名称。
+ * 描述 Xxx。
  *
- * @param userInfo 用户信息。
+ * @param rawInput 输入文本。
  */
-function getUserDisplayName(userInfo: IUserInfo): string {
-  return userInfo.name
+function parseValue(rawInput: string): string {
+  return rawInput.trim()
 }
 ```
 
 不推荐写法
 ```typescript
 /**
- * 获取用户的显示名称。
+ * 描述 Xxx。
  */
-function getUserDisplayName(userInfo: IUserInfo): string {
-  return userInfo.name
+function parseValue(rawInput: string): string {
+  return rawInput.trim()
 }
 ```
 
@@ -39,25 +57,22 @@ function getUserDisplayName(userInfo: IUserInfo): string {
 推荐写法
 ```typescript
 /**
- * 获取用户的显示名称。
+ * 描述 Xxx。
  *
- * @param userInfo 用户信息。
- * @returns 用户的显示名称。
+ * @returns 结果。
  */
-function getUserDisplayName(userInfo: IUserInfo): string {
-  return userInfo.name
+function getValue(): string {
+  return ""
 }
 ```
 
 不推荐写法
 ```typescript
 /**
- * 获取用户的显示名称。
- *
- * @param userInfo 用户信息。
+ * 描述 Xxx。
  */
-function getUserDisplayName(userInfo: IUserInfo): string {
-  return userInfo.name
+function getValue(): string {
+  return ""
 }
 ```
 
@@ -68,27 +83,22 @@ function getUserDisplayName(userInfo: IUserInfo): string {
 推荐写法
 ```typescript
 /**
- * 读取配置文件内容。
+ * 描述 Xxx。
  *
- * @param filePath 配置文件路径。
- * @returns 配置文件内容。
- * @throws 配置文件不存在时抛出错误。
+ * @throws 输入为空时抛出错误。
  */
-function loadConfigFileContent(filePath: string): string {
-  throw new Error("配置文件不存在。")
+function loadValue(): string {
+  throw new ParseError("输入为空")
 }
 ```
 
 不推荐写法
 ```typescript
 /**
- * 读取配置文件内容。
- *
- * @param filePath 配置文件路径。
- * @returns 配置文件内容。
+ * 描述 Xxx。
  */
-function loadConfigFileContent(filePath: string): string {
-  throw new Error("配置文件不存在。")
+function loadValue(): string {
+  throw new ParseError("输入为空")
 }
 ```
 
@@ -99,24 +109,17 @@ function loadConfigFileContent(filePath: string): string {
 推荐写法
 ```typescript
 /**
- * 解析用户信息文本。
- *
- * @param content 用户信息文本。
- * @returns 解析后的用户信息。
+ * 描述 Xxx。
  *
  * @example
- * parseUserInfo("{\"id\":\"u1\",\"name\":\"Alice\"}") => { id: "u1", name: "Alice" }
- * parseUserInfo("{\"id\":\"u2\",\"name\":\"Bob\"}") => { id: "u2", name: "Bob" }
+ * parseValue("a") => "a"
  */
-function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
+function parseValue(rawInput: string): string {
+  return rawInput
 }
 
 /**
- * 运行 CLI 主流程。
+ * 串联主流程。
  */
 function runCli(): void {}
 ```
@@ -124,23 +127,17 @@ function runCli(): void {}
 不推荐写法
 ```typescript
 /**
- * 解析用户信息文本。
- *
- * @param content 用户信息文本。
- * @returns 解析后的用户信息。
+ * 描述 Xxx。
  */
-function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
+function parseValue(rawInput: string): string {
+  return rawInput
 }
 
 /**
- * 运行 CLI 主流程。
+ * 串联主流程。
  *
  * @example
- * runCli() => 启动 CLI 主流程
+ * runCli() => 串联主流程
  */
 function runCli(): void {}
 ```
@@ -154,18 +151,18 @@ function runCli(): void {}
 推荐写法
 ```typescript
 /**
- * 获取用户的显示名称。
+ * 描述 Xxx。
  */
-function getUserDisplayName(): string {
-  return "Alice"
+function getValue(): string {
+  return ""
 }
 ```
 
 不推荐写法
 ```typescript
-/** 获取用户的显示名称。 */
-function getUserDisplayName(): string {
-  return "Alice"
+/** 描述 Xxx。 */
+function getValue(): string {
+  return ""
 }
 ```
 
@@ -176,76 +173,27 @@ function getUserDisplayName(): string {
 推荐写法
 ```typescript
 /**
- * 应用错误码定义。
- */
-const AppErrorCode = {
-  /**
-   * package.json 中缺少 bin 配置。
-   */
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
-
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-export { AppErrorCode }
-export type { AppErrorCode }
-
-/**
- * 用户信息。
- */
-interface IUserInfo {
-  /**
-   * 用户唯一标识。
-   */
-  id: string
-  /**
-   * 用户显示名称。
-   */
-  name: string
-}
-
-export type { IUserInfo }
-
-/**
- * 运行 CLI 主流程。
+ * 描述 Xxx。
  */
 function runCli(): void {}
 
 /**
- * 安装命令。
+ * 封装 Xxx 的入口。
  */
 class InstallCommand {
   /**
-   * 执行安装流程。
+   * 执行命令。
    */
-  execute(): void {}
+  public execute(): void {}
 }
 ```
 
 不推荐写法
 ```typescript
-const AppErrorCode = {
-  // package.json 中缺少 bin 配置。
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
-
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-export { AppErrorCode }
-export type { AppErrorCode }
-
-interface IUserInfo {
-  // 用户唯一标识。
-  id: string
-  // 用户显示名称。
-  name: string
-}
-
-export type { IUserInfo }
 function runCli(): void {}
 
 class InstallCommand {
-  execute(): void {}
+  public execute(): void {}
 }
 ```
 
@@ -257,22 +205,22 @@ class InstallCommand {
 
 推荐写法
 ```typescript
-function syncUserInfo(userInfoList: IUserInfo[]): void {
-  // 保留原始顺序，避免输出结果和平台目录顺序不一致。
-  for (let userInfo of userInfoList) {
-    console.log(userInfo.name)
-  }
+function processItems(items: IConfig[]): void {
+  // 保留原始顺序
+  items.forEach((item) => {
+    console.log(item.name)
+  })
 }
 ```
 
 不推荐写法
 ```typescript
-function syncUserInfo(userInfoList: IUserInfo[]): void {
+function processItems(items: IConfig[]): void {
   /**
-   * 保留原始顺序，避免输出结果和平台目录顺序不一致。
+   * 保留原始顺序
    */
-  for (let userInfo of userInfoList) {
-    console.log(userInfo.name)
-  }
+  items.forEach((item) => {
+    console.log(item.name)
+  })
 }
 ```
