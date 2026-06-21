@@ -356,7 +356,7 @@ git commit -m "feat(tools): add HttpRequestError class"
 - Modify: `src/tools/request.test.ts`
 
 **Interfaces:**
-- Produces: `createRequestClient(options?: CreateRequestClientOptions): RequestClient`; types `CreateRequestClientOptions = { baseURL?: string, headers?: Record<string, string>, timeoutMs?: number }` and `RequestClient = { loadJson: (url: string) => Promise<unknown>, loadText: (url: string) => Promise<string> }`.
+- Produces: `createRequestClient(options?: CreateRequestClientOptions): RequestClient`; types `CreateRequestClientOptions = { baseURL?: string, headers?: Record<string, string>, timeoutMs?: number }` and `RequestClient = { loadJson: <T = unknown>(url: string) => Promise<T>, loadText: (url: string) => Promise<string> }`. `loadJson` is generic with default `T = unknown` so existing call sites that use `loadJson<T>(url)` keep working without modification.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -676,7 +676,7 @@ interface RequestClient {
    * @returns The parsed JSON value; callers should schema-validate.
    * @throws {HttpRequestError} when the request fails after retries.
    */
-  loadJson: (url: string) => Promise<unknown>
+  loadJson: <T = unknown>(url: string) => Promise<T>
 
   /**
    * Fetch a URL and return the response body as text.
@@ -706,9 +706,9 @@ function createRequestClient(options: CreateRequestClientOptions = {}): RequestC
     return config
   })
 
-  async function loadJson(url: string): Promise<unknown> {
+  async function loadJson<T = unknown>(url: string): Promise<T> {
     return executeWithRetry(async () => {
-      const response = await axiosClient.get<unknown>(url)
+      const response = await axiosClient.get<T>(url)
       return response.data
     })
   }
@@ -921,7 +921,7 @@ interface IGitHubApi {
   /**
    * 加载 JSON 响应。
    */
-  loadJson: (url: string) => Promise<unknown>
+  loadJson: <T = unknown>(url: string) => Promise<T>
 
   /**
    * 加载文本响应。
@@ -1447,6 +1447,6 @@ After writing this plan I checked:
 
 2. **Placeholder scan** — no "TBD"/"TODO"/"implement later" in any step. The `_typecheckGithubApiUsage` placeholders in Task 8 Step 2 are explicitly noted as removable; the final code block removes them.
 
-3. **Type consistency** — `IGitHubApi` is declared once in Task 6 with shape `{ loadJson: (url: string) => Promise<unknown>, loadText: (url: string) => Promise<string> }`. Task 7 imports the canonical one for its return type. `HttpRequestError`, `RequestClient`, `CreateRequestClientOptions` definitions are stable from Task 3 onward.
+3. **Type consistency** — `IGitHubApi` is declared once in Task 6 with shape `{ loadJson: <T = unknown>(url: string) => Promise<T>, loadText: (url: string) => Promise<string> }`. Task 7 imports the canonical one for its return type. `RequestClient.loadJson` in Task 4 has the same generic shape so `createRequestClient()` satisfies `IGitHubApi` structurally. `HttpRequestError`, `RequestClient`, `CreateRequestClientOptions` definitions are stable from Task 4 onward.
 
 4. **One open design note** — the retry mechanism is implemented as an `executeWithRetry` wrapper inside `createRequestClient`, not as a response error interceptor as the spec literally described. This is a deliberate interpretation to keep the implementation `as`-free per Global Constraints. The behavior matches the spec (5xx retried, 4xx not, MAX_ATTEMPTS=3, exponential backoff with jitter). If the user wants interceptor-based retry, that requires `as` and conflicts with the Global Constraints — flag it before implementing.
