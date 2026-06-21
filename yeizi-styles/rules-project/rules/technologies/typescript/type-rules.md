@@ -106,7 +106,7 @@ const retryCount: unknown = 0
 
 推荐写法
 ```typescript
-class AppError extends Error {
+class WrappedError extends Error {
   public readonly code: ErrorCode
 
   public constructor(code: ErrorCode) {
@@ -118,7 +118,7 @@ class AppError extends Error {
 
 不推荐写法
 ```typescript
-class AppError<TCode extends string = string> extends Error {
+class WrappedError<TCode extends string = string> extends Error {
   public readonly code: TCode
 
   public constructor(code: TCode) {
@@ -134,16 +134,6 @@ class AppError<TCode extends string = string> extends Error {
 
 推荐写法
 ```typescript
-const ItemStatus = {
-  IDLE: "idle",
-  UPLOADING: "uploading",
-} as const
-
-type ItemStatus = typeof ItemStatus[keyof typeof ItemStatus]
-```
-
-不推荐写法
-```typescript
 function focusButton(): void {
   const button = document.getElementById("submit") as HTMLButtonElement | null
 
@@ -152,5 +142,12 @@ function focusButton(): void {
   }
 
   button.focus()
+}
+```
+
+不推荐写法
+```typescript
+function parseConfig(rawInput: string): IConfig {
+  return rawInput as unknown as IConfig
 }
 ```

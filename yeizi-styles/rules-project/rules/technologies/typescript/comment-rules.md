@@ -251,7 +251,7 @@ function runCli(): void {}
 /**
  * 封装 Xxx 的入口。
  */
-class InstallCommand {
+class AppCommand {
   /**
    * 执行命令。
    */
@@ -263,7 +263,7 @@ class InstallCommand {
 ```typescript
 function runCli(): void {}
 
-class InstallCommand {
+class AppCommand {
   public execute(): void {}
 }
 ```
