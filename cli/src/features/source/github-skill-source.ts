@@ -1,26 +1,31 @@
+import type { z } from "zod"
 import type { ISkillIndex, ISkillIndexEntry } from "@/types/skill"
+
 import type {
   IDownloadedSkillFile,
-  IGitHubClient,
+  IGitHubApi,
   IGitHubContentsEntry,
   ISkillSource,
 } from "@/types/source"
 
-import { REPOSITORY_CONFIG } from "@/config"
+import { githubApi } from "@/apis/github"
+import {
+  buildContentsApiUrl,
+  buildSkillsJsonUrl,
+} from "@/apis/github/github-endpoint-builder"
 import { AppError, AppErrorCode } from "@/errors"
 import { parseSkillIndex, SkillDocumentParser } from "@/features/skill"
 import { githubContentsEntryListSchema } from "@/schemas"
 
-import { FetchGitHubClient } from "./fetch-github-client"
-
-type GitHubContentsPayload = Parameters<typeof githubContentsEntryListSchema.parse>[0]
+type GitHubContentsPayload = z.input<typeof githubContentsEntryListSchema>
 
 /**
  * 解析 GitHub Contents API 条目。
  *
  * @param githubContentsPayload - 未校验的 GitHub Contents API 载荷。
  * @returns 归一化后的 GitHub 条目列表。
- * @example parseGitHubContentsEntries([{ type: "file", path: "yeizi-demo/SKILL.md", download_url: "https://example.com" }]) => [{ type: "file", path: "yeizi-demo/SKILL.md", downloadUrl: "https://example.com" }]
+ * @example
+ * parseGitHubContentsEntries([{ type: "file", path: "yeizi-demo/SKILL.md", download_url: "https://example.com" }]) => [{ type: "file", path: "yeizi-demo/SKILL.md", downloadUrl: "https://example.com" }]
  */
 function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload): IGitHubContentsEntry[] {
   try {
@@ -53,22 +58,19 @@ function parseGitHubContentsEntries(githubContentsPayload: GitHubContentsPayload
  * 基于 GitHub 仓库的技能源实现。
  */
 class GitHubSkillSource implements ISkillSource {
-  private readonly gitHubClient: IGitHubClient = new FetchGitHubClient()
-  private readonly repositoryOwner = REPOSITORY_CONFIG.owner
-  private readonly repositoryName = REPOSITORY_CONFIG.repo
-  private readonly repositoryBranch = REPOSITORY_CONFIG.branch
+  private readonly client: IGitHubApi = githubApi
   private readonly skillDocumentParser = new SkillDocumentParser()
 
   /**
    * 加载远端技能索引。
    *
    * @returns 远端技能索引。
-   * @example loadSkillIndex() => Promise<ISkillIndex>
+   *
+   * @example
+   * loadSkillIndex() => Promise<ISkillIndex>
    */
   public async loadSkillIndex(): Promise<ISkillIndex> {
-    const skillIndexUrl = `https://raw.githubusercontent.com/${this.repositoryOwner}/${this.repositoryName}/${this.repositoryBranch}/skills.json`
-
-    return parseSkillIndex(await this.gitHubClient.loadJson<Parameters<typeof parseSkillIndex>[0]>(skillIndexUrl))
+    return parseSkillIndex(await this.client.loadJson(buildSkillsJsonUrl()))
   }
 
   /**
@@ -76,7 +78,9 @@ class GitHubSkillSource implements ISkillSource {
    *
    * @param skillName - 技能名称。
    * @returns 下载后的技能文件列表。
-   * @example loadSkillFiles("yeizi-demo") => Promise<IDownloadedSkillFile[]>
+   *
+   * @example
+   * loadSkillFiles("yeizi-demo") => Promise<IDownloadedSkillFile[]>
    */
   public async loadSkillFiles(skillName: string): Promise<IDownloadedSkillFile[]> {
     const loadedGitHubFiles = await this.loadGitHubFileEntries(skillName)
@@ -102,7 +106,9 @@ class GitHubSkillSource implements ISkillSource {
    * @param skillIndexEntry - 技能索引条目。
    * @param loadedSkillFiles - 可选的已加载技能文件列表。
    * @returns 校验完成后的 Promise。
-   * @example validateRemoteSkillVersion({ name: "yeizi-demo", version: "1.0.0" }) => Promise<void>
+   *
+   * @example
+   * validateRemoteSkillVersion({ name: "yeizi-demo", version: "1.0.0" }) => Promise<void>
    */
   public async validateRemoteSkillVersion(
     skillIndexEntry: ISkillIndexEntry,
@@ -134,33 +140,28 @@ class GitHubSkillSource implements ISkillSource {
   }
 
   /**
-   * 递归加载 GitHub 目录下的全部文件内容。
+   * 按数组顺序加载 GitHub 目录下的全部文件内容。
    *
    * @param githubContentPath - GitHub 仓库内的目录路径。
    * @returns 路径和内容组成的文件列表。
-   * @example loadGitHubFileEntries("yeizi-demo") => Promise<Array<{ path: string, fileContents: string }>>
+   *
+   * @example
+   * loadGitHubFileEntries("yeizi-demo") => Promise<Array<{ path: string, fileContents: string }>>
    */
   private async loadGitHubFileEntries(
     githubContentPath: string,
   ): Promise<Array<{ path: string, fileContents: string }>> {
     const githubContentEntries = await this.loadGitHubContentsDirectory(githubContentPath)
-    return this.loadGitHubFileEntriesSequentially(githubContentEntries)
-  }
 
-  private async loadGitHubFileEntriesSequentially(
-    githubContentEntries: readonly IGitHubContentsEntry[],
-    index = 0,
-  ): Promise<Array<{ path: string, fileContents: string }>> {
-    const githubContentEntry = githubContentEntries[index]
+    return githubContentEntries.reduce<Promise<Array<{ path: string, fileContents: string }>>>(
+      async (accumulator, githubContentEntry) => {
+        const accumulatedFiles = await accumulator
+        const loadedForEntry = await this.loadGitHubFileEntry(githubContentEntry)
 
-    if (githubContentEntry === undefined) {
-      return []
-    }
-
-    const currentEntries = await this.loadGitHubFileEntry(githubContentEntry)
-    const remainingEntries = await this.loadGitHubFileEntriesSequentially(githubContentEntries, index + 1)
-
-    return [...currentEntries, ...remainingEntries]
+        return [...accumulatedFiles, ...loadedForEntry]
+      },
+      Promise.resolve([]),
+    )
   }
 
   private async loadGitHubFileEntry(
@@ -182,7 +183,7 @@ class GitHubSkillSource implements ISkillSource {
 
     return [{
       path: githubContentEntry.path,
-      fileContents: await this.gitHubClient.loadText(githubContentEntry.downloadUrl),
+      fileContents: await this.client.loadText(githubContentEntry.downloadUrl),
     }]
   }
 
@@ -193,25 +194,9 @@ class GitHubSkillSource implements ISkillSource {
    * @returns 解析后的 GitHub 条目列表。
    */
   private async loadGitHubContentsDirectory(githubContentPath: string): Promise<IGitHubContentsEntry[]> {
-    const githubContentsPayload = await this.gitHubClient.loadJson<GitHubContentsPayload>(this.buildContentsApiUrl(githubContentPath))
+    const githubContentsPayload = await this.client.loadJson<GitHubContentsPayload>(buildContentsApiUrl(githubContentPath))
 
     return parseGitHubContentsEntries(githubContentsPayload)
-  }
-
-  /**
-   * 组装 GitHub Contents API 地址。
-   *
-   * @param githubContentPath - GitHub 仓库内的目录路径。
-   * @returns 对应的 GitHub Contents API 地址。
-   */
-  private buildContentsApiUrl(githubContentPath: string): string {
-    let encodedGitHubContentPath = ""
-
-    if (githubContentPath.length > 0) {
-      encodedGitHubContentPath = `/${githubContentPath}`
-    }
-
-    return `https://api.github.com/repos/${this.repositoryOwner}/${this.repositoryName}/contents${encodedGitHubContentPath}?ref=${this.repositoryBranch}`
   }
 }
 
