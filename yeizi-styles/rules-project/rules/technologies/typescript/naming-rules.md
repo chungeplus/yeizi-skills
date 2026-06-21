@@ -2,27 +2,25 @@
 
 ## 变量命名规则
 
-### 变量默认使用小驼峰命名法
+### 普通变量命名使用小驼峰命名法
 
-> 除固定单值常量和对象式枚举主体外，变量统一使用小驼峰命名法。
+> 普通变量命名统一使用小驼峰命名法。
 
 推荐写法
 ```typescript
-const foo = 1
-const isFoo = true
+let currentUserName = "Alice"
+let isDialogVisible = true
 ```
 
 不推荐写法
 ```typescript
-const Foo = 1
-const is_foo = true
+let CurrentUserName = "Alice"
+let is_dialog_visible = true
 ```
 
 ### 布尔变量命名使用逻辑判断词
 
 > 布尔变量命名使用 `is`、`has`、`can` 这类逻辑判断词，让人一眼看出“是否”“有没有”“能不能”。
->
-> 本规则只适用于变量名，不适用于函数名和方法名。函数和方法即使返回 `boolean`，也按函数命名规则处理；读取已有状态时使用 `getXxx`。
 
 - `is`：表示是否处于某种状态。
 - `has`：表示是否拥有或包含某个内容。
@@ -30,34 +28,56 @@ const is_foo = true
 
 推荐写法
 ```typescript
-const isFoo = true
-const hasBar = false
-const canBaz = true
+let isDialogVisible = true
+let hasPermission = false
+let canSubmit = true
 ```
 
 不推荐写法
 ```typescript
-const foo = true
-const barStatus = false
-const bazAble = true
+let dialogVisible = true
+let permissionStatus = false
+let submitAble = true
 ```
 
 ## 常量命名规则
 
-### 固定单值常量用大写下划线
+### 普通常量用大写下划线
 
-> 名称表示单个固定取值时，使用大写下划线命名法。
+> 不承担枚举值集合职责的固定常量统一使用大写下划线命名法。
 
 推荐写法
 ```typescript
-const MAX_FOO = 3
-const DEFAULT_BAR = 1
+const MAX_RETRY_COUNT = 3
+const DEFAULT_TIMEOUT_MS = 30000
 ```
 
 不推荐写法
 ```typescript
-const maxFoo = 3
-const defaultBar = 1
+const maxRetryCount = 3
+const defaultTimeoutMs = 30000
+```
+
+## 配置对象命名规则
+
+### 固定配置对象用小驼峰
+
+> 固定配置对象命名统一使用小驼峰命名法，不按普通常量使用大写下划线。
+
+推荐写法
+```typescript
+const requestConfig = {
+  baseUrl: "",
+  timeoutMs: 3000,
+}
+```
+
+不推荐写法
+```typescript
+const REQUEST_CONFIG = {
+  baseUrl: "",
+  timeoutMs: 3000,
+}
 ```
 
 ## 函数命名规则
@@ -68,19 +88,23 @@ const defaultBar = 1
 
 推荐写法
 ```typescript
-function foo(): string { return "" }
+function getUserName(): string {
+  return "Alice"
+}
 
-class Xxx {
-  public bar(): void {}
+class UserService {
+  public loadUserInfo(): void {}
 }
 ```
 
 不推荐写法
 ```typescript
-function Foo(): string { return "" }
+function GetUserName(): string {
+  return "Alice"
+}
 
-class Xxx {
-  public Bar(): void {}
+class UserService {
+  public LoadUserInfo(): void {}
 }
 ```
 
@@ -90,46 +114,58 @@ class Xxx {
 
 推荐写法
 ```typescript
-function getFoo(): string { return "" }
-function buildBar(): T { return 1 as T }
+function getUserName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
+
+function buildRequestParams(userInfo: IUserInfo): IRequestOptions {
+  return {
+    timeout: 3000,
+  }
+}
 ```
 
 不推荐写法
 ```typescript
-function foo(): string { return "" }
-function bar(): T { return 1 as T }
+function userName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
+
+function requestParams(userInfo: IUserInfo): IRequestOptions {
+  return {
+    timeout: 3000,
+  }
+}
 ```
 
 ### 流程入口使用 `run`
 
-> 启动并串起整段流程的入口函数，使用 `runXxx` 命名。
+> 启动并串起整段流程的入口函数，使用 `runXxx` 命名。`runXxx` 只用于流程入口，不用于普通数据处理、构建、解析、加载、渲染和校验函数。已经有更准确的现成动词时，直接使用那个动词，不用 `runXxx` 代替。
 
 推荐写法
 ```typescript
-async function runFoo(): Promise<void> {}
-function runBar(): void {}
+async function runCli(): Promise<void> {}
+
+async function runMigration(): Promise<void> {}
+
+function runSyncScript(): void {}
 ```
 
 不推荐写法
 ```typescript
-async function startFoo(): Promise<void> {}
-function startBar(): void {}
-```
+async function runConfigFileContent(filePath: string): Promise<string> {
+  return ""
+}
 
-### 普通函数不使用 `run`
+function runRequestParams(userInfo: IUserInfo): IRequestOptions {
+  return {
+    timeout: 3000,
+  }
+}
 
-> 普通数据处理、构建、解析、加载、渲染和校验函数不使用 `runXxx`。已经有更准确的现成动词时，直接使用对应动词。
-
-推荐写法
-```typescript
-async function loadFoo(): Promise<string> { return "" }
-function buildBar(): T { return 1 as T }
-```
-
-不推荐写法
-```typescript
-async function runFoo(): Promise<string> { return "" }
-function runBar(): T { return 1 as T }
+function runDialogFooter(): string {
+  return ""
+}
 ```
 
 ### 已有值用 `get`，外部内容用 `load`
@@ -138,14 +174,48 @@ function runBar(): T { return 1 as T }
 
 推荐写法
 ```typescript
-function getFoo(): string { return "" }
-async function loadBar(): Promise<T> { return 1 as T }
+function getUserName(): string {
+  return currentUser.name
+}
+
+function getLoginDialogVisible(): boolean {
+  return true
+}
+
+async function loadUserProfile(): Promise<IUserInfo> {
+  return await requestUserProfile()
+}
+
+async function loadConfigFileContent(filePath: string): Promise<string> {
+  return await readFile(filePath, "utf8")
+}
+
+async function loadUploadPermission(): Promise<boolean> {
+  return await requestUploadPermission()
+}
 ```
 
 不推荐写法
 ```typescript
-function loadFoo(): string { return "" }
-async function getBar(): Promise<T> { return 1 as T }
+function loadUserName(): string {
+  return currentUser.name
+}
+
+function isLoginDialogVisible(): boolean {
+  return true
+}
+
+async function getUserProfile(): Promise<IUserInfo> {
+  return await requestUserProfile()
+}
+
+async function getConfigFileContent(filePath: string): Promise<string> {
+  return await readFile(filePath, "utf8")
+}
+
+async function getUploadPermission(): Promise<boolean> {
+  return await requestUploadPermission()
+}
 ```
 
 ### 单个值用 `set`，已有内容用 `update`
@@ -154,14 +224,16 @@ async function getBar(): Promise<T> { return 1 as T }
 
 推荐写法
 ```typescript
-function setFoo(x: T): void {}
-function updateBar(x: T): void {}
+function setDialogVisible(visible: boolean): void {}
+
+function updateUserInfo(userInfo: IUserInfo): void {}
 ```
 
 不推荐写法
 ```typescript
-function updateFoo(x: T): void {}
-function setBar(x: T): void {}
+function updateDialogVisible(visible: boolean): void {}
+
+function setUserInfo(userInfo: IUserInfo): void {}
 ```
 
 ### 创建用 `create`，组装用 `build`
@@ -170,14 +242,32 @@ function setBar(x: T): void {}
 
 推荐写法
 ```typescript
-function createFoo(): T { return {} as T }
-function buildBar(x: T): T { return x }
+function createUploadContext(): IUploadContext {
+  return {
+    userInfoList: [],
+  }
+}
+
+function buildRequestParams(userInfo: IUserInfo): IRequestOptions {
+  return {
+    timeout: 3000,
+  }
+}
 ```
 
 不推荐写法
 ```typescript
-function buildFoo(): T { return {} as T }
-function createBar(x: T): T { return x }
+function buildUploadContext(): IUploadContext {
+  return {
+    userInfoList: [],
+  }
+}
+
+function createRequestParams(userInfo: IUserInfo): IRequestOptions {
+  return {
+    timeout: 3000,
+  }
+}
 ```
 
 ### 解析用 `parse`，整理用 `format`
@@ -186,14 +276,24 @@ function createBar(x: T): T { return x }
 
 推荐写法
 ```typescript
-function parseFoo(x: string): T { return JSON.parse(x) }
-function formatBar(x: number): string { return `${x}` }
+function parseUserInfo(content: string): IUserInfo {
+  return validateUserInfo(JSON.parse(content))
+}
+
+function formatPrice(price: number): string {
+  return `¥${price}`
+}
 ```
 
 不推荐写法
 ```typescript
-function formatFoo(x: string): T { return JSON.parse(x) }
-function parseBar(x: number): string { return `${x}` }
+function formatUserInfo(content: string): IUserInfo {
+  return validateUserInfo(JSON.parse(content))
+}
+
+function parsePrice(price: number): string {
+  return `¥${price}`
+}
 ```
 
 ### 生成展示内容使用 render
@@ -202,12 +302,24 @@ function parseBar(x: number): string { return `${x}` }
 
 推荐写法
 ```typescript
-function renderFoo(): string { return "" }
+function renderDialogFooter(): string {
+  return "<footer>...</footer>"
+}
+
+function renderUserCard(): string {
+  return "<section>...</section>"
+}
 ```
 
 不推荐写法
 ```typescript
-function buildFoo(): string { return "" }
+function buildDialogFooter(): string {
+  return "<footer>...</footer>"
+}
+
+function createUserCard(): string {
+  return "<section>...</section>"
+}
 ```
 
 ### 新增用 `add`，移除用 `remove`
@@ -216,56 +328,38 @@ function buildFoo(): string { return "" }
 
 推荐写法
 ```typescript
-function addFoo(x: T): void {}
-function removeBar(x: T): void {}
+function addUserRole(roleName: string): void {}
+
+function removeUserRole(roleName: string): void {}
 ```
 
 不推荐写法
 ```typescript
-function createFoo(x: T): void {}
-function deleteBar(x: T): void {}
+function createUserRole(roleName: string): void {}
+
+function deleteUserRole(roleName: string): void {}
 ```
 
-### 清空已有内容使用 `clear`
+### `clear`、`reset`、`init` 分开用
 
-> 清空已有集合、列表、状态或缓存时，使用 `clearXxx`。
+> 清空已有内容时，使用 `clearXxx`。恢复初始值、初始状态或默认配置时，使用 `resetXxx`。初始化已经存在的实例、状态或上下文时，使用 `initXxx`，不用于新建并返回实例。
 
 推荐写法
 ```typescript
-function clearFoo(): void {}
+function clearSearchHistory(): void {}
+
+function resetSearchForm(): void {}
+
+function initUploadContext(uploadContext: IUploadContext): void {}
 ```
 
 不推荐写法
 ```typescript
-function resetFoo(): void {}
-```
+function resetSearchHistory(): void {}
 
-### 恢复初始值使用 `reset`
+function clearSearchForm(): void {}
 
-> 恢复初始值、初始状态或默认配置时，使用 `resetXxx`。
-
-推荐写法
-```typescript
-function resetFoo(): void {}
-```
-
-不推荐写法
-```typescript
-function clearFoo(): void {}
-```
-
-### 初始化既有实例使用 `init`
-
-> 初始化已经存在的实例、状态或上下文时，使用 `initXxx`，不用于新建并返回实例。
-
-推荐写法
-```typescript
-function initFoo(x: T): void {}
-```
-
-不推荐写法
-```typescript
-function createFoo(x: T): void {}
+function createUploadContext(uploadContext: IUploadContext): void {}
 ```
 
 ### 绑定用 `bind`，解绑用 `unbind`
@@ -274,14 +368,20 @@ function createFoo(x: T): void {}
 
 推荐写法
 ```typescript
-function bindFoo(): void {}
-function unbindBar(): void {}
+function bindEvents(): void {}
+
+function bindKeyboardEvents(): void {}
+
+function unbindEvents(): void {}
 ```
 
 不推荐写法
 ```typescript
-function handleFoo(): void {}
-function removeBar(): void {}
+function handleEvents(): void {}
+
+function initEvents(): void {}
+
+function removeEvents(): void {}
 ```
 
 ### 事件处理用 handle
@@ -290,12 +390,20 @@ function removeBar(): void {}
 
 推荐写法
 ```typescript
-function handleFoo(): void {}
+function handleItemClick(): void {}
+
+function handleFormSubmit(): void {}
+
+function handleDialogClose(): void {}
 ```
 
 不推荐写法
 ```typescript
-function foo(): void {}
+function clickItem(): void {}
+
+function submitForm(): void {}
+
+function dialogClose(): void {}
 ```
 
 ### 校验函数、方法使用 validate
@@ -304,12 +412,24 @@ function foo(): void {}
 
 推荐写法
 ```typescript
-function validateFoo(x: T): boolean { return true }
+function validatePassword(password: string): boolean {
+  return password.length >= 8
+}
+
+function validateFormData(formData: FormData): boolean {
+  return true
+}
 ```
 
 不推荐写法
 ```typescript
-function isFoo(x: T): boolean { return true }
+function isPassword(password: string): boolean {
+  return password.length >= 8
+}
+
+function checkFormData(formData: FormData): boolean {
+  return true
+}
 ```
 
 ## 类命名规则
@@ -320,12 +440,12 @@ function isFoo(x: T): boolean { return true }
 
 推荐写法
 ```typescript
-class Xxx {}
+class UserService {}
 ```
 
 不推荐写法
 ```typescript
-class xxx {}
+class userService {}
 ```
 
 ## 接口命名规则
@@ -336,15 +456,32 @@ class xxx {}
 
 推荐写法
 ```typescript
-interface IXxx {
-  foo: string
+interface IUserInfo {
+  id: string
+  name: string
+}
+
+interface IRequestOptions {
+  timeout: number
+}
+
+interface IUploadHandler {
+  upload(): void
 }
 ```
 
 不推荐写法
 ```typescript
-interface Xxx {
-  foo: string
+interface UserInfo {
+  id: string
+}
+
+interface iRequestOptions {
+  timeout: number
+}
+
+interface IuploadHandler {
+  upload(): void
 }
 ```
 
@@ -356,60 +493,40 @@ interface Xxx {
 
 推荐写法
 ```typescript
-type Foo = "a" | "b"
+type RequestMode = "sync" | "async"
 ```
 
 不推荐写法
 ```typescript
-type foo = "a" | "b"
+type requestMode = "sync" | "async"
 ```
 
 
 ## 枚举命名规则
 
-### 对象式枚举主体用大驼峰
+### 对象式枚举命名
 
 > 对象式枚举主体使用大驼峰命名法。
-
-推荐写法
-```typescript
-const Xxx = { FOO: "foo" } as const
-type Xxx = typeof Xxx[keyof typeof Xxx]
-```
-
-不推荐写法
-```typescript
-const XXX_FOO = { FOO: "foo" } as const
-type Xxx = typeof XXX_FOO[keyof typeof XXX_FOO]
-```
-
-### 对象式枚举成员用大写下划线
-
-> 对象式枚举成员使用大写下划线命名法。
-
-推荐写法
-```typescript
-const Xxx = { FOO_BAR: "foo_bar" } as const
-```
-
-不推荐写法
-```typescript
-const Xxx = { FooBar: "foo_bar" } as const
-```
-
-### 对象式枚举主体和联合类型同名
-
+> 枚举成员使用大写下划线命名法。
 > 对象式枚举主体名称和对应联合类型名称保持一致。
 
 推荐写法
 ```typescript
-const Xxx = { FOO: "foo" } as const
-type Xxx = typeof Xxx[keyof typeof Xxx]
+const AppScene = {
+  TEST: 'test',
+  PRODUCTION: 'production',
+} as const
+
+type AppScene = typeof AppScene[keyof typeof AppScene]
 ```
 
 不推荐写法
 ```typescript
-const Xxx = { FOO: "foo" } as const
-type XxxType = typeof Xxx[keyof typeof Xxx]
+const APP_SCENE = {
+  Test: 'test',
+  Production: 'production',
+} as const
+
+type AppSceneType = typeof APP_SCENE[keyof typeof APP_SCENE]
 ```
 

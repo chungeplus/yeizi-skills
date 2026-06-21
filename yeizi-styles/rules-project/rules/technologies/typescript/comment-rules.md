@@ -1,96 +1,10 @@
 # TypeScript 注释规则
 
-## 多行注释
+## TSDoc 注释
 
 ### 注释使用 TSDoc 规范
 
 > TypeScript 注释统一使用 TSDoc 规范。文档注释结构和 `@param`、`@returns`、`@throws`、`@example` 等标签写法遵守 TSDoc，再按本文件补充项目约束。
-
-推荐写法
-```typescript
-function foo(): void {}
-```
-
-不推荐写法
-```typescript
-function foo(): void {}
-```
-
-### 注释正文只描述调用方契约
-
-> 注释正文只写调用方看得见的契约。先写用途；需要补充时，只写调用方可依赖的结果、输入约束、抛错条件和错误码。
->
-> 不写分支、回退、特例处理、`cause` 挂载方式和状态转移等实现细节。只有实现方式本身属于对外契约时，才写结果本身，例如“会原地修改入参数组”。
->
-> `@param`、`@returns`、`@throws`、`@example` 等 TSDoc 标签内容按 TSDoc 惯例保留技术表达。
-
-推荐写法
-```typescript
-function foo(): never { throw new XxxError("foo") }
-```
-
-不推荐写法
-```typescript
-function foo(): never { throw new XxxError("foo") }
-```
-
-### 同一块内容不写空行
-
-> 同一块内容内部不写空行。描述句之间不写空行，连续 `@param`、连续 `@returns`、同一个 `@example` 里的连续示例之间也不写空行。按 TSDoc 规范切换到新的块内容时，在块与块之间保留一行空行。
-
-推荐写法
-```typescript
-/**
- * foo
- * bar
- */
-function foo(): void {}
-```
-
-不推荐写法
-```typescript
-/**
- * foo
- *
- * bar
- */
-function foo(): void {}
-```
-
-### `@example` 内容写在 `@example` 标签下一行
-
-> `@example` 的代码示例写在 `@example` 标签下一行，不写在同一行尾。
-
-推荐写法
-```typescript
-/**
- * @example
- * foo()
- */
-function foo(): void {}
-```
-
-不推荐写法
-```typescript
-/**
- * @example foo()
- */
-function foo(): void {}
-```
-
-### 注释里的示例代码遵守所有代码规则
-
-> `@example`、`@throws` 等注释里的代码示例，同样遵守当前项目和 TypeScript 的所有代码规则，不因为它们只出现在注释里就放宽。
-
-推荐写法
-```typescript
-function foo(): void {}
-```
-
-不推荐写法
-```typescript
-function foo (): void {}
-```
 
 ### 有参数时写 `@param`
 
@@ -98,12 +12,24 @@ function foo (): void {}
 
 推荐写法
 ```typescript
-function foo(x: T): T { return x }
+/**
+ * 获取用户的显示名称。
+ *
+ * @param userInfo 用户信息。
+ */
+function getUserDisplayName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
 ```
 
 不推荐写法
 ```typescript
-function foo(x: T): T { return x }
+/**
+ * 获取用户的显示名称。
+ */
+function getUserDisplayName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
 ```
 
 ### 有返回值时写 `@returns`
@@ -112,12 +38,27 @@ function foo(x: T): T { return x }
 
 推荐写法
 ```typescript
-function foo(): T { return 1 }
+/**
+ * 获取用户的显示名称。
+ *
+ * @param userInfo 用户信息。
+ * @returns 用户的显示名称。
+ */
+function getUserDisplayName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
 ```
 
 不推荐写法
 ```typescript
-function foo(): T { return 1 }
+/**
+ * 获取用户的显示名称。
+ *
+ * @param userInfo 用户信息。
+ */
+function getUserDisplayName(userInfo: IUserInfo): string {
+  return userInfo.name
+}
 ```
 
 ### 会抛错时写 `@throws`
@@ -126,12 +67,29 @@ function foo(): T { return 1 }
 
 推荐写法
 ```typescript
-function foo(): void { throw new XxxError("foo") }
+/**
+ * 读取配置文件内容。
+ *
+ * @param filePath 配置文件路径。
+ * @returns 配置文件内容。
+ * @throws 配置文件不存在时抛出错误。
+ */
+function loadConfigFileContent(filePath: string): string {
+  throw new Error("配置文件不存在。")
+}
 ```
 
 不推荐写法
 ```typescript
-function foo(): void { throw new XxxError("foo") }
+/**
+ * 读取配置文件内容。
+ *
+ * @param filePath 配置文件路径。
+ * @returns 配置文件内容。
+ */
+function loadConfigFileContent(filePath: string): string {
+  throw new Error("配置文件不存在。")
+}
 ```
 
 ### 可复用函数和方法写 `@example`
@@ -140,15 +98,54 @@ function foo(): void { throw new XxxError("foo") }
 
 推荐写法
 ```typescript
-function foo(x: string): T { return JSON.parse(x) }
-function bar(): void {}
+/**
+ * 解析用户信息文本。
+ *
+ * @param content 用户信息文本。
+ * @returns 解析后的用户信息。
+ *
+ * @example
+ * parseUserInfo("{\"id\":\"u1\",\"name\":\"Alice\"}") => { id: "u1", name: "Alice" }
+ * parseUserInfo("{\"id\":\"u2\",\"name\":\"Bob\"}") => { id: "u2", name: "Bob" }
+ */
+function parseUserInfo(content: string): IUserInfo {
+  return {
+    id: "u1",
+    name: "Alice",
+  }
+}
+
+/**
+ * 运行 CLI 主流程。
+ */
+function runCli(): void {}
 ```
 
 不推荐写法
 ```typescript
-function foo(x: string): T { return JSON.parse(x) }
-function bar(): void {}
+/**
+ * 解析用户信息文本。
+ *
+ * @param content 用户信息文本。
+ * @returns 解析后的用户信息。
+ */
+function parseUserInfo(content: string): IUserInfo {
+  return {
+    id: "u1",
+    name: "Alice",
+  }
+}
+
+/**
+ * 运行 CLI 主流程。
+ *
+ * @example
+ * runCli() => 启动 CLI 主流程
+ */
+function runCli(): void {}
 ```
+
+## 多行注释
 
 ### 不使用单行 `/** 内容 */`
 
@@ -157,81 +154,98 @@ function bar(): void {}
 推荐写法
 ```typescript
 /**
- * foo
+ * 获取用户的显示名称。
  */
-function foo(): string { return "foo" }
+function getUserDisplayName(): string {
+  return "Alice"
+}
 ```
 
 不推荐写法
 ```typescript
-/** foo */
-function foo(): string { return "foo" }
+/** 获取用户的显示名称。 */
+function getUserDisplayName(): string {
+  return "Alice"
+}
 ```
 
-### 顶层定义和方法统一使用 `/** */`
+### 类型、常量、配置、函数、类、方法使用 `/** */`
 
-> 顶层的类型、常量、配置、函数、类，以及类中的方法统一使用 `/** */`。
+> 类型、常量、配置、函数、类、方法统一使用 `/** */`。接口字段、对象成员和类字段需要说明语义时，也使用 `/** */`。
 
 推荐写法
 ```typescript
-function foo(): void {}
+/**
+ * 应用错误码定义。
+ */
+const AppErrorCode = {
+  /**
+   * package.json 中缺少 bin 配置。
+   */
+  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+} as const
 
-class Xxx {
-  public bar(): void {}
+type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+
+export { AppErrorCode }
+export type { AppErrorCode }
+
+/**
+ * 用户信息。
+ */
+interface IUserInfo {
+  /**
+   * 用户唯一标识。
+   */
+  id: string
+  /**
+   * 用户显示名称。
+   */
+  name: string
+}
+
+export type { IUserInfo }
+
+/**
+ * 运行 CLI 主流程。
+ */
+function runCli(): void {}
+
+/**
+ * 安装命令。
+ */
+class InstallCommand {
+  /**
+   * 执行安装流程。
+   */
+  execute(): void {}
 }
 ```
 
 不推荐写法
 ```typescript
-function foo(): void {}
+const AppErrorCode = {
+  // package.json 中缺少 bin 配置。
+  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+} as const
 
-class Xxx {
-  public bar(): void {}
+type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+
+export { AppErrorCode }
+export type { AppErrorCode }
+
+interface IUserInfo {
+  // 用户唯一标识。
+  id: string
+  // 用户显示名称。
+  name: string
 }
-```
 
-### 字段统一使用 `/** */`
+export type { IUserInfo }
+function runCli(): void {}
 
-> 接口字段、类型字面量字段和类字段统一使用 `/** */`。
-
-推荐写法
-```typescript
-interface IXxx {
-  /**
-   * foo
-   */
-  foo: string
-}
-```
-
-不推荐写法
-```typescript
-interface IXxx {
-  foo: string
-}
-```
-
-### 字段注释直接写用途和约束
-
-> 字段注释直接写用途、约束、取值语义或调用方需要知道的影响，不写只把字段名或类型名换个说法的空注释。
-
-推荐写法
-```typescript
-interface IXxx {
-  /**
-   * 超时时间，毫秒；0 表示不超时。
-   */
-  foo: number
-}
-```
-
-不推荐写法
-```typescript
-interface IXxx {
-  /**
-   * foo
-   */
-  foo: number
+class InstallCommand {
+  execute(): void {}
 }
 ```
 
@@ -243,18 +257,22 @@ interface IXxx {
 
 推荐写法
 ```typescript
-function foo(list: T[]): void {
-  // 保留顺序
-  list.forEach((x) => x)
+function syncUserInfo(userInfoList: IUserInfo[]): void {
+  // 保留原始顺序，避免输出结果和平台目录顺序不一致。
+  for (let userInfo of userInfoList) {
+    console.log(userInfo.name)
+  }
 }
 ```
 
 不推荐写法
 ```typescript
-function foo(list: T[]): void {
+function syncUserInfo(userInfoList: IUserInfo[]): void {
   /**
-   * 保留顺序
+   * 保留原始顺序，避免输出结果和平台目录顺序不一致。
    */
-  list.forEach((x) => x)
+  for (let userInfo of userInfoList) {
+    console.log(userInfo.name)
+  }
 }
 ```
