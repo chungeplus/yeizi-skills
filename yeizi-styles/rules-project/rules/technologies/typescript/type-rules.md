@@ -8,19 +8,19 @@
 
 推荐写法
 ```typescript
-const AppScene = {
-  TEST: 'test',
-  PRODUCTION: 'production',
+const ItemStatus = {
+  IDLE: "idle",
+  UPLOADING: "uploading",
 } as const
 
-type AppScene = typeof AppScene[keyof typeof AppScene]
+type ItemStatus = typeof ItemStatus[keyof typeof ItemStatus]
 ```
 
 不推荐写法
 ```typescript
-enum AppScene {
-  TEST = 'test',
-  PRODUCTION = 'production',
+enum ItemStatus {
+  IDLE = "idle",
+  UPLOADING = "uploading",
 }
 ```
 
@@ -32,25 +32,23 @@ enum AppScene {
 
 推荐写法
 ```typescript
-interface IUserInfo {
-  id: string
-  name: string
+interface IConfig {
+  value: string
 }
 
 interface IRequestOptions {
-  timeout: number
+  timeoutMs: number
 }
 ```
 
 不推荐写法
 ```typescript
-type UserInfo = {
-  id: string
-  name: string
+type Config = {
+  value: string
 }
 
 type RequestOptions = {
-  timeout: number
+  timeoutMs: number
 }
 ```
 
@@ -60,20 +58,20 @@ type RequestOptions = {
 
 推荐写法
 ```typescript
-type AppScene = "test" | "production"
+type RequestMode = "sync" | "async"
 
 type RequestHandler = (requestUrl: string) => Promise<string>
 
-type UserSummary = Pick<IUserInfo, "id" | "name">
+type ConfigSummary = Pick<IConfig, "value">
 ```
 
 不推荐写法
 ```typescript
-interface AppScene {
-  value: "test" | "production"
+interface IRequestMode {
+  value: "sync" | "async"
 }
 
-interface RequestHandler {
+interface IRequestHandler {
   (requestUrl: string): Promise<string>
 }
 ```
@@ -86,20 +84,20 @@ interface RequestHandler {
 
 推荐写法
 ```typescript
-function getUserName(userInfo: IUserInfo): string {
-  return userInfo.name
+function getName(config: IConfig): string {
+  return config.value
 }
 
-let retryCount = 0
+const retryCount = 0
 ```
 
 不推荐写法
 ```typescript
-function getUserName(userInfo: any): string {
-  return userInfo.name
+function getName(config: any): string {
+  return config.value
 }
 
-let retryCount: unknown = 0
+const retryCount: unknown = 0
 ```
 
 ### 类型明确时禁止额外使用泛型
@@ -109,25 +107,18 @@ let retryCount: unknown = 0
 推荐写法
 ```typescript
 class AppError extends Error {
-  public readonly code: AppErrorCodeName
+  public readonly code: ErrorCode
 
-  public constructor(code: AppErrorCodeName) {
+  public constructor(code: ErrorCode) {
     super(code)
     this.code = code
   }
-}
-
-function getObjectValue<TObject, TKey extends keyof TObject>(
-  objectValue: TObject,
-  objectKey: TKey,
-): TObject[TKey] {
-  return objectValue[objectKey]
 }
 ```
 
 不推荐写法
 ```typescript
-class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error {
+class AppError<TCode extends string = string> extends Error {
   public readonly code: TCode
 
   public constructor(code: TCode) {
@@ -143,20 +134,23 @@ class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error 
 
 推荐写法
 ```typescript
-function focusSubmitButton(): void {
-  let submitButton = document.getElementById("submit-button") as HTMLButtonElement | null
+const ItemStatus = {
+  IDLE: "idle",
+  UPLOADING: "uploading",
+} as const
 
-  if (!submitButton) {
-    return
-  }
-
-  submitButton.focus()
-}
+type ItemStatus = typeof ItemStatus[keyof typeof ItemStatus]
 ```
 
 不推荐写法
 ```typescript
-function parseUserInfo(content: string): IUserInfo {
-  return JSON.parse(content) as IUserInfo
+function focusButton(): void {
+  const button = document.getElementById("submit") as HTMLButtonElement | null
+
+  if (!button) {
+    return
+  }
+
+  button.focus()
 }
 ```
