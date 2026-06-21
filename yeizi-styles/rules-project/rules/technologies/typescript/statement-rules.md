@@ -29,46 +29,38 @@ var retryCount = 0
 
 推荐写法
 ```typescript
-const AppErrorCode = {
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+const ErrorCode = {
+  CONFIG_MISSING: "CONFIG_MISSING",
 } as const
 
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode]
 
-interface IUserInfo {
-  id: string
-  name: string
+interface IConfig {
+  value: string
 }
 
-function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
+function parseConfig(content: string): IConfig {
+  return { value: content }
 }
 
-export { AppErrorCode, parseUserInfo }
-export type { AppErrorCode, IUserInfo }
+export { ErrorCode, parseConfig }
+export type { ErrorCode, IConfig }
 ```
 
 不推荐写法
 ```typescript
-export const AppErrorCode = {
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
+export const ErrorCode = {
+  CONFIG_MISSING: "CONFIG_MISSING",
 } as const
 
-export type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
+export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode]
 
-export interface IUserInfo {
-  id: string
-  name: string
+export interface IConfig {
+  value: string
 }
 
-export function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
+export function parseConfig(content: string): IConfig {
+  return { value: content }
 }
 ```
 
@@ -124,11 +116,11 @@ return isEnabled ? "enabled" : "disabled"
 
 推荐写法
 ```typescript
-if (status === UploadStatus.READY) {
+if (status === "ready") {
   return "ready"
 }
 
-if (status === UploadStatus.UPLOADING) {
+if (status === "uploading") {
   return "uploading"
 }
 
@@ -138,9 +130,9 @@ return "finished"
 不推荐写法
 ```typescript
 switch (status) {
-  case UploadStatus.READY:
+  case "ready":
     return "ready"
-  case UploadStatus.UPLOADING:
+  case "uploading":
     return "uploading"
   default:
     return "finished"
@@ -155,21 +147,21 @@ switch (status) {
 
 推荐写法
 ```typescript
-let enabledUserList = userList.filter((userInfo) => userInfo.isEnabled)
+let enabledItems = items.filter((item) => item.isEnabled)
 
-let userNameList = userList.map((userInfo) => userInfo.name)
+let itemNames = items.map((item) => item.name)
 
-let hasAdminUser = userList.some((userInfo) => userInfo.role === "admin")
+let hasAdminItem = items.some((item) => item.role === "admin")
 ```
 
 不推荐写法
 ```typescript
-for (let userInfo of userList) {
-  console.log(userInfo.name)
+for (const item of items) {
+  console.log(item.name)
 }
 
-for (let index = 0; index < userList.length; index += 1) {
-  console.log(userList[index].name)
+for (let index = 0; index < items.length; index += 1) {
+  console.log(items[index].name)
 }
 ```
 
@@ -179,30 +171,30 @@ for (let index = 0; index < userList.length; index += 1) {
 
 推荐写法
 ```typescript
-let enabledUserNameList = Object.values(userInfoMap)
-  .filter((userInfo) => userInfo.isEnabled)
-  .map((userInfo) => userInfo.name)
+let enabledNames = Object.values(itemMap)
+  .filter((item) => item.isEnabled)
+  .map((item) => item.name)
 
-let enabledRoleEntries = Object.entries(userRoleMap)
+let enabledRoleEntries = Object.entries(roleMap)
   .filter(([, roleName]) => roleName.length > 0)
 
 let roleNameList = Array.from(roleSet)
   .map((roleName) => roleName.trim())
   .filter((roleName) => roleName.length > 0)
 
-let letterList = Array.from(userNameText)
+let letterList = Array.from(nameText)
   .filter((letter) => letter !== " ")
 ```
 
 不推荐写法
 ```typescript
-for (let userId in userInfoMap) {
-  if (userInfoMap[userId].isEnabled) {
-    console.log(userInfoMap[userId].name)
+for (const itemId in itemMap) {
+  if (itemMap[itemId].isEnabled) {
+    console.log(itemMap[itemId].name)
   }
 }
 
-for (let roleName of roleSet) {
+for (const roleName of roleSet) {
   console.log(roleName)
 }
 ```
