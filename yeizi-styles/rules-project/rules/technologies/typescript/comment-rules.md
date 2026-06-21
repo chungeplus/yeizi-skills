@@ -149,38 +149,38 @@ function runCli(): void {}
 推荐写法
 ```typescript
 /**
- * 解析平台选项值。
+ * 解析输入值。
  *
- * @param platformOptionValue 平台选项值。
- * @returns 平台名列表。
- * @throws 平台选项值格式错误时抛出错误。
+ * @param rawInput 输入文本。
+ * @returns 解析结果。
+ * @throws 输入格式错误时抛出错误。
  *
  * @example
- * parsePlatforms("codex")
- * parsePlatforms("codex,claude")
+ * parseValue("a")
+ * parseValue("a,b")
  */
-function parsePlatforms(platformOptionValue: string): string[] {
-  return platformOptionValue.split(",")
+function parseValue(rawInput: string): string[] {
+  return rawInput.split(",")
 }
 ```
 
 不推荐写法
 ```typescript
 /**
- * 解析平台选项值。
+ * 解析输入值。
  *
- * @param platformOptionValue 平台选项值。
+ * @param rawInput 输入文本。
  *
- * @returns 平台名列表。
- * @throws 平台选项值格式错误时抛出错误。
+ * @returns 解析结果。
+ * @throws 输入格式错误时抛出错误。
  *
  * @example
- * parsePlatforms("codex")
+ * parseValue("a")
  *
- * parsePlatforms("codex,claude")
+ * parseValue("a,b")
  */
-function parsePlatforms(platformOptionValue: string): string[] {
-  return platformOptionValue.split(",")
+function parseValue(rawInput: string): string[] {
+  return rawInput.split(",")
 }
 ```
 
@@ -191,25 +191,25 @@ function parsePlatforms(platformOptionValue: string): string[] {
 推荐写法
 ```typescript
 /**
- * 解析平台选项值。
+ * 解析输入值。
  *
  * @example
- * parsePlatforms("codex,claude") => ["codex", "claude"]
+ * parseValue("a,b") => ["a", "b"]
  */
-function parsePlatforms(platformOptionValue: string): string[] {
-  return platformOptionValue.split(",")
+function parseValue(rawInput: string): string[] {
+  return rawInput.split(",")
 }
 ```
 
 不推荐写法
 ```typescript
 /**
- * 解析平台选项值。
+ * 解析输入值。
  *
- * @example parsePlatforms("codex,claude") => ["codex", "claude"]
+ * @example parseValue("a,b") => ["a", "b"]
  */
-function parsePlatforms(platformOptionValue: string): string[] {
-  return platformOptionValue.split(",")
+function parseValue(rawInput: string): string[] {
+  return rawInput.split(",")
 }
 ```
 
