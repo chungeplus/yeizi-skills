@@ -41,6 +41,16 @@ function isRetryableStatus(status: number | null): boolean {
   return false
 }
 
+function hasResponseWithStatus(error: Error): error is Error & { response: { status: number } } {
+  if (!("response" in error))
+    return false
+  const response = (error as Record<string, unknown>).response
+  if (typeof response !== "object" || response === null)
+    return false
+  const status = (response as Record<string, unknown>).status
+  return typeof status === "number"
+}
+
 function wrapError(error: unknown): HttpRequestError {
   if (error instanceof HttpRequestError)
     return error
@@ -52,8 +62,7 @@ function wrapError(error: unknown): HttpRequestError {
   }
   if (error instanceof Error) {
     const message = error.message
-    const maybeResponse = (error as { response?: { status?: number } }).response
-    const status = maybeResponse?.status ?? null
+    const status = hasResponseWithStatus(error) ? error.response.status : null
     return new HttpRequestError(message, status, isRetryableStatus(status), { cause: error })
   }
   return new HttpRequestError(String(error), null, false)
