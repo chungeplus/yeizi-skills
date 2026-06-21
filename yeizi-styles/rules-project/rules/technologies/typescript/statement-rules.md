@@ -8,17 +8,15 @@
 
 推荐写法
 ```typescript
-const userName = "Alice"
-
-let retryCount = 0
-retryCount += 1
+const foo = 1
+let bar = 0
+bar += 1
 ```
 
 不推荐写法
 ```typescript
-let userName = "Alice"
-
-var retryCount = 0
+let foo = 1
+var bar = 0
 ```
 
 ## 模块规则
@@ -29,47 +27,21 @@ var retryCount = 0
 
 推荐写法
 ```typescript
-const AppErrorCode = {
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
+const Xxx = { FOO: "foo" } as const
+type Xxx = typeof Xxx[keyof typeof Xxx]
+interface IXxx { foo: string }
+function bar(x: string): IXxx { return { foo: x } }
 
-type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-interface IUserInfo {
-  id: string
-  name: string
-}
-
-function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
-}
-
-export { AppErrorCode, parseUserInfo }
-export type { AppErrorCode, IUserInfo }
+export { Xxx, bar }
+export type { Xxx, IXxx }
 ```
 
 不推荐写法
 ```typescript
-export const AppErrorCode = {
-  PACKAGE_BIN_CONFIG_MISSING: "PACKAGE_BIN_CONFIG_MISSING",
-} as const
-
-export type AppErrorCode = typeof AppErrorCode[keyof typeof AppErrorCode]
-
-export interface IUserInfo {
-  id: string
-  name: string
-}
-
-export function parseUserInfo(content: string): IUserInfo {
-  return {
-    id: "u1",
-    name: "Alice",
-  }
-}
+export const Xxx = { FOO: "foo" } as const
+export type Xxx = typeof Xxx[keyof typeof Xxx]
+export interface IXxx { foo: string }
+export function bar(x: string): IXxx { return { foo: x } }
 ```
 
 ## 条件语句规则
@@ -80,24 +52,14 @@ export function parseUserInfo(content: string): IUserInfo {
 
 推荐写法
 ```typescript
-if (isReady) {
-  startTask()
-}
-
-if (!isEnabled) {
-  return
-}
+if (isFoo) { bar() }
+if (!isFoo) { return }
 ```
 
 不推荐写法
 ```typescript
-if (isReady === true) {
-  startTask()
-}
-
-if (isEnabled === false) {
-  return
-}
+if (isFoo === true) { bar() }
+if (isFoo === false) { return }
 ```
 
 ### 禁止使用三目运算符
@@ -106,16 +68,13 @@ if (isEnabled === false) {
 
 推荐写法
 ```typescript
-if (isEnabled) {
-  return "enabled"
-}
-
-return "disabled"
+if (isFoo) { return "a" }
+return "b"
 ```
 
 不推荐写法
 ```typescript
-return isEnabled ? "enabled" : "disabled"
+return isFoo ? "a" : "b"
 ```
 
 ### 禁用 `switch`
@@ -124,26 +83,17 @@ return isEnabled ? "enabled" : "disabled"
 
 推荐写法
 ```typescript
-if (status === UploadStatus.READY) {
-  return "ready"
-}
-
-if (status === UploadStatus.UPLOADING) {
-  return "uploading"
-}
-
-return "finished"
+if (status === "a") { return 1 }
+if (status === "b") { return 2 }
+return 0
 ```
 
 不推荐写法
 ```typescript
 switch (status) {
-  case UploadStatus.READY:
-    return "ready"
-  case UploadStatus.UPLOADING:
-    return "uploading"
-  default:
-    return "finished"
+  case "a": return 1
+  case "b": return 2
+  default: return 0
 }
 ```
 
@@ -155,22 +105,15 @@ switch (status) {
 
 推荐写法
 ```typescript
-let enabledUserList = userList.filter((userInfo) => userInfo.isEnabled)
-
-let userNameList = userList.map((userInfo) => userInfo.name)
-
-let hasAdminUser = userList.some((userInfo) => userInfo.role === "admin")
+const foo = list.filter((x) => x.isFoo)
+const bar = list.map((x) => x.foo)
+const baz = list.some((x) => x.isFoo)
 ```
 
 不推荐写法
 ```typescript
-for (let userInfo of userList) {
-  console.log(userInfo.name)
-}
-
-for (let index = 0; index < userList.length; index += 1) {
-  console.log(userList[index].name)
-}
+for (const x of list) { console.log(x.foo) }
+for (let i = 0; i < list.length; i += 1) { console.log(list[i].foo) }
 ```
 
 ### 其他可遍历内容先转数组再处理
@@ -179,31 +122,17 @@ for (let index = 0; index < userList.length; index += 1) {
 
 推荐写法
 ```typescript
-let enabledUserNameList = Object.values(userInfoMap)
-  .filter((userInfo) => userInfo.isEnabled)
-  .map((userInfo) => userInfo.name)
-
-let enabledRoleEntries = Object.entries(userRoleMap)
-  .filter(([, roleName]) => roleName.length > 0)
-
-let roleNameList = Array.from(roleSet)
-  .map((roleName) => roleName.trim())
-  .filter((roleName) => roleName.length > 0)
-
-let letterList = Array.from(userNameText)
-  .filter((letter) => letter !== " ")
+const foo = Object.values(map)
+  .filter((x) => x.isFoo)
+  .map((x) => x.foo)
+const bar = Array.from(set).map((x) => x.foo)
 ```
 
 不推荐写法
 ```typescript
-for (let userId in userInfoMap) {
-  if (userInfoMap[userId].isEnabled) {
-    console.log(userInfoMap[userId].name)
-  }
+for (const k in map) {
+  if (map[k].isFoo) { console.log(map[k].foo) }
 }
-
-for (let roleName of roleSet) {
-  console.log(roleName)
-}
+for (const x of set) { console.log(x) }
 ```
 

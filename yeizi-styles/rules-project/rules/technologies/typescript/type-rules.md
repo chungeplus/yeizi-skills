@@ -8,20 +8,13 @@
 
 推荐写法
 ```typescript
-const AppScene = {
-  TEST: 'test',
-  PRODUCTION: 'production',
-} as const
-
-type AppScene = typeof AppScene[keyof typeof AppScene]
+const Xxx = { FOO: "foo", BAR: "bar" } as const
+type Xxx = typeof Xxx[keyof typeof Xxx]
 ```
 
 不推荐写法
 ```typescript
-enum AppScene {
-  TEST = 'test',
-  PRODUCTION = 'production',
-}
+enum Xxx { FOO = "foo", BAR = "bar" }
 ```
 
 ## 类型定义规则
@@ -32,25 +25,23 @@ enum AppScene {
 
 推荐写法
 ```typescript
-interface IUserInfo {
-  id: string
-  name: string
+interface IXxx {
+  foo: string
 }
 
-interface IRequestOptions {
-  timeout: number
+interface IBar {
+  baz: number
 }
 ```
 
 不推荐写法
 ```typescript
-type UserInfo = {
-  id: string
-  name: string
+type Xxx = {
+  foo: string
 }
 
-type RequestOptions = {
-  timeout: number
+type Bar = {
+  baz: number
 }
 ```
 
@@ -60,22 +51,15 @@ type RequestOptions = {
 
 推荐写法
 ```typescript
-type AppScene = "test" | "production"
-
-type RequestHandler = (requestUrl: string) => Promise<string>
-
-type UserSummary = Pick<IUserInfo, "id" | "name">
+type Xxx = "a" | "b"
+type Bar = (x: string) => Promise<string>
+type Baz = Pick<IXxx, "foo">
 ```
 
 不推荐写法
 ```typescript
-interface AppScene {
-  value: "test" | "production"
-}
-
-interface RequestHandler {
-  (requestUrl: string): Promise<string>
-}
+interface IXxx { value: "a" | "b" }
+interface IBar { (x: string): Promise<string> }
 ```
 
 ## 类型使用规则
@@ -86,20 +70,14 @@ interface RequestHandler {
 
 推荐写法
 ```typescript
-function getUserName(userInfo: IUserInfo): string {
-  return userInfo.name
-}
-
-let retryCount = 0
+function foo(x: IXxx): string { return x.foo }
+const bar = 0
 ```
 
 不推荐写法
 ```typescript
-function getUserName(userInfo: any): string {
-  return userInfo.name
-}
-
-let retryCount: unknown = 0
+function foo(x: any): string { return x.foo }
+const bar: unknown = 0
 ```
 
 ### 类型明确时禁止额外使用泛型
@@ -108,55 +86,55 @@ let retryCount: unknown = 0
 
 推荐写法
 ```typescript
-class AppError extends Error {
-  public readonly code: AppErrorCodeName
-
-  public constructor(code: AppErrorCodeName) {
-    super(code)
-    this.code = code
-  }
+class XxxError extends Error {
+  public readonly foo: string
+  public constructor(foo: string) { super(foo); this.foo = foo }
 }
 
-function getObjectValue<TObject, TKey extends keyof TObject>(
-  objectValue: TObject,
-  objectKey: TKey,
-): TObject[TKey] {
-  return objectValue[objectKey]
-}
+function bar<T extends object, K extends keyof T>(x: T, y: K): T[K] { return x[y] }
 ```
 
 不推荐写法
 ```typescript
-class AppError<TCode extends AppErrorCodeName = AppErrorCodeName> extends Error {
-  public readonly code: TCode
-
-  public constructor(code: TCode) {
-    super(code)
-    this.code = code
-  }
+class XxxError<TFoo extends string = string> extends Error {
+  public readonly foo: TFoo
+  public constructor(foo: TFoo) { super(foo); this.foo = foo }
 }
 ```
 
-### `as` 只补明确类型
+### 只在 `as const` 场景使用 `as`
 
-> `as SomeType` 只在你已经明确知道值是什么类型、只是 TypeScript 这里没推出来时使用。不把未校验输入直接断成业务类型。
+> 只在需要把字面量值固定为只读常量表达时使用 `as const`。除 `as const` 外，不使用 `as SomeType` 做类型断言。
 
 推荐写法
 ```typescript
-function focusSubmitButton(): void {
-  let submitButton = document.getElementById("submit-button") as HTMLButtonElement | null
-
-  if (!submitButton) {
-    return
-  }
-
-  submitButton.focus()
-}
+const Xxx = { FOO: "foo" } as const
+type Xxx = typeof Xxx[keyof typeof Xxx]
 ```
 
 不推荐写法
 ```typescript
-function parseUserInfo(content: string): IUserInfo {
-  return JSON.parse(content) as IUserInfo
+function foo(): void {
+  const x = bar() as Xxx | null
+  if (!x) { return }
+  x.baz()
 }
+```
+
+### 参数类型不使用只读修饰
+
+> 参数类型不使用 `readonly` 修饰符、`ReadonlyArray<T>`、`ReadonlyMap<K, V>`、`ReadonlySet<T>` 等只读类型。
+>
+> 不修改入参的约束靠代码规则保证，不由类型系统兜底。字段、类属性和对象常量上的只读语义不在本条范围内。
+
+推荐写法
+```typescript
+function foo(list: string[]): string { return list.join("") }
+function bar(m: Map<string, string[]>, k: string): string[] | undefined { return m.get(k) }
+```
+
+不推荐写法
+```typescript
+function foo(list: readonly string[]): string { return list.join("") }
+function bar(m: ReadonlyMap<string, readonly string[]>, k: string): readonly string[] | undefined { return m.get(k) }
 ```
