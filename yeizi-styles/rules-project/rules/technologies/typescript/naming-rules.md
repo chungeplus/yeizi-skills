@@ -40,6 +40,22 @@ const permissionStatus = false
 const submitAble = true
 ```
 
+### 集合命名使用 `XxxList` 后缀
+
+> 集合类型的变量、参数和字段统一使用 `XxxList` 后缀（如 `itemList`、`nameList`、`configList`），不写 `Xxxs` 形式的简单复数。
+
+推荐写法
+```typescript
+const itemList: IItem[] = []
+const nameList: string[] = []
+```
+
+不推荐写法
+```typescript
+const items: IItem[] = []
+const names: string[] = []
+```
+
 ## 常量命名规则
 
 ### 普通常量用大写下划线
