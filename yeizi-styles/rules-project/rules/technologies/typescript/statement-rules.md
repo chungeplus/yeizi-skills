@@ -64,6 +64,33 @@ export function parseConfig(content: string): IConfig {
 }
 ```
 
+### 目录门面文件职责
+
+> 目录的门面文件严格限定为"桶导出"角色：仅允许 `export *` / `export { ... }` / `export type { ... }` 语句。
+
+推荐写法
+```typescript
+// features/parser/index.ts
+export * from "./parser"
+```
+
+不推荐写法
+```typescript
+// features/index.ts
+import type { IRegistrar } from "./types"
+import { Parser } from "./parser"
+import { Builder } from "./builder"
+import { Validator } from "./validator"
+
+function registerFeatures(program: IRegistrar): void {
+  new Parser().register(program)
+  new Builder().register(program)
+  new Validator().register(program)
+}
+
+export { registerFeatures }
+```
+
 ## 条件语句规则
 
 ### 判断不写 `=== true/false`
