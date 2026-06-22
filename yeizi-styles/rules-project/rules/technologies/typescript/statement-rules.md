@@ -75,15 +75,15 @@ export * from "./parser"
 
 不推荐写法
 ```typescript
-import type { IRegistrar } from "./types"
+import type { IConfig } from "./types"
 import { Parser } from "./parser"
-import { Builder } from "./builder"
+import { Formatter } from "./formatter"
 import { Validator } from "./validator"
 
-function registerFeatures(program: IRegistrar): void {
-  new Parser().register(program)
-  new Builder().register(program)
-  new Validator().register(program)
+function registerFeatures(config: IConfig): void {
+  new Parser().register(config)
+  new Formatter().register(config)
+  new Validator().register(config)
 }
 
 export { registerFeatures }

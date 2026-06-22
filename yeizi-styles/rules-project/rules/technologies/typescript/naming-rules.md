@@ -110,7 +110,7 @@ function getName(): string {
   return ""
 }
 
-class UserService {
+class Parser {
   public loadInfo(): void {}
 }
 ```
@@ -121,7 +121,7 @@ function GetName(): string {
   return ""
 }
 
-class UserService {
+class Parser {
   public LoadInfo(): void {}
 }
 ```
@@ -348,14 +348,14 @@ function deleteRole(name: string): void {}
 ```typescript
 function clearHistory(): void {}
 function resetForm(): void {}
-function initUploadState(state: IUploadState): void {}
+function initConfig(config: IConfig): void {}
 ```
 
 不推荐写法
 ```typescript
 function resetHistory(): void {}
 function clearForm(): void {}
-function createUploadState(state: IUploadState): void {}
+function createConfig(config: IConfig): void {}
 ```
 
 ### 绑定用 `bind`，解绑用 `unbind`
@@ -428,12 +428,12 @@ function checkFormData(formData: FormData): boolean {
 
 推荐写法
 ```typescript
-class UserService {}
+class Parser {}
 ```
 
 不推荐写法
 ```typescript
-class userService {}
+class parser {}
 ```
 
 ## 接口命名规则
