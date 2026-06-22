@@ -182,7 +182,7 @@
 6. statement-rules：扫描全范围，导出位置、循环方式、判断写法。
 7. type-rules：扫描全范围，枚举、`interface/type`、`any/unknown`、泛型、`as`。
 
-每类完成后运行 `bun run check`。全部完成后运行 `bun run check && bun test`，并对 CLI 入口做最小 smoke（见验证方式）。
+每类完成后运行 `bun run check`（shared-rules 这一类只查不改，跳过这一步）。全部完成后运行 `bun run check && bun test && bun run build`，并对 CLI 入口做最小 smoke（见验证方式）。
 
 ## 检查点
 
