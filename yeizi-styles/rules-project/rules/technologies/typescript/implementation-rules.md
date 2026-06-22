@@ -30,14 +30,14 @@ function parseValue(rawInput?: string): string {
 推荐写法
 ```typescript
 function processItems(items: IItem[]): void {
-  ...
+  console.log(items.length)
 }
 ```
 
 不推荐写法
 ```typescript
 function processItems(items: readonly IItem[]): void {
-  ...
+  console.log(items.length)
 }
 ```
 

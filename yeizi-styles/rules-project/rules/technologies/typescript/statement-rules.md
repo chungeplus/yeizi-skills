@@ -70,13 +70,11 @@ export function parseConfig(content: string): IConfig {
 
 推荐写法
 ```typescript
-// features/parser/index.ts
 export * from "./parser"
 ```
 
 不推荐写法
 ```typescript
-// features/index.ts
 import type { IRegistrar } from "./types"
 import { Parser } from "./parser"
 import { Builder } from "./builder"

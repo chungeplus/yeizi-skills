@@ -48,12 +48,16 @@ const submitAble = true
 ```typescript
 const itemList: IItem[] = []
 const nameList: string[] = []
+
+function processItems(itemList: IItem[]): void {}
 ```
 
 不推荐写法
 ```typescript
 const items: IItem[] = []
 const names: string[] = []
+
+function processItems(items: IItem[]): void {}
 ```
 
 ## 常量命名规则
@@ -295,6 +299,24 @@ function renderFooter(): string {
 ```typescript
 function buildFooter(): string {
   return ""
+}
+```
+
+### 交互式用户选择使用 `prompt`
+
+> 使用 inquirer 等交互式库向用户呈现选择列表并接收用户输入时，使用 `promptXxx` 命名。不使用含义模糊的 `select`、`choose`、`pick` 等泛化动词。
+
+推荐写法
+```typescript
+async function promptPlatformList(): Promise<SupportedPlatform[]> {
+  return await inquirer.prompt([])
+}
+```
+
+不推荐写法
+```typescript
+async function selectPlatforms(): Promise<SupportedPlatform[]> {
+  return await inquirer.prompt([])
 }
 ```
 
