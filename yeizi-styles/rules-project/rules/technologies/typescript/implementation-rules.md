@@ -23,6 +23,24 @@ function parseValue(rawInput?: string): string {
 }
 ```
 
+### 参数不使用 `readonly`
+
+> 函数参数不使用 `readonly` 修饰符。`readonly` 只用于类字段或局部变量，不用于参数签名。
+
+推荐写法
+```typescript
+function processItems(items: IItem[]): void {
+  ...
+}
+```
+
+不推荐写法
+```typescript
+function processItems(items: readonly IItem[]): void {
+  ...
+}
+```
+
 ## class 和 function 使用规则
 
 ### 单次处理用 function
