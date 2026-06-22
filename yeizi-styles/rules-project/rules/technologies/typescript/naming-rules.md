@@ -259,8 +259,8 @@ function formatInfo(content: string): IConfig {
   return validateInfo(JSON.parse(content))
 }
 
-function parsePrice(price: number): string {
-  return `${price}`
+function parsePrice(priceText: string): number {
+  return Number(priceText)
 }
 ```
 
@@ -306,14 +306,14 @@ function deleteRole(name: string): void {}
 ```typescript
 function clearHistory(): void {}
 function resetForm(): void {}
-function initContext(ctx: IContext): void {}
+function initUploadState(state: IUploadState): void {}
 ```
 
 不推荐写法
 ```typescript
 function resetHistory(): void {}
 function clearForm(): void {}
-function createContext(ctx: IContext): void {}
+function createUploadState(state: IUploadState): void {}
 ```
 
 ### 绑定用 `bind`，解绑用 `unbind`
@@ -329,9 +329,9 @@ function unbindEvents(): void {}
 
 不推荐写法
 ```typescript
-function handleEvents(): void {}
-function initEvents(): void {}
-function removeEvents(): void {}
+function registerEvents(): void {}
+function attachEvents(): void {}
+function detachEvents(): void {}
 ```
 
 ### 事件处理用 handle

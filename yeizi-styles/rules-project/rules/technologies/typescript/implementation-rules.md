@@ -107,14 +107,11 @@ throw "输入不能为空"
 } catch (error) {
   return (error as ParseError).code
 }
+```
 
+不推荐写法
+```typescript
 function isParseError(error: Error): error is ParseError {
   return error.name === "ParseError"
-}
-
-} catch (error) {
-  if (error instanceof Error && isParseError(error)) {
-    return error.code
-  }
 }
 ```
