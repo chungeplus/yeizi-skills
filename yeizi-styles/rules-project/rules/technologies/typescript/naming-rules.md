@@ -363,7 +363,7 @@ function validatePassword(password: string): boolean {
 }
 
 function validateFormData(formData: FormData): boolean {
-  return true
+  return formData.has("email") && formData.has("password")
 }
 ```
 
@@ -374,7 +374,7 @@ function isPassword(password: string): boolean {
 }
 
 function checkFormData(formData: FormData): boolean {
-  return true
+  return formData.has("email") && formData.has("password")
 }
 ```
 

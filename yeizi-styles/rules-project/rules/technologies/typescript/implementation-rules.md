@@ -38,7 +38,7 @@ function renderError(title: string, message: string): void {
 
 不推荐写法
 ```typescript
-class ErrorRenderer {
+class TitlePrinter {
   public render(title: string, message: string): void {
     console.error(`[${title}] ${message}`)
   }
