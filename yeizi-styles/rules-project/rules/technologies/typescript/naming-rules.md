@@ -308,15 +308,19 @@ function buildFooter(): string {
 
 推荐写法
 ```typescript
-async function promptPlatformList(): Promise<SupportedPlatform[]> {
-  return await inquirer.prompt([])
+async function promptItemList(): Promise<string[]> {
+  return await inquirer.prompt([
+    { type: "list", name: "item" },
+  ])
 }
 ```
 
 不推荐写法
 ```typescript
-async function selectPlatforms(): Promise<SupportedPlatform[]> {
-  return await inquirer.prompt([])
+async function selectItem(): Promise<string> {
+  return await inquirer.prompt([
+    { type: "list", name: "item" },
+  ])
 }
 ```
 
