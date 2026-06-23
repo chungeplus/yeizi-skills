@@ -29,14 +29,14 @@ function parseValue(rawInput?: string): string {
 
 推荐写法
 ```typescript
-function processItems(items: IItem[]): void {
+function processItems(items: Item[]): void {
   console.log(items.length)
 }
 ```
 
 不推荐写法
 ```typescript
-function processItems(items: readonly IItem[]): void {
+function processItems(items: readonly Item[]): void {
   console.log(items.length)
 }
 ```
@@ -124,12 +124,5 @@ throw "输入不能为空"
 ```typescript
 } catch (error) {
   return (error as ParseError).code
-}
-```
-
-不推荐写法
-```typescript
-function isParseError(error: Error): error is ParseError {
-  return error.name === "ParseError"
 }
 ```

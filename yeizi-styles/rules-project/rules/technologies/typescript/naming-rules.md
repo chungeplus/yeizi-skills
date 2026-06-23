@@ -46,18 +46,26 @@ const submitAble = true
 
 推荐写法
 ```typescript
-const itemList: IItem[] = []
+const itemList: Item[] = []
 const nameList: string[] = []
 
-function processItems(itemList: IItem[]): void {}
+function processItems(itemList: Item[]): void {}
+
+interface IConfig {
+  itemList: Item[]
+}
 ```
 
 不推荐写法
 ```typescript
-const items: IItem[] = []
+const items: Item[] = []
 const names: string[] = []
 
-function processItems(items: IItem[]): void {}
+function processItems(items: Item[]): void {}
+
+interface IConfig {
+  items: Item[]
+}
 ```
 
 ## 常量命名规则
@@ -132,11 +140,11 @@ class Parser {
 
 推荐写法
 ```typescript
-function getName(info: IConfig): string {
+function getName(info: Config): string {
   return info.value
 }
 
-function buildRequestParams(info: IConfig): IRequestOptions {
+function buildRequestParams(info: Config): RequestOptions {
   return {
     timeoutMs: 3000,
   }
@@ -145,11 +153,11 @@ function buildRequestParams(info: IConfig): IRequestOptions {
 
 不推荐写法
 ```typescript
-function name(info: IConfig): string {
+function name(info: Config): string {
   return info.value
 }
 
-function requestParams(info: IConfig): IRequestOptions {
+function requestParams(info: Config): RequestOptions {
   return {
     timeoutMs: 3000,
   }
@@ -184,7 +192,7 @@ function getName(): string {
   return ""
 }
 
-async function loadProfile(): Promise<IConfig> {
+async function loadProfile(): Promise<Config> {
   return await requestProfile()
 }
 
@@ -199,7 +207,7 @@ function loadName(): string {
   return ""
 }
 
-async function getProfile(): Promise<IConfig> {
+async function getProfile(): Promise<Config> {
   return await requestProfile()
 }
 
@@ -215,13 +223,13 @@ async function getConfig(filePath: string): Promise<string> {
 推荐写法
 ```typescript
 function setVisible(visible: boolean): void {}
-function updateInfo(info: IConfig): void {}
+function updateInfo(info: Config): void {}
 ```
 
 不推荐写法
 ```typescript
 function updateVisible(visible: boolean): void {}
-function setInfo(info: IConfig): void {}
+function setInfo(info: Config): void {}
 ```
 
 ### 创建用 `create`，组装用 `build`
@@ -230,13 +238,13 @@ function setInfo(info: IConfig): void {}
 
 推荐写法
 ```typescript
-function createContext(): IContext {
+function createContext(): Context {
   return {
     items: [],
   }
 }
 
-function buildRequestParams(info: IConfig): IRequestOptions {
+function buildRequestParams(info: Config): RequestOptions {
   return {
     timeoutMs: 3000,
   }
@@ -245,13 +253,13 @@ function buildRequestParams(info: IConfig): IRequestOptions {
 
 不推荐写法
 ```typescript
-function buildContext(): IContext {
+function buildContext(): Context {
   return {
     items: [],
   }
 }
 
-function createRequestParams(info: IConfig): IRequestOptions {
+function createRequestParams(info: Config): RequestOptions {
   return {
     timeoutMs: 3000,
   }
@@ -264,7 +272,7 @@ function createRequestParams(info: IConfig): IRequestOptions {
 
 推荐写法
 ```typescript
-function parseInfo(content: string): IConfig {
+function parseInfo(content: string): Config {
   return validateInfo(JSON.parse(content))
 }
 
@@ -275,12 +283,12 @@ function formatPrice(price: number): string {
 
 不推荐写法
 ```typescript
-function formatInfo(content: string): IConfig {
+function formatInfo(content: string): Config {
   return validateInfo(JSON.parse(content))
 }
 
-function parsePrice(priceText: string): number {
-  return Number(priceText)
+function parsePrice(price: number): string {
+  return `${price}`
 }
 ```
 
@@ -348,14 +356,14 @@ function deleteRole(name: string): void {}
 ```typescript
 function clearHistory(): void {}
 function resetForm(): void {}
-function initConfig(config: IConfig): void {}
+function initConfig(config: Config): void {}
 ```
 
 不推荐写法
 ```typescript
 function resetHistory(): void {}
 function clearForm(): void {}
-function createConfig(config: IConfig): void {}
+function createConfig(config: Config): void {}
 ```
 
 ### 绑定用 `bind`，解绑用 `unbind`
@@ -438,36 +446,36 @@ class parser {}
 
 ## 接口命名规则
 
-### 接口名使用 `I` 开头的大驼峰命名法
+### 接口名用大驼峰
 
-> 接口名统一使用 `I` 开头，再接大驼峰名称。
+> 接口名统一使用大驼峰命名法。
 
 推荐写法
 ```typescript
-interface IConfig {
+interface Config {
   value: string
 }
 
-interface IRequestOptions {
+interface RequestOptions {
   timeoutMs: number
 }
 
-interface IUploadHandler {
+interface UploadHandler {
   upload(): void
 }
 ```
 
 不推荐写法
 ```typescript
-interface Config {
+interface config {
   value: string
 }
 
-interface iRequestOptions {
+interface requestOptions {
   timeoutMs: number
 }
 
-interface IuploadHandler {
+interface uploadHandler {
   upload(): void
 }
 ```
@@ -486,6 +494,96 @@ type RequestMode = "sync" | "async"
 不推荐写法
 ```typescript
 type requestMode = "sync" | "async"
+```
+
+## 文件命名规则
+
+### 目录契约优先于通用文件命名
+
+> 当前目录已经有稳定的入口名、门面名或注册文件名时，先沿用目录契约，不用通用文件命名规则改写。
+
+### 先判断是符号文件还是角色文件
+
+> TypeScript 文件先判断它主要承载单一符号，还是承担目录结构角色。承载单个 class、interface、type、函数或对象式枚举主体的文件，按符号文件处理；目录门面、常量集合、命令装配、类型聚合等按角色文件处理。
+
+### 符号文件名跟随主符号语义
+
+> 符号文件名使用主符号语义转成小写中划线。
+
+推荐写法
+```typescript
+class AppError extends Error {}
+```
+文件名
+```text
+app-error.ts
+```
+
+```typescript
+interface SkillSource {}
+```
+文件名
+```text
+skill-source.ts
+```
+
+不推荐写法
+```text
+AppError.ts
+skillSource.ts
+types.ts
+```
+
+### 目录门面文件使用 `index.ts`
+
+> 只承担目录门面、且内容严格限定为桶导出语句的文件使用 `index.ts`。`index.ts` 不承载目录私有实现细节，也不放目录内部实现逻辑。
+
+推荐写法
+```text
+src/features/skill/index.ts
+src/types/source/index.ts
+```
+
+不推荐写法
+```text
+src/features/skill/skill-index.ts
+src/types/source/source-index.ts
+```
+
+### 其他角色文件优先使用语义主题加角色
+
+> 常量集合、命令装配、注册入口等角色文件，优先使用“语义主题 + 角色”命名，如 `platform-directory-names.ts`、`register-commands.ts`。只有当前目录已经完整限定主题，且该文件承担当前目录唯一的同类角色时，才使用 `constants.ts`、`command.ts` 这类纯角色名。
+
+推荐写法
+```text
+src/constants/platform-directory-names.ts
+src/commands/register-commands.ts
+src/apis/github/constants.ts
+src/commands/install/command.ts
+```
+
+不推荐写法
+```text
+src/constants/constants.ts
+src/commands/command.ts
+src/tools/utils.ts
+src/shared/common.ts
+```
+
+### TypeScript 测试文件命名
+
+> TypeScript 测试文件命名为 `<source>.test.ts`，与源文件同目录。
+
+推荐写法
+```text
+platform-resolver.ts
+platform-resolver.test.ts
+```
+
+不推荐写法
+```text
+platform-resolver.spec.ts
+tests/platform-resolver.ts
 ```
 
 
