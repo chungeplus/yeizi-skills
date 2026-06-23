@@ -51,7 +51,7 @@ const nameList: string[] = []
 
 function processItems(itemList: Item[]): void {}
 
-interface IConfig {
+interface Config {
   itemList: Item[]
 }
 ```
@@ -63,7 +63,7 @@ const names: string[] = []
 
 function processItems(items: Item[]): void {}
 
-interface IConfig {
+interface Config {
   items: Item[]
 }
 ```
