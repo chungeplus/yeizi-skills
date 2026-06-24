@@ -66,29 +66,38 @@ export function parseConfig(content: string): Config {
 }
 ```
 
-### 目录门面文件职责
+### 导入导出使用具名形式
 
-> 目录的门面文件严格限定为"桶导出"角色：仅允许 `export *` / `export { ... }` / `export type { ... }` 语句。
+> 导入和导出使用具名形式，按名字写 `import { ... }` / `import type { ... }` / `export { ... }` / `export type { ... }` 语句。
 
 推荐写法
 ```typescript
-export * from "./parser"
+import { parseConfig } from "./parser"
+import type { Config } from "./types"
+
+export { parseConfig } from "./parser"
+export type { Config } from "./types"
 ```
 
 不推荐写法
 ```typescript
-import type { Config } from "./types"
-import { Parser } from "./parser"
-import { Formatter } from "./formatter"
-import { Validator } from "./validator"
+import * as parser from "./parser"
+export * from "./parser"
+```
 
-function registerFeatures(config: Config): void {
-  new Parser().register(config)
-  new Formatter().register(config)
-  new Validator().register(config)
-}
+### 类型导入导出使用 `type` 形式
 
-export { registerFeatures }
+> 只用作类型的导入和导出，使用 `import type` / `export type` 形式。同一条语句里同时有类型和值时，拆成 `import type` 与普通 `import`、`export type` 与普通 `export` 分别书写，不把类型和值混在一条普通 `import` / `export` 里。
+
+推荐写法
+```typescript
+import { parseConfig } from "./parser"
+import type { Config, RequestOptions } from "./types"
+```
+
+不推荐写法
+```typescript
+import { parseConfig, Config, RequestOptions } from "./parser"
 ```
 
 ## 条件语句规则
@@ -226,3 +235,24 @@ for (const roleName of roleSet) {
 }
 ```
 
+### 串行异步循环使用 `for...of` 配合 `await`
+
+> 需要逐项等待上一项异步完成再处理下一项时，使用 `for...of` 配合 `await`。不需要串行、各项之间互不依赖时，使用 `Promise.all` 配合数组方法并发处理。
+
+推荐写法
+```typescript
+for (const task of taskList) {
+  await runTask(task)
+}
+```
+
+### 并发异步使用 `Promise.all` 配合数组方法
+
+> 多项异步之间互不依赖、可以同时开始时，使用 `Promise.all` 配合数组方法并发处理。各项异步在数组方法回调里创建，由 `Promise.all` 统一等待结果。
+
+推荐写法
+```typescript
+const profileList = await Promise.all(
+  userIdList.map((userId) => loadProfile(userId)),
+)
+```

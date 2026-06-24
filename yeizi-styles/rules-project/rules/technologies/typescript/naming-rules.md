@@ -456,8 +456,8 @@ interface RequestOptions {
   timeoutMs: number
 }
 
-interface UploadHandler {
-  upload(): void
+interface EventHandler {
+  handle(): void
 }
 ```
 
@@ -471,8 +471,8 @@ interface requestOptions {
   timeoutMs: number
 }
 
-interface uploadHandler {
-  upload(): void
+interface eventHandler {
+  handle(): void
 }
 ```
 
@@ -512,17 +512,17 @@ app-error.ts
 ```
 
 ```typescript
-interface UploadSource {}
+interface ConfigLoader {}
 ```
 文件名
 ```text
-upload-source.ts
+config-loader.ts
 ```
 
 不推荐写法
 ```text
 AppError.ts
-uploadSource.ts
+configLoader.ts
 types.ts
 ```
 
