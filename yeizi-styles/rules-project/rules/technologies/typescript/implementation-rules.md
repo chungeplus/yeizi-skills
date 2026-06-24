@@ -23,21 +23,31 @@ function parseValue(rawInput?: string): string {
 }
 ```
 
-### 参数不使用 `readonly`
+### 参数签名不写 `readonly`，函数内不直接修改参数
 
-> 函数参数不使用 `readonly` 修饰符。`readonly` 只用于类字段或局部变量，不用于参数签名。
+> 项目内函数参数签名不写 `readonly`。同时，函数内不直接修改参数本身，也不原地修改参数承载的数据。需要变更时，先复制到局部变量或新数据再处理。
 
 推荐写法
 ```typescript
-function processItems(items: Item[]): void {
-  console.log(items.length)
+function sortItemList(itemList: Item[]): Item[] {
+  const nextItemList = [...itemList]
+
+  nextItemList.sort((leftItem, rightItem) => leftItem.order - rightItem.order)
+
+  return nextItemList
 }
 ```
 
 不推荐写法
 ```typescript
-function processItems(items: readonly Item[]): void {
-  console.log(items.length)
+function buildItemNameList(itemList: readonly Item[]): string[] {
+  return itemList.map((item) => item.name)
+}
+
+function sortItemList(itemList: Item[]): Item[] {
+  itemList.sort((leftItem, rightItem) => leftItem.order - rightItem.order)
+
+  return itemList
 }
 ```
 
@@ -105,7 +115,7 @@ throw "输入不能为空"
 
 ### `catch` 里先用类型守卫收窄
 
-> `catch (error)` 收到的 `error` 默认是 `unknown`。先用 `instanceof`、自定义类型谓词或 `typeof` 把它收窄到 `Error` 或业务错误类。不把 `unknown` 直接断成业务类型。
+> `catch (error)` 先用 `instanceof`、自定义类型谓词或 `typeof` 把它收窄到 `Error` 或自定义错误类。不把它直接断成具体类型。
 
 推荐写法
 ```typescript

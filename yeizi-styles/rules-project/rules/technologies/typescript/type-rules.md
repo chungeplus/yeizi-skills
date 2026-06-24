@@ -32,11 +32,11 @@ enum ItemStatus {
 
 推荐写法
 ```typescript
-interface IConfig {
+interface Config {
   value: string
 }
 
-interface IRequestOptions {
+interface RequestOptions {
   timeoutMs: number
 }
 ```
@@ -62,29 +62,29 @@ type RequestMode = "sync" | "async"
 
 type RequestHandler = (requestUrl: string) => Promise<string>
 
-type ConfigSummary = Pick<IConfig, "value">
+type ConfigSummary = Pick<Config, "value">
 ```
 
 不推荐写法
 ```typescript
-interface IRequestMode {
+interface RequestMode {
   value: "sync" | "async"
 }
 
-interface IRequestHandler {
+interface RequestHandler {
   (requestUrl: string): Promise<string>
 }
 ```
 
 ## 类型使用规则
 
-### 禁止使用 `any` 和 `unknown`
+### 不使用 `any` 和 `unknown` 兜底
 
-> 参数、返回值、字段和类型断言写清类型。局部变量可以交给 TypeScript 自己推出来。不使用 `any` 和 `unknown` 兜底。
+> 参数、返回值、字段和类型断言写清类型。不使用 `any` 和 `unknown` 兜底。
 
 推荐写法
 ```typescript
-function getName(config: IConfig): string {
+function getName(config: Config): string {
   return config.value
 }
 
@@ -97,7 +97,8 @@ function getName(config: any): string {
   return config.value
 }
 
-const retryCount: unknown = 0
+const retryCount: any = 0
+const cachedValue: unknown = 0
 ```
 
 ### 类型明确时禁止额外使用泛型
@@ -130,7 +131,7 @@ class WrappedError<TCode extends string = string> extends Error {
 
 ### `as` 只补明确类型
 
-> `as SomeType` 只在你已经明确知道值是什么类型、只是 TypeScript 这里没推出来时使用。不把未校验输入直接断成业务类型。
+> `as SomeType` 只在你已经明确知道值是什么类型、只是 TypeScript 这里没推出来时使用。不把未校验输入直接断成具体类型。
 
 推荐写法
 ```typescript
@@ -147,7 +148,7 @@ function focusButton(): void {
 
 不推荐写法
 ```typescript
-function parseConfig(rawInput: string): IConfig {
-  return rawInput as unknown as IConfig
+function parseConfig(rawInput: string): Config {
+  return rawInput as unknown as Config
 }
 ```
