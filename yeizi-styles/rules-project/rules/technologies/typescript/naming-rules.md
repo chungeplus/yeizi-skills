@@ -51,7 +51,7 @@ const nameList: string[] = []
 
 function processItems(itemList: Item[]): void {}
 
-interface Config {
+interface Container {
   itemList: Item[]
 }
 ```
@@ -63,7 +63,7 @@ const names: string[] = []
 
 function processItems(items: Item[]): void {}
 
-interface Config {
+interface Container {
   items: Item[]
 }
 ```
@@ -170,16 +170,16 @@ function requestParams(info: Config): RequestOptions {
 
 推荐写法
 ```typescript
-async function runCli(): Promise<void> {}
-async function runMigration(): Promise<void> {}
-function runSync(): void {}
+async function runBatchSync(): Promise<void> {}
+async function runDataImport(): Promise<void> {}
+function runMainFlow(): void {}
 ```
 
 不推荐写法
 ```typescript
-async function startCli(): Promise<void> {}
-async function startMigration(): Promise<void> {}
-function startSync(): void {}
+async function startBatchSync(): Promise<void> {}
+async function startDataImport(): Promise<void> {}
+function startMainFlow(): void {}
 ```
 
 ### 已有值用 `get`，外部内容用 `load`
@@ -240,7 +240,7 @@ function setInfo(info: Config): void {}
 ```typescript
 function createContext(): Context {
   return {
-    items: [],
+    itemList: [],
   }
 }
 
@@ -255,7 +255,7 @@ function buildRequestParams(info: Config): RequestOptions {
 ```typescript
 function buildContext(): Context {
   return {
-    items: [],
+    itemList: [],
   }
 }
 
@@ -312,23 +312,19 @@ function buildFooter(): string {
 
 ### 交互式用户选择使用 `prompt`
 
-> 使用 inquirer 等交互式库向用户呈现选择列表并接收用户输入时，使用 `promptXxx` 命名。不使用含义模糊的 `select`、`choose`、`pick` 等泛化动词。
+> 向用户呈现选择并接收输入的交互式函数，使用 `promptXxx` 命名。不使用含义模糊的 `select`、`choose`、`pick` 等泛化动词。
 
 推荐写法
 ```typescript
-async function promptItemList(): Promise<string[]> {
-  return await inquirer.prompt([
-    { type: "list", name: "item" },
-  ])
+async function promptItem(): Promise<string> {
+  return ""
 }
 ```
 
 不推荐写法
 ```typescript
 async function selectItem(): Promise<string> {
-  return await inquirer.prompt([
-    { type: "list", name: "item" },
-  ])
+  return ""
 }
 ```
 
@@ -498,13 +494,9 @@ type requestMode = "sync" | "async"
 
 ## 文件命名规则
 
-### 目录契约优先于通用文件命名
-
-> 当前目录已经有稳定的入口名、门面名或注册文件名时，先沿用目录契约，不用通用文件命名规则改写。
-
 ### 先判断是符号文件还是角色文件
 
-> TypeScript 文件先判断它主要承载单一符号，还是承担目录结构角色。承载单个 class、interface、type、函数或对象式枚举主体的文件，按符号文件处理；目录门面、常量集合、命令装配、类型聚合等按角色文件处理。
+> TypeScript 文件先判断它主要承载单一符号，还是承担目录结构角色。承载单个 class、interface、type、函数或对象式枚举主体的文件，按符号文件处理；目录门面、常量集合、入口装配、类型聚合等按角色文件处理。
 
 ### 符号文件名跟随主符号语义
 
@@ -520,17 +512,17 @@ app-error.ts
 ```
 
 ```typescript
-interface SkillSource {}
+interface UploadSource {}
 ```
 文件名
 ```text
-skill-source.ts
+upload-source.ts
 ```
 
 不推荐写法
 ```text
 AppError.ts
-skillSource.ts
+uploadSource.ts
 types.ts
 ```
 
@@ -540,32 +532,32 @@ types.ts
 
 推荐写法
 ```text
-src/features/skill/index.ts
-src/types/source/index.ts
+src/features/login/index.ts
+src/types/profile/index.ts
 ```
 
 不推荐写法
 ```text
-src/features/skill/skill-index.ts
-src/types/source/source-index.ts
+src/features/login/login-index.ts
+src/types/profile/profile-index.ts
 ```
 
 ### 其他角色文件优先使用语义主题加角色
 
-> 常量集合、命令装配、注册入口等角色文件，优先使用“语义主题 + 角色”命名，如 `platform-directory-names.ts`、`register-commands.ts`。只有当前目录已经完整限定主题，且该文件承担当前目录唯一的同类角色时，才使用 `constants.ts`、`command.ts` 这类纯角色名。
+> 常量集合、装配文件、聚合文件等角色文件，优先使用“语义主题 + 角色”命名，如 `error-codes.ts`、`field-labels.ts`。只有当前目录已经完整限定主题，且该文件承担当前目录唯一的同类角色时，才使用 `constants.ts`、`validator.ts` 这类纯角色名。
 
 推荐写法
 ```text
-src/constants/platform-directory-names.ts
-src/commands/register-commands.ts
-src/apis/github/constants.ts
-src/commands/install/command.ts
+src/constants/error-codes.ts
+src/forms/field-labels.ts
+src/features/login/constants.ts
+src/features/login/validator.ts
 ```
 
 不推荐写法
 ```text
 src/constants/constants.ts
-src/commands/command.ts
+src/forms/forms.ts
 src/tools/utils.ts
 src/shared/common.ts
 ```
@@ -576,14 +568,14 @@ src/shared/common.ts
 
 推荐写法
 ```text
-platform-resolver.ts
-platform-resolver.test.ts
+request-parser.ts
+request-parser.test.ts
 ```
 
 不推荐写法
 ```text
-platform-resolver.spec.ts
-tests/platform-resolver.ts
+request-parser.spec.ts
+tests/request-parser.ts
 ```
 
 

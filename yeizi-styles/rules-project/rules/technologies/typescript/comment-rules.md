@@ -104,7 +104,7 @@ function loadValue(): string {
 
 ### 可复用函数和方法写 `@example`
 
-> 不是所有函数和方法都写 `@example`。只有可复用函数和方法写 `@example`，并且至少写一个。业务复杂、参数多样性大或需要覆盖不同调用结果时，写多个 `@example`。入口流程函数、只服务当前文件的函数，以及没有参数也没有返回值的流程函数不写 `@example`。
+> 不是所有函数和方法都写 `@example`。只有可复用函数和方法写 `@example`，并且至少写一个。逻辑复杂、参数多样性大或需要覆盖不同调用结果时，写多个 `@example`。入口流程函数、只服务当前文件的函数，以及没有参数也没有返回值的流程函数不写 `@example`。
 
 推荐写法
 ```typescript
@@ -121,7 +121,7 @@ function parseValue(rawInput: string): string {
 /**
  * 串联主流程。
  */
-function runCli(): void {}
+function runMainFlow(): void {}
 ```
 
 不推荐写法
@@ -137,9 +137,9 @@ function parseValue(rawInput: string): string {
  * 串联主流程。
  *
  * @example
- * runCli() => 串联主流程
+ * runMainFlow() => 串联主流程
  */
-function runCli(): void {}
+function runMainFlow(): void {}
 ```
 
 ### 同一块内容不写空行
@@ -239,32 +239,32 @@ function getValue(): string {
 
 ### 类型、常量、配置、函数、类、方法使用 `/** */`
 
-> 类型、常量、配置、函数、类、方法统一使用 `/** */`。接口字段、对象成员和类字段需要说明语义时，也使用 `/** */`。
+> 类型、常量、配置、函数、类、方法统一使用 `/** */`。
 
 推荐写法
 ```typescript
 /**
  * 描述 Xxx。
  */
-function runCli(): void {}
+function runMainFlow(): void {}
 
 /**
  * 封装 Xxx 的入口。
  */
-class AppCommand {
+class TaskRunner {
   /**
-   * 执行命令。
+   * 执行流程。
    */
-  public execute(): void {}
+  public run(): void {}
 }
 ```
 
 不推荐写法
 ```typescript
-function runCli(): void {}
+function runMainFlow(): void {}
 
-class AppCommand {
-  public execute(): void {}
+class TaskRunner {
+  public run(): void {}
 }
 ```
 
@@ -276,9 +276,9 @@ class AppCommand {
 
 推荐写法
 ```typescript
-function processItems(items: IConfig[]): void {
+function processItems(itemList: Config[]): void {
   // 保留原始顺序
-  items.forEach((item) => {
+  itemList.forEach((item) => {
     console.log(item.name)
   })
 }
@@ -286,11 +286,11 @@ function processItems(items: IConfig[]): void {
 
 不推荐写法
 ```typescript
-function processItems(items: IConfig[]): void {
+function processItems(itemList: Config[]): void {
   /**
    * 保留原始顺序
    */
-  items.forEach((item) => {
+  itemList.forEach((item) => {
     console.log(item.name)
   })
 }

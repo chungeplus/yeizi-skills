@@ -31,35 +31,37 @@ var retryCount = 0
 ```typescript
 const ErrorCode = {
   CONFIG_MISSING: "CONFIG_MISSING",
+  UNKNOWN: "UNKNOWN",
 } as const
 
 type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode]
 
-interface IConfig {
+interface Config {
   value: string
 }
 
-function parseConfig(content: string): IConfig {
+function parseConfig(content: string): Config {
   return { value: content }
 }
 
 export { ErrorCode, parseConfig }
-export type { ErrorCode, IConfig }
+export type { ErrorCode, Config }
 ```
 
 不推荐写法
 ```typescript
 export const ErrorCode = {
   CONFIG_MISSING: "CONFIG_MISSING",
+  UNKNOWN: "UNKNOWN",
 } as const
 
 export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode]
 
-export interface IConfig {
+export interface Config {
   value: string
 }
 
-export function parseConfig(content: string): IConfig {
+export function parseConfig(content: string): Config {
   return { value: content }
 }
 ```
@@ -75,12 +77,12 @@ export * from "./parser"
 
 不推荐写法
 ```typescript
-import type { IConfig } from "./types"
+import type { Config } from "./types"
 import { Parser } from "./parser"
 import { Formatter } from "./formatter"
 import { Validator } from "./validator"
 
-function registerFeatures(config: IConfig): void {
+function registerFeatures(config: Config): void {
   new Parser().register(config)
   new Formatter().register(config)
   new Validator().register(config)
@@ -172,21 +174,21 @@ switch (status) {
 
 推荐写法
 ```typescript
-let enabledItems = items.filter((item) => item.isEnabled)
+const enabledItemList = itemList.filter((item) => item.isEnabled)
 
-let itemNames = items.map((item) => item.name)
+const itemNameList = itemList.map((item) => item.name)
 
-let hasAdminItem = items.some((item) => item.role === "admin")
+const hasAdminItem = itemList.some((item) => item.role === "admin")
 ```
 
 不推荐写法
 ```typescript
-for (const item of items) {
+for (const item of itemList) {
   console.log(item.name)
 }
 
-for (let index = 0; index < items.length; index += 1) {
-  console.log(items[index].name)
+for (let index = 0; index < itemList.length; index += 1) {
+  console.log(itemList[index].name)
 }
 ```
 
@@ -196,18 +198,18 @@ for (let index = 0; index < items.length; index += 1) {
 
 推荐写法
 ```typescript
-let enabledNames = Object.values(itemMap)
+const enabledNameList = Object.values(itemMap)
   .filter((item) => item.isEnabled)
   .map((item) => item.name)
 
-let enabledRoleEntries = Object.entries(roleMap)
+const enabledRoleEntryList = Object.entries(roleMap)
   .filter(([, roleName]) => roleName.length > 0)
 
-let roleNameList = Array.from(roleSet)
+const roleNameList = Array.from(roleSet)
   .map((roleName) => roleName.trim())
   .filter((roleName) => roleName.length > 0)
 
-let letterList = Array.from(nameText)
+const letterList = Array.from(nameText)
   .filter((letter) => letter !== " ")
 ```
 
