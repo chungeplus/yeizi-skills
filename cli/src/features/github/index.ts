@@ -1,2 +1,2 @@
 export { downloadRepository } from "./download-repository"
-export { loadGitHubSkillManifest, loadSkillFiles } from "./github-source"
+export { loadGitHubSkillManifest } from "./github-source"

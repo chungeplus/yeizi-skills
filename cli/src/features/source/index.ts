@@ -1,1 +1,1 @@
-export * from "./github-skill-source"
+export { loadGitHubSkillManifest } from "../github"
