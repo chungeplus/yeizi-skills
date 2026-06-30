@@ -1,1 +1,0 @@
-export { UpdateCommand } from "./command"
