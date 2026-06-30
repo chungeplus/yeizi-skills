@@ -84,9 +84,9 @@ function getAppErrorDefinition(code: AppErrorCode): AppErrorDefinition {
       title: "已取消操作",
       buildMessage: () => "已取消本次操作。",
     },
-    [AppErrorCodeValues.REMOTE_SKILL_CATALOG_INVALID]: {
-      title: "远端数据异常",
-      buildMessage: () => "远端技能目录格式不正确。",
+    [AppErrorCodeValues.REMOTE_REPOSITORY_EMPTY]: {
+      title: "远端仓库异常",
+      buildMessage: () => "远端仓库未发现任何技能，请检查仓库内容。",
     },
     [AppErrorCodeValues.REMOTE_SKILL_DOCUMENT_INVALID]: {
       title: "远端数据异常",

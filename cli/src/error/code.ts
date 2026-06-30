@@ -51,9 +51,9 @@ const AppErrorCode = {
    */
   PROMPT_CANCELLED: "prompt-cancelled",
   /**
-   * 远端技能目录格式不正确。
+   * 远端仓库根目录下没有任何 yeizi-* 子目录（仓库异常）。
    */
-  REMOTE_SKILL_CATALOG_INVALID: "remote-skill-catalog-invalid",
+  REMOTE_REPOSITORY_EMPTY: "remote-repository-empty",
   /**
    * 远端 Skill 文档格式不正确。
    */
