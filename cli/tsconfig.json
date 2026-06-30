@@ -11,13 +11,15 @@
     },
     "types": [
       "node",
-      "bun"
+      "bun",
+      "bun-types/test-globals"
     ],
     "strict": true,
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
   "include": [
