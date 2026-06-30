@@ -4,7 +4,6 @@ import { Command } from "commander"
 
 import { InstallCommand } from "@/commands/install"
 import { ListCommand } from "@/commands/list"
-import { UpdateCommand } from "@/commands/update"
 import { AppError, AppErrorCode, handleFatalError } from "@/error"
 import { loadPackageJsonInfo } from "@/tools/package-json/load-info"
 
@@ -33,7 +32,6 @@ async function createProgram(): Promise<Command> {
 
   new ListCommand().register(program)
   new InstallCommand().register(program)
-  new UpdateCommand().register(program)
 
   return program
 }
