@@ -7,6 +7,7 @@ import type { SkillComparisonRow } from "@/types/skill"
 import boxen from "boxen"
 import chalk from "chalk"
 import { AppError, AppErrorCode } from "@/error"
+import { renderSummaryDisplay } from "@/features/display"
 import { getRepositoryDirectoryPath, scanSkillEntryList } from "@/features/github"
 import { buildSelectedPlatformList, parsePlatformNameList, PlatformConfigService, promptPlatformNameList } from "@/features/platform"
 import { buildComparisonRows } from "@/features/skill"
@@ -182,18 +183,23 @@ class ListCommand implements BaseCommand<ListCommandOptions> {
     const selectedPlatformList = buildSelectedPlatformList(
       this.platformConfig.getPlatformList(),
       selectedPlatformNameList,
+      true,
     )
 
     const repositoryDirectoryPath = await getRepositoryDirectoryPath()
 
     try {
-      const remoteSkillEntryList = await scanSkillEntryList(repositoryDirectoryPath)
+      const { skillEntryList: remoteSkillEntryList, warningList } = await scanSkillEntryList(repositoryDirectoryPath)
       const comparisonRowList = await buildComparisonRows(
         remoteSkillEntryList,
         selectedPlatformList,
       )
 
       this.renderComparisonTable("技能列表", comparisonRowList)
+
+      if (warningList.length > 0) {
+        renderSummaryDisplay("提示", warningList)
+      }
     }
     finally {
       await this.removeRepositoryDirectory(repositoryDirectoryPath)

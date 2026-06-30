@@ -7,6 +7,8 @@ type AppErrorCodeType = (typeof AppErrorCode)[keyof typeof AppErrorCode]
 
 /**
  * 错误定义结构。
+ *
+ * `buildMessage` 故意使用方法简写而非函数类型属性，让具体错误条目可以把参数类型收窄到 `AppErrorParamsMap[code]` 后直接声明在签名上，从而无需在函数体内使用 `as` 类型断言。
  */
 interface AppErrorDefinition {
   /**
@@ -16,8 +18,11 @@ interface AppErrorDefinition {
 
   /**
    * 根据参数构建错误消息。
+   *
+   * 故意使用方法简写而非函数类型属性，让具体错误条目的 `buildMessage` 可以把入参收窄到 `AppErrorParamsMap[code]` 后直接声明在签名上，从而无需在函数体内使用 `as` 类型断言。
    */
-  buildMessage: (params: AppErrorParamsMap[AppErrorCodeType]) => string
+  // eslint-disable-next-line ts/method-signature-style
+  buildMessage(params: AppErrorParamsMap[AppErrorCodeType]): string
 }
 
 /**

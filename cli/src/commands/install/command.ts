@@ -239,7 +239,7 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
     const repositoryDirectoryPath = await getRepositoryDirectoryPath()
 
     try {
-      const remoteSkillEntryList = await scanSkillEntryList(repositoryDirectoryPath)
+      const { skillEntryList: remoteSkillEntryList, warningList } = await scanSkillEntryList(repositoryDirectoryPath)
       const selectedSkillNameList = await this.buildSelectedSkillNameList(
         remoteSkillEntryList,
         commandOptions.skillNameList,
@@ -257,6 +257,10 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
       const summaryMessageList = this.buildInstallSummaryMessageList(installResultList)
 
       renderSummaryDisplay("安装完成", summaryMessageList)
+
+      if (warningList.length > 0) {
+        renderSummaryDisplay("提示", warningList)
+      }
     }
     finally {
       await this.removeRepositoryDirectory(repositoryDirectoryPath)

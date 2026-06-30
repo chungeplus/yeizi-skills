@@ -41,20 +41,25 @@ async function getRepositoryDirectoryPath(): Promise<string> {
  * 扫描本地已下载仓库目录，收集所有 `yeizi-` 前缀子目录里的技能条目。
  *
  * 每个候选子目录读取根目录下的 `SKILL.md`，按 gray-matter + Zod schema 解析 frontmatter，得到 `{ name, description }`。
- * 单个 `SKILL.md` 缺失会跳过；解析失败会被吞掉并继续处理其它技能，避免一个坏文档阻塞整次扫描。
+ * 单个 `SKILL.md` 缺失或 frontmatter 解析失败会跳过该候选目录，并以中文 warning 字符串汇报，避免一个坏文档阻塞整次扫描。
  * 扫描结果按 name 升序返回。
  *
  * @param repositoryDirectoryPath - 已下载到本地的仓库根目录路径。
- * @returns 仓库内合法的技能条目列表，按 name 升序。
+ * @returns 仓库扫描结果，包含技能条目列表（按 name 升序）和被跳过候选目录的 warning 字符串列表。
  * @throws 仓库根目录下没有任何 `yeizi-` 前缀子目录时抛出 {@link AppError}（错误码 `REMOTE_REPOSITORY_EMPTY`）。
  *
  * @example
  * ```typescript
  * await scanSkillEntryList("/tmp/yeizi-skills-repo-abc123")
- * // [{ name: "yeizi-demo", description: "示例技能" }]
+ * // {
+ * //   skillEntryList: [{ name: "yeizi-demo", description: "示例技能" }],
+ * //   warningList: ['跳过技能候选目录"yeizi-broken"：frontmatter 解析失败。'],
+ * // }
  * ```
  */
-async function scanSkillEntryList(repositoryDirectoryPath: string): Promise<SkillEntry[]> {
+async function scanSkillEntryList(
+  repositoryDirectoryPath: string,
+): Promise<{ skillEntryList: SkillEntry[], warningList: string[] }> {
   const directoryEntryList = await readdir(repositoryDirectoryPath, { withFileTypes: true })
   const candidateEntryList = directoryEntryList.filter(
     directoryEntryItem => directoryEntryItem.isDirectory() && directoryEntryItem.name.startsWith("yeizi-"),
@@ -65,11 +70,13 @@ async function scanSkillEntryList(repositoryDirectoryPath: string): Promise<Skil
   }
 
   const skillEntryList: SkillEntry[] = []
+  const warningList: string[] = []
 
   for (const candidateEntryItem of candidateEntryList) {
     const skillDocumentPath = join(repositoryDirectoryPath, candidateEntryItem.name, "SKILL.md")
 
     if (!existsSync(skillDocumentPath)) {
+      warningList.push(`跳过技能候选目录“${candidateEntryItem.name}”：缺少 SKILL.md。`)
       continue
     }
 
@@ -84,6 +91,7 @@ async function scanSkillEntryList(repositoryDirectoryPath: string): Promise<Skil
       })
     }
     catch {
+      warningList.push(`跳过技能候选目录“${candidateEntryItem.name}”：frontmatter 解析失败。`)
       continue
     }
   }
@@ -92,7 +100,7 @@ async function scanSkillEntryList(repositoryDirectoryPath: string): Promise<Skil
     leftSkillEntryItem.name.localeCompare(rightSkillEntryItem.name),
   )
 
-  return skillEntryList
+  return { skillEntryList, warningList }
 }
 
 export { getRepositoryDirectoryPath, scanSkillEntryList }

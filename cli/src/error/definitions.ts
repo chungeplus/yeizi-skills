@@ -5,6 +5,8 @@ import { AppErrorCode as AppErrorCodeValues } from "./code"
 /**
  * 根据错误代码获取统一错误定义。
  *
+ * 每个 `buildMessage` 在函数签名上显式标注它消费的参数类型，由 `AppErrorParamsMap` 按错误码索引得到具体形状，避免在函数体内使用 `as` 类型断言再次收窄。
+ *
  * @param code - 错误代码。
  * @returns 对应的错误定义。
  *
@@ -22,11 +24,8 @@ function getAppErrorDefinition(code: AppErrorCode): AppErrorDefinition {
     },
     [AppErrorCodeValues.CLI_USAGE_INVALID]: {
       title: "命令用法错误",
-      buildMessage: (params) => {
-        const cliUsageInvalidParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.CLI_USAGE_INVALID]
-
-        return cliUsageInvalidParams.detailMessage
-      },
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.CLI_USAGE_INVALID]) =>
+        params.detailMessage,
     },
     [AppErrorCodeValues.PACKAGE_BIN_CONFIG_MISSING]: {
       title: "程序配置错误",
@@ -46,19 +45,13 @@ function getAppErrorDefinition(code: AppErrorCode): AppErrorDefinition {
     },
     [AppErrorCodeValues.PLATFORM_NOT_SUPPORTED]: {
       title: "平台不受支持",
-      buildMessage: (params) => {
-        const platformNotSupportedParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.PLATFORM_NOT_SUPPORTED]
-
-        return `平台“${platformNotSupportedParams.platformName}”不受支持。`
-      },
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.PLATFORM_NOT_SUPPORTED]) =>
+        `平台“${params.platformName}”不受支持。`,
     },
     [AppErrorCodeValues.PLATFORM_NOT_FOUND]: {
       title: "平台不存在",
-      buildMessage: (params) => {
-        const platformNotFoundParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.PLATFORM_NOT_FOUND]
-
-        return `以下平台不存在：${platformNotFoundParams.platformNameList.join("、")}。`
-      },
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.PLATFORM_NOT_FOUND]) =>
+        `以下平台不存在：${params.platformNameList.join("、")}。`,
     },
     [AppErrorCodeValues.SKILL_OPTION_EMPTY]: {
       title: "参数错误",
@@ -66,14 +59,12 @@ function getAppErrorDefinition(code: AppErrorCode): AppErrorDefinition {
     },
     [AppErrorCodeValues.SKILL_NOT_FOUND]: {
       title: "技能不存在",
-      buildMessage: (params) => {
-        const skillNotFoundParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.SKILL_NOT_FOUND]
-
-        if (skillNotFoundParams.skillNameList.length === 1) {
-          return `技能“${skillNotFoundParams.skillNameList[0]}”不存在。`
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.SKILL_NOT_FOUND]) => {
+        if (params.skillNameList.length === 1) {
+          return `技能“${params.skillNameList[0]}”不存在。`
         }
 
-        return `以下技能不存在：${skillNotFoundParams.skillNameList.join("、")}。`
+        return `以下技能不存在：${params.skillNameList.join("、")}。`
       },
     },
     [AppErrorCodeValues.PROMPT_UNAVAILABLE]: {
@@ -94,19 +85,13 @@ function getAppErrorDefinition(code: AppErrorCode): AppErrorDefinition {
     },
     [AppErrorCodeValues.FILE_COPY_FAILED]: {
       title: "文件复制失败",
-      buildMessage: (params) => {
-        const fileCopyFailedParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.FILE_COPY_FAILED]
-
-        return `从“${fileCopyFailedParams.sourcePath}”复制到“${fileCopyFailedParams.targetPath}”失败。`
-      },
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.FILE_COPY_FAILED]) =>
+        `从“${params.sourcePath}”复制到“${params.targetPath}”失败。`,
     },
     [AppErrorCodeValues.DIRECTORY_REMOVE_FAILED]: {
       title: "删除目录失败",
-      buildMessage: (params) => {
-        const directoryRemoveFailedParams = params as AppErrorParamsMap[typeof AppErrorCodeValues.DIRECTORY_REMOVE_FAILED]
-
-        return `删除临时目录“${directoryRemoveFailedParams.directoryPath}”失败。`
-      },
+      buildMessage: (params: AppErrorParamsMap[typeof AppErrorCodeValues.DIRECTORY_REMOVE_FAILED]) =>
+        `删除临时目录“${params.directoryPath}”失败。`,
     },
   } satisfies Record<AppErrorCode, AppErrorDefinition>)[code]
 }
