@@ -55,10 +55,6 @@ const AppErrorCode = {
    */
   REMOTE_REPOSITORY_EMPTY: "remote-repository-empty",
   /**
-   * 远端 Skill 文档格式不正确。
-   */
-  REMOTE_SKILL_DOCUMENT_INVALID: "remote-skill-document-invalid",
-  /**
    * 文件复制失败。
    */
   FILE_COPY_FAILED: "file-copy-failed",

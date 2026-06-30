@@ -31,7 +31,6 @@ interface AppErrorParamsMap {
   [AppErrorCode.PROMPT_UNAVAILABLE]: undefined
   [AppErrorCode.PROMPT_CANCELLED]: undefined
   [AppErrorCode.REMOTE_REPOSITORY_EMPTY]: undefined
-  [AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID]: undefined
   [AppErrorCode.FILE_COPY_FAILED]: { sourcePath: string, targetPath: string }
   [AppErrorCode.DIRECTORY_REMOVE_FAILED]: { directoryPath: string }
 }

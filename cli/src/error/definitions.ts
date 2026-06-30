@@ -77,10 +77,6 @@ const errorDefinitionMap: {
     title: "远端仓库异常",
     buildMessage: () => "远端仓库未发现任何技能，请检查仓库内容。",
   },
-  [AppErrorCode.REMOTE_SKILL_DOCUMENT_INVALID]: {
-    title: "远端数据异常",
-    buildMessage: () => "技能文档 frontmatter 格式不正确。",
-  },
   [AppErrorCode.FILE_COPY_FAILED]: {
     title: "文件复制失败",
     buildMessage: (params: AppErrorParamsMap[typeof AppErrorCode.FILE_COPY_FAILED]) =>
