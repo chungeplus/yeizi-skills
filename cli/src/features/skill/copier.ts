@@ -1,6 +1,7 @@
 import type { PlatformItem } from "@/types/platform"
 import type { SkillEntry, SkillInstallResult } from "@/types/skill"
 
+import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { AppError, AppErrorCode } from "@/error"
@@ -37,6 +38,21 @@ async function copySkillEntryToPlatformItem(
 ): Promise<SkillInstallResult> {
   const skillSourceDirectoryPath = resolve(repositoryDirectoryPath, skillEntry.name)
   const targetSkillDirectoryPath = resolve(platformItem.platformSkillDirectoryPath, skillEntry.name)
+
+  // B4: 前置检查 source，避免 race / mid-flight 删除导致 raw fs error
+  if (!existsSync(skillSourceDirectoryPath)) {
+    return {
+      platformName: platformItem.platformName,
+      skillName: skillEntry.name,
+      status: SkillInstallStatus.FAILED,
+      error: new AppError(AppErrorCode.FILE_COPY_FAILED, {
+        params: {
+          sourcePath: `仓库临时目录/${skillEntry.name}`,
+          targetPath: targetSkillDirectoryPath,
+        },
+      }),
+    }
+  }
 
   try {
     const isContentIdentical = await compareDirectoryContentHash(
