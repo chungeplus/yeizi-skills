@@ -17,6 +17,8 @@ export default antfu(
       "jsdoc/require-returns-check": "off",
     },
     ignores: [
+      "AGENTS.md",
+      "CLAUDE.md",
       "docs/superpowers/**",
       "dist/**",
     ],
