@@ -22,9 +22,8 @@ async function loadPackageJsonInfo(): Promise<ReturnType<typeof packageJsonInfoS
 
   try {
     const packageJsonContent = await readFile(packageJsonPath, "utf8")
-    const packageJsonPayload: unknown = JSON.parse(packageJsonContent)
 
-    return packageJsonInfoSchema.parse(packageJsonPayload)
+    return packageJsonInfoSchema.parse(JSON.parse(packageJsonContent))
   }
   catch (error) {
     if (error instanceof Error) {
