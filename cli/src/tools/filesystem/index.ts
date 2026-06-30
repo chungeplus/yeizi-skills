@@ -1,1 +1,1 @@
-export { copyDirectory, removeDirectory } from "./directory"
+export { compareDirectoryContentHash, copyDirectory, removeDirectory } from "./directory"
