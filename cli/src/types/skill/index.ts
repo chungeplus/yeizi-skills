@@ -1,5 +1,5 @@
-export type { SkillComparisonRow, SkillComparisonStatusValue, SkillEntry } from "./comparison"
+export type { SkillComparisonRow, SkillEntry } from "./comparison"
 export type { SkillFrontmatter } from "./frontmatter"
-export type { SkillInstallResult, SkillInstallStatusValue } from "./install-result"
+export type { SkillInstallResult } from "./install-result"
 export { SkillComparisonStatus } from "@/constants/skill/comparison-status"
 export { SkillInstallStatus } from "@/constants/skill/install-status"

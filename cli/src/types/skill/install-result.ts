@@ -3,11 +3,6 @@ import type { AppError } from "@/error"
 import { SkillInstallStatus } from "@/constants/skill/install-status"
 
 /**
- * 技能安装结果状态值类型。
- */
-type SkillInstallStatusValue = (typeof SkillInstallStatus)[keyof typeof SkillInstallStatus]
-
-/**
  * 单个技能在单个平台上安装成功的结果。
  */
 interface SuccessSkillInstallResult {
@@ -77,4 +72,4 @@ interface FailedSkillInstallResult {
  */
 type SkillInstallResult = SuccessSkillInstallResult | NoChangeSkillInstallResult | FailedSkillInstallResult
 
-export type { SkillInstallResult, SkillInstallStatusValue }
+export type { SkillInstallResult }
