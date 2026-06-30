@@ -1,155 +1,94 @@
 import type { PlatformItem } from "@/types/platform"
-import type { SkillComparisonRow, SkillItem } from "@/types/skill"
+import type { SkillComparisonRow, SkillEntry } from "@/types/skill"
 
-import { readFile } from "node:fs/promises"
-import { join } from "node:path"
-import semver from "semver"
+import { existsSync } from "node:fs"
+import { readdir } from "node:fs/promises"
 
 import { SkillComparisonStatus } from "@/types/skill"
-import { parseSkillVersion } from "./document-parser"
 
 /**
- * 组装平台与技能的比较结果。
+ * 远端技能名称前缀，本地子目录名称需要匹配该前缀才被视为受管技能。
+ */
+const YEIZI_SKILL_NAME_PREFIX = "yeizi-"
+
+/**
+ * 组装远端技能与本地各平台目录的比较结果行。
  *
- * @param skillList - 远端技能清单条目列表。
- * @param platformList - 平台目标目录列表。
- * @returns 比较结果行列表。
+ * 行集合由远端技能与各选中平台本地 yeizi-* 子目录并集而成，状态按 4 态判定：
+ * - 平台 skills 目录缺失：远端每个技能为该平台推一行 MISSING_SKILLS_DIRECTORY，目录都不在不再展开本地孤儿。
+ * - 远端技能在本地存在：INSTALLED。
+ * - 远端技能在本地缺失：NOT_INSTALLED。
+ * - 本地存在但远端已无：REMOTE_REMOVED，description 留空。
+ *
+ * @param remoteSkillEntryList - 远端技能条目列表。
+ * @param selectedPlatformList - 当前选中的平台列表。
+ * @returns 平台与技能交叉的比较结果行列表。
  *
  * @example
  * ```typescript
  * await buildComparisonRows(
- *   [{ skillName: "yeizi-demo", skillVersion: "1.0.0" }],
- *   [{ platformName: "codex", platformSkillDirectoryPath: "/Users/demo/.codex/skills" }],
+ *   [{ name: "yeizi-demo", description: "示例技能" }],
+ *   [{ platformName: "codex", platformHomeDirectoryPath: "/Users/demo/.codex", platformSkillDirectoryPath: "/Users/demo/.codex/skills" }],
  * )
- * // [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.0.0", localVersion: null, statusMessage: "该技能尚未安装。" }]
+ * // [{ platformName: "codex", skillName: "yeizi-demo", description: "示例技能", statusMessage: "未安装" }]
  * ```
  */
 async function buildComparisonRows(
-  skillList: SkillItem[],
-  platformList: PlatformItem[],
+  remoteSkillEntryList: SkillEntry[],
+  selectedPlatformList: PlatformItem[],
 ): Promise<SkillComparisonRow[]> {
-  const resultRowList: SkillComparisonRow[] = []
+  const remoteSkillEntryByNameMap = new Map(
+    remoteSkillEntryList.map(remoteSkillEntryItem => [remoteSkillEntryItem.name, remoteSkillEntryItem]),
+  )
 
-  for (const platformItem of platformList) {
-    for (const skillItem of skillList) {
-      const localSkillDocumentPath = join(
-        platformItem.platformSkillDirectoryPath,
-        skillItem.skillName,
-        "SKILL.md",
-      )
+  const comparisonRowList: SkillComparisonRow[] = []
 
-      try {
-        const localSkillDocumentContent = await readFile(localSkillDocumentPath, "utf8")
-        const localSkillVersion = parseSkillVersion(localSkillDocumentContent)
-        let statusMessage: SkillComparisonRow["statusMessage"] = SkillComparisonStatus.UP_TO_DATE
-
-        if (semver.lt(localSkillVersion, skillItem.skillVersion)) {
-          statusMessage = SkillComparisonStatus.UPDATE_AVAILABLE
-        }
-
-        resultRowList.push({
-          platformName: platformItem.platformName,
-          skillName: skillItem.skillName,
-          remoteVersion: skillItem.skillVersion,
-          localVersion: localSkillVersion,
-          statusMessage,
-        } satisfies SkillComparisonRow)
-      }
-      catch {
-        resultRowList.push({
-          platformName: platformItem.platformName,
-          skillName: skillItem.skillName,
-          remoteVersion: skillItem.skillVersion,
-          localVersion: null,
-          statusMessage: SkillComparisonStatus.NOT_INSTALLED,
-        } satisfies SkillComparisonRow)
-      }
+  for (const platformItem of selectedPlatformList) {
+    if (!existsSync(platformItem.platformSkillDirectoryPath)) {
+      const missingDirectoryRowList = remoteSkillEntryList.map(remoteSkillEntryItem => ({
+        platformName: platformItem.platformName,
+        skillName: remoteSkillEntryItem.name,
+        description: remoteSkillEntryItem.description,
+        statusMessage: SkillComparisonStatus.MISSING_SKILLS_DIRECTORY,
+      } satisfies SkillComparisonRow))
+      comparisonRowList.push(...missingDirectoryRowList)
+      continue
     }
+
+    const directoryEntryList = await readdir(platformItem.platformSkillDirectoryPath, { withFileTypes: true })
+    const localSkillNameSet = new Set(
+      directoryEntryList
+        .filter(directoryEntryItem => directoryEntryItem.isDirectory() && directoryEntryItem.name.startsWith(YEIZI_SKILL_NAME_PREFIX))
+        .map(directoryEntryItem => directoryEntryItem.name),
+    )
+
+    const remoteRowList = remoteSkillEntryList.map((remoteSkillEntryItem) => {
+      let statusMessage: SkillComparisonRow["statusMessage"] = SkillComparisonStatus.NOT_INSTALLED
+      if (localSkillNameSet.has(remoteSkillEntryItem.name)) {
+        statusMessage = SkillComparisonStatus.INSTALLED
+      }
+
+      return {
+        platformName: platformItem.platformName,
+        skillName: remoteSkillEntryItem.name,
+        description: remoteSkillEntryItem.description,
+        statusMessage,
+      } satisfies SkillComparisonRow
+    })
+    comparisonRowList.push(...remoteRowList)
+
+    const orphanRowList = Array.from(localSkillNameSet)
+      .filter(localSkillNameItem => !remoteSkillEntryByNameMap.has(localSkillNameItem))
+      .map(localSkillNameItem => ({
+        platformName: platformItem.platformName,
+        skillName: localSkillNameItem,
+        description: "",
+        statusMessage: SkillComparisonStatus.REMOTE_REMOVED,
+      } satisfies SkillComparisonRow))
+    comparisonRowList.push(...orphanRowList)
   }
 
-  return resultRowList
+  return comparisonRowList
 }
 
-/**
- * 组装需要更新的比较结果行。
- *
- * @param comparisonRowList - 完整比较结果行列表。
- * @returns 仅包含可更新项的结果行列表。
- *
- * @example
- * ```typescript
- * buildUpdateRows([
- *   {
- *     platformName: "codex",
- *     skillName: "yeizi-demo",
- *     remoteVersion: "1.1.0",
- *     localVersion: "1.0.0",
- *     statusMessage: "有可用更新"
- *   }
- * ])
- * // [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.1.0", localVersion: "1.0.0", statusMessage: "有可用更新" }]
- * ```
- */
-function buildUpdateRows(comparisonRowList: SkillComparisonRow[]): SkillComparisonRow[] {
-  return comparisonRowList.filter(
-    comparisonRow =>
-      comparisonRow.statusMessage === SkillComparisonStatus.UPDATE_AVAILABLE
-      || comparisonRow.statusMessage === SkillComparisonStatus.LOCAL_SKILL_INVALID,
-  )
-}
-
-/**
- * 组装可更新技能名称列表。
- *
- * @param comparisonRowList - 可更新结果行列表。
- * @returns 去重后的技能名称列表。
- *
- * @example
- * ```typescript
- * buildUpdateSkillNameList([
- *   {
- *     platformName: "codex",
- *     skillName: "yeizi-demo",
- *     remoteVersion: "1.1.0",
- *     localVersion: "1.0.0",
- *     statusMessage: "有可用更新"
- *   }
- * ])
- * // ["yeizi-demo"]
- * ```
- */
-function buildUpdateSkillNameList(comparisonRowList: SkillComparisonRow[]): string[] {
-  return Array.from(new Set(comparisonRowList.map(comparisonRow => comparisonRow.skillName)))
-}
-
-/**
- * 组装用户选中后的结果行列表。
- *
- * @param comparisonRowList - 可选结果行列表。
- * @param selectedSkillNameList - 选中的技能名称列表。
- * @returns 过滤后的结果行列表。
- *
- * @example
- * ```typescript
- * buildSelectedRows(
- *   [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.1.0", localVersion: "1.0.0", statusMessage: "有可用更新" }],
- *   ["yeizi-demo"],
- * )
- * // [{ platformName: "codex", skillName: "yeizi-demo", remoteVersion: "1.1.0", localVersion: "1.0.0", statusMessage: "有可用更新" }]
- * ```
- */
-function buildSelectedRows(
-  comparisonRowList: SkillComparisonRow[],
-  selectedSkillNameList: string[],
-): SkillComparisonRow[] {
-  const selectedSkillNameSet = new Set(selectedSkillNameList)
-
-  return comparisonRowList.filter(comparisonRow => selectedSkillNameSet.has(comparisonRow.skillName))
-}
-
-export {
-  buildComparisonRows,
-  buildSelectedRows,
-  buildUpdateRows,
-  buildUpdateSkillNameList,
-}
+export { buildComparisonRows }

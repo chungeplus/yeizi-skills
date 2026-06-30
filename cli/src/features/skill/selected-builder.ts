@@ -1,31 +1,36 @@
-import type { SkillItem } from "@/types/skill"
+import type { SkillEntry } from "@/types/skill"
 
 import { AppError, AppErrorCode } from "@/error"
 
 /**
- * 根据技能名称组装完整的技能清单条目。
+ * 根据技能名称组装完整的技能条目列表。
  *
- * @param skillList - 远端技能条目列表。
- * @param selectedSkillNameList - 选中的技能名称列表。
- * @returns 对应的技能条目列表。
- * @throws 任意选中技能在清单中找不到时抛出错误。
+ * 流程：把远端技能按 name 建索引，过滤出选中名单中缺失的技能名，若有缺失抛 {@link AppError}；
+ * 否则按 selectedSkillNameList 顺序映射回 SkillEntry。
+ *
+ * @param skillEntryList - 远端技能条目列表。
+ * @param selectedSkillNameList - 用户选中的技能名称列表。
+ * @returns 与 selectedSkillNameList 顺序对应的技能条目列表。
+ * @throws 任意选中技能在远端条目中找不到时抛出 {@link AppError}。
  *
  * @example
  * ```typescript
  * buildSelectedSkillList(
- *   [{ skillName: 'typescript', skillVersion: '1.0.0' }],
- *   ['typescript']
+ *   [{ name: "yeizi-demo", description: "示例技能" }],
+ *   ["yeizi-demo"],
  * )
- * // [{ skillName: 'typescript', skillVersion: '1.0.0' }]
+ * // [{ name: "yeizi-demo", description: "示例技能" }]
  * ```
  */
 function buildSelectedSkillList(
-  skillList: SkillItem[],
+  skillEntryList: SkillEntry[],
   selectedSkillNameList: string[],
-): SkillItem[] {
-  const skillItemBySkillNameMap = new Map(skillList.map(skillItem => [skillItem.skillName, skillItem]))
+): SkillEntry[] {
+  const skillEntryByNameMap = new Map(
+    skillEntryList.map(skillEntryItem => [skillEntryItem.name, skillEntryItem]),
+  )
   const missingSkillNameList = selectedSkillNameList.filter(
-    skillNameItem => !skillItemBySkillNameMap.has(skillNameItem),
+    selectedSkillNameItem => !skillEntryByNameMap.has(selectedSkillNameItem),
   )
 
   if (missingSkillNameList.length > 0) {
@@ -35,7 +40,7 @@ function buildSelectedSkillList(
   }
 
   return selectedSkillNameList.map(
-    skillNameItem => skillItemBySkillNameMap.get(skillNameItem)!,
+    selectedSkillNameItem => skillEntryByNameMap.get(selectedSkillNameItem)!,
   )
 }
 
