@@ -224,9 +224,406 @@ async function runWithSkillRepository<T>(
 - ❌ .bak-{ts} 自动回收（未来迭代）
 - ❌ uninstall --backup / uninstall --dry-run（不存在 uninstall 命令）
 
-## 9. 关联文档
+## 9. 命名与文件落地
+
+本节**逐项**给出 §3 修复项的最终目录路径、文件命名、桶导出关系。所有命名遵循 cli/CLAUDE.md 命名规则（小写中划线文件名 + 主题名词、`List`/`Map`/`Set` 后缀、`Item`/`Key`/`Value` 单项、`is`/`has`/`can` 布尔前缀、动作+对象函数名）。
+
+### 9.1 目录落位总览（refactor 后）
+
+```
+cli/src/
+├── bin/
+│   └── cli.ts                       (不变)
+├── commands/
+│   ├── install/
+│   │   ├── command.ts              (A6/A5/F4 修)
+│   │   └── index.ts                (不变)
+│   └── list/
+│       ├── command.ts              (A5 修)
+│       └── index.ts                (不变)
+├── config/
+│   ├── platform/
+│   │   └── index.ts                (F3: 单文件 platform.ts → index.ts)
+│   ├── repository/
+│   │   └── index.ts                (F3: 单文件 repository.ts → index.ts)
+│   └── index.ts                    (F3: 桶 re-export 两个子目录)
+├── constants/
+│   └── skill/
+│       ├── comparison-status.ts    (不变)
+│       ├── install-status.ts        (不变)
+│       └── index.ts                (不变)
+├── error/
+│   ├── app.ts                      (不变)
+│   ├── code.ts                     (C1 删除 REMOTE_SKILL_DOCUMENT_INVALID)
+│   ├── commander-adapter.ts        (A2 修)
+│   ├── definitions.ts              (A3/A7 修)
+│   ├── display.ts                  (不变)
+│   ├── fatal-handler.ts            (不变)
+│   └── index.ts                    (不变)
+├── features/
+│   ├── display/
+│   │   ├── command-summary.ts      (不变)
+│   │   └── index.ts                (不变)
+│   ├── github/
+│   │   ├── index.ts                (新增 runWithSkillRepository 桶导出)
+│   │   ├── load-manifest-config.ts (不变，本次任务不删——已删除前 PR 删过)
+│   │   ├── repository.ts           (B5 修：warning 文案精确字段)
+│   │   └── run-with-skill-repository.ts  (新文件)
+│   ├── platform/
+│   │   ├── config.ts               (F4 修：去深拷贝)
+│   │   ├── index.ts                (A5 调整：buildSelectedPlatformList 移出后)
+│   │   ├── prompt.ts               (不变)
+│   │   └── resolver.ts             (B1 修)
+│   └── skill/
+│       ├── comparison-builder.ts   (B5 修：warning 字段具体化)
+│       ├── copier.ts               (A4 修：Record 分发表;B4 修)
+│       ├── index.ts                (A6 batch 删私有 batchInstall)
+│       ├── name-parser.ts          (不变)
+│       ├── prompt.ts               (不变)
+│       └── selected-builder.ts     (B2 修：早期 SKILL_NOT_FOUND)
+├── main.ts                         (A4 修 D6 中英 help)
+├── schemas/
+│   ├── platform/
+│   │   └── supported-name.ts       (不变)
+│   ├── skill/
+│   │   └── frontmatter.ts          (C2 TSDoc 修)
+│   └── tools/
+│       └── package-json-info.ts    (不变)
+├── tools/
+│   ├── filesystem/
+│   │   ├── directory.ts            (B8 修)
+│   │   └── index.ts                (不变)
+│   ├── package-json/
+│   │   └── load-info.ts            (A1 修)
+│   ├── string/
+│   │   ├── index.ts                (A5 加 export)
+│   │   ├── split-csv.ts            (C4 TSDoc 修)
+│   │   └── truncate-text.ts        (A5 新文件)
+│   └── terminal/
+│       ├── index.ts                (不变)
+│       └── interactive.ts          (不变)
+└── types/
+    ├── command/
+    │   ├── command.ts             (保留)
+    │   ├── command-option.ts      (保留)
+    │   ├── index.ts               (F2 桶更新：re-export command.ts/install.ts/list.ts)
+    │   ├── install.ts             (F2: install/index.ts + install/options.ts → install.ts)
+    │   └── list.ts                (F2: list/index.ts + list/options.ts → list.ts)
+    ├── error/
+    │   ├── app-error-options.ts   (不变)
+    │   ├── commander-message-builder.ts  (不变)
+    │   ├── index.ts               (A3 桶更新)
+    │   └── types.ts                (A3 修：公开 AppErrorCodeType)
+    ├── platform/
+    │   ├── index.ts                (不变)
+    │   ├── config.ts               (F3 不动，仍在 types/platform/)
+    │   └── name.ts                 (不变)
+    └── skill/
+        ├── comparison.ts          (不变)
+        ├── frontmatter.ts          (不变)
+        ├── index.ts               (F1 修：删除 *Value 桶导出)
+        └── install-result.ts       (不变)
+```
+
+### 9.2 命名原则（CLAUDE.md 适用于本批改造的细节）
+
+- **文件名小写中划线**：`run-with-skill-repository.ts`、`truncate-text.ts` 等多个词用 `-`
+- **新文件不带 `index.ts` 桶内容**：每个新文件就是单一职责单文件，不为它建桶。`run-with-skill-repository.ts` 直接是叶子节点，由 `features/github/index.ts` 桶聚合
+- **最小目录才有桶导出**：`config/platform/index.ts` 是桶；但 `config/platform.ts` 单文件（重构前）不是——这正是 F3 要修的边界
+- **`List`/`Map`/`Set` 后缀**：`warningList`、`skillEntryList`、`rootFileList` 等
+- **`Item`/`Key`/`Value` 单项**：`rootFileEntry`、`platformItem`、`skillEntryItem`
+- **`is`/`has`/`can` 布尔前缀**：`isLoaded`、`hasSkillsDirectory`、`canInstall`
+- **动作+对象函数名**：`scanSkillEntryList` (动作+对象+集合) 不是 `scanSkillEntries`；`buildSelectedPlatformList` 不是 `buildSelectedPlatforms`
+- **桶导出别名只在必要时使用**：
+  - `AppErrorCode`（值）与 `AppErrorCodeType`（类型）在 definitions 文件中**各取一名**、不再需要 `as AppErrorCodeValues`
+  - `SkillEntry` 是 SkillEntry 接口名（与原 `SkillItem` 已废不同名）—— 整个项目统一
+  - `SkillEntry.name` 是字段名（不带 `skill` 前缀，与字段描述对齐）
+
+### 9.3 标识符命名表
+
+| 概念 | 命名 | 位置 | 类型 |
+|---|---|---|---|
+| 拆 manifest 后扫技能 | `scanSkillEntryList` | `features/github/repository.ts` | function |
+| 拉仓库到 tmp + 事后清理的包装 | `runWithSkillRepository` | `features/github/run-with-skill-repository.ts` | async function |
+| 同上 参数 lambda | `(repositoryDirectoryPath) => Promise<T>` | 同上 | callback |
+| 同上 入参命名 | `runner`（接 runner 函数） | 同上 | parameter |
+| 截断 description | `truncateText` | `tools/string/truncate-text.ts` | function |
+| 同上 参数 | `text`（不是 description —— 通用工具不耦合 description 概念） | 同上 | parameter |
+| 同上 限制 | `truncateLimit`（参数化、调用方传 60）| 同上 | parameter |
+| 平台支持的批量错误 | `platformNameList` | `types/error/types.ts` `AppErrorParamsMap` key | field |
+| 平台目录自动创建 | `ensureSkillsDirectory`（batchInstall 入口） | `features/platform/resolver.ts` 或迁到 `tools/filesystem/` | function |
+| 复制单技能前 existsSync 校验源 | `assertSourceSkillExists`（或 inline） | `features/skill/copier.ts` | function |
+| 复制选项入参 | `CopyOptions` | `features/skill/copier.ts` | interface |
+| 字段 | `dryRun: boolean; backup: boolean` | 同上 | fields |
+| 早期 SKILL_NOT_FOUND 校验函数 | `ensureRemoteSkillNamesExist` | `features/skill/selected-builder.ts` 或新文件 | function |
+| 入参 | `remoteSkillEntryList`、`inputSkillNameList` | 同上 | parameters |
+| install status 消息分发表 | `installStatusMessageBuilderByStatus` | `commands/install/command.ts`（private）| Map |
+| 键类型 | `SkillInstallStatus`（值枚举名）| 同上 | key |
+| list 表格的 truncate limit 字段 | `descriptionTruncateLimit`（保持） | `commands/list/command.ts` | readonly private field |
+| 列表格调用工具 | `truncateText(row.description, this.descriptionTruncateLimit)` | 同上 | 调用点 |
+| 缺失平台名数组 key | `missingPlatformNameList`（已有）→ `platformNameList` 改后 | `features/platform/resolver.ts` | variable |
+| 早期参数名 | `inputSkillNameList`、`availableSkillEntryList` | install command | fields |
+| --dry-run 选项字段 | `dryRun: boolean` | `types/command/install.ts` RawInstallOptions | field |
+| --backup 选项字段 | `backup: boolean` | 同上 | field |
+| --offline 选项字段 | `offline: boolean` | 同上 | field |
+| getRepositoryDirectoryPath 入参 | `options?: { offline?: boolean }` | `features/github/repository.ts` | parameter（不破坏旧签名）|
+
+### 9.4 桶导出关系（修改后）
+
+#### `features/github/index.ts`（修改）
+
+```typescript
+export { getRepositoryDirectoryPath, scanSkillEntryList } from "./repository"
+export { runWithSkillRepository } from "./run-with-skill-repository"
+```
+
+#### `features/platform/index.ts`（微调）
+
+```typescript
+// buildSelectedPlatformList 在 batch-2 移到 tools/string/ 后从 features/platform/ 移除
+// 留下 promptPlatformNameList（不变）与平台内容隔离
+export { promptPlatformNameList } from "./prompt"
+// 如 F2 决策后 buildSelectedPlatformList 仍属 resolver.ts，可继续在这里桶导出
+// 若移到 tools/string/build-selected-list.ts，则从 tools/string/index.ts 桶导出
+export { buildSelectedPlatformList } from "./resolver"
+```
+
+#### `features/skill/index.ts`（修改）
+
+```typescript
+// batch-2 末尾 A6 inline private batchInstall 后，桶导出精简为 4 项
+export { buildComparisonRows } from "./comparison-builder"
+export { copySkillEntryToPlatformItem } from "./copier"
+export { buildSelectedSkillList } from "./selected-builder"  // B2 加早期校验后
+export { parseSkillNameList } from "./name-parser"
+export { promptSkillNameList } from "./prompt"
+
+// F1 删除：无 *Value 类型导出
+```
+
+#### `tools/string/index.ts`（A5 修）
+
+```typescript
+export { splitCsvString } from "./split-csv"
+export { truncateText } from "./truncate-text"
+// C4：split-csv TSDoc 补完
+
+// A5 讨论结果：buildSelectedPlatformList 不在 tools/string/——它接受 PlatformItem[]，
+// 是 platform 域抽象；放回 features/platform/resolver.ts 的桶
+```
+
+#### `types/skill/index.ts`（F1 修改）
+
+```typescript
+// 删除：
+// export type { SkillComparisonStatusValue, SkillInstallStatusValue }
+
+// F1 不动 Keep 下来的（remained unchanged）：
+export type { SkillComparisonRow, SkillEntry, SkillFrontmatter, SkillInstallResult } from "..."
+// 值从 constants 那里 export、不在 types 桶里二次转出
+```
+
+#### `types/error/index.ts`（A3 修改）
+
+```typescript
+// 旧实现（broken 状态）:
+export { AppError, AppErrorCode, getAppErrorDefinition, handleFatalError } from "..."
+export type { AppErrorOptions, AppErrorParamsMap } from "..."
+
+// A3 修改后：统一类型与值一起从桶导出，values 与 types 各走其名
+export { AppError, AppErrorCode, getAppErrorDefinition, handleFatalError } from "..."
+export type { AppErrorOptions, AppErrorParamsMap, AppErrorDefinition, AppErrorCodeType } from "..."
+```
+
+#### `error/definitions.ts`（A3 + A7 修改）
+
+```typescript
+// 删除 as AppErrorCodeValues 重命名
+import { AppErrorCode } from "./code"
+import type { AppErrorCodeType, AppErrorParamsMap } from "@/types/error"
+
+// A7 修复：消除 6 处 `as AppErrorParamsMap[...]` 收窄
+//   方法：每个 buildMessage 用 defineBuildMessage 工厂（此为 zod-less 实现）签名上声明具体 params 类型
+//   或更简洁：手写每个 buildMessage 直接 import 类型，跳过 record 形式
+//   （参考 zod-less：参见 .superpowers/sdd/spec-sketch/define-build-message.md 占位笔记）
+
+const errorDefinitionMap: { [K in AppErrorCode]: {
+  title: string
+  buildMessage: (params: AppErrorParamsMap[K]) => string
+} } = {
+  [AppErrorCode.UNEXPECTED_ERROR]: {
+    title: "程序异常",
+    buildMessage: () => "程序执行失败，请稍后重试。",
+  },
+  // ... 等等
+  [AppErrorCode.PLATFORM_NOT_SUPPORTED]: {
+    title: "平台不受支持",
+    buildMessage: (params) => `以下平台不受支持：${params.platformNameList.join("、")}。`,
+  },
+  [AppErrorCode.REMOTE_REPOSITORY_EMPTY]: {
+    title: "远端仓库异常",
+    buildMessage: (params) =>
+      `仓库 ${params.repositoryOwner}/${params.repositoryName}@${params.repositoryBranch} 内未发现任何 yeizi- 前缀技能目录。请确认：(1) 配置仓库地址正确；(2) 顶层存在至少一个 yeizi-xxx 子目录且包含 SKILL.md。`,
+  },
+  // ... 等等
+}
+
+function getAppErrorDefinition<K extends AppErrorCodeType>(
+  code: K,
+): { title: string; buildMessage: (params: AppErrorParamsMap[K]) => string } {
+  return errorDefinitionMap[code]
+}
+```
+
+#### `types/error/types.ts`（A3 修）
+
+```typescript
+// 暴露 AppErrorCodeType 给外部消费
+type AppErrorCodeType = (typeof AppErrorCode)[keyof typeof AppErrorCode]
+
+interface AppErrorDefinition<K extends AppErrorCodeType = AppErrorCodeType> {
+  title: string
+  buildMessage: (params: AppErrorParamsMap[K]) => string
+}
+
+// B1 修改 PLATFORM_NOT_SUPPORTED 入参
+interface AppErrorParamsMap {
+  // ... 现有项不变 ...
+  [AppErrorCode.PLATFORM_NOT_SUPPORTED]: { platformNameList: string[] }
+  // ... 现有项不变 ...
+  [AppErrorCode.REMOTE_REPOSITORY_EMPTY]: {
+    repositoryOwner: string
+    repositoryName: string
+    repositoryBranch: string
+  }
+}
+```
+
+### 9.5 移除/合并的桶项（最终态）
+
+**task 安装流程调用的所有顶层函数及其最终所属桶文件**：
+
+```typescript
+// 主进程入口的命令侧
+// 全部走 commander 安装与注册；不在桶里二次聚合：
+
+// src/main.ts
+import { InstallCommand } from "@/commands/install"
+import { ListCommand } from "@/commands/list"
+
+// src/commands/install/index.ts（桶）
+export { InstallCommand } from "./command"
+
+// src/commands/list/index.ts（桶）
+export { ListCommand } from "./command"
+
+// src/features/github/index.ts（桶，最终态）
+export { getRepositoryDirectoryPath, scanSkillEntryList } from "./repository"
+export { runWithSkillRepository } from "./run-with-skill-repository"
+
+// src/features/platform/index.ts（桶，最终态）
+export { buildSelectedPlatformList } from "./resolver"
+export { promptPlatformNameList } from "./prompt"
+
+// src/features/skill/index.ts（桶，最终态）
+export { buildComparisonRows } from "./comparison-builder"
+export { copySkillEntryToPlatformItem } from "./copier"
+export { buildSelectedSkillList } from "./selected-builder"
+export { parseSkillNameList } from "./name-parser"
+export { promptSkillNameList } from "./prompt"
+
+// src/tools/string/index.ts（桶，最终态）
+export { splitCsvString } from "./split-csv"
+export { truncateText } from "./truncate-text"
+
+// src/tools/filesystem/index.ts（桶，不变）
+export { compareDirectoryContentHash, copyDirectory, removeDirectory } from "./directory"
+
+// src/features/display/index.ts（桶，不变）
+export { renderSummaryDisplay } from "./command-summary"
+export { renderComparisonTable } from "./comparison-table"  // 仍需确认这俩函数实际位置
+
+// src/error/index.ts（值）
+// src/types/error/index.ts（类型）
+```
+
+### 9.6 跨目录导入的"最小桶文件"约束
+
+按 directory-rules 强约束，跨目录导入**必须停在最小目录桶文件**，不绕进文件内部：
+
+| 跨目录场景 | 必须走的桶 | 示例 |
+|---|---|---|
+| `commands/*` 用 `features/*` | 该 `features/` 模块的 `index.ts` | `import { scanSkillEntryList } from "@/features/github"` |
+| `commands/*` 用 `tools/*` | 该 `tools/` 模块的 `index.ts` | `import { truncateText } from "@/tools/string"` |
+| 任何模块用 `@/error` | `error/index.ts`（值）+ `types/error/index.ts`（类型）| 路径不混 |
+| `features/*` 互引 | 该 `features/xxx/index.ts` | `import { getPlatformList } from "@/features/platform"` |
+| `tools/*` 用 `error` | `error/index.ts` | — |
+| `tools/*` 用 `features/*` | **不允许**——工具层不应依赖业务 | （目录规则"通用技术内容"隔离） |
+| 桶文件跨目录 import | 仍走最小桶 | `features/github/index.ts` 的 `import { removeDirectory } from "@/tools/filesystem"` 合规 |
+
+### 9.7 内容主题与文件名一致性
+
+| 文件 | 内容主题 | 文件名一致性 |
+|---|---|---|
+| `features/github/run-with-skill-repository.ts` | 拉仓库 + 清理临时目录的包裹 | "with" 表达"包装 + 时序"，"skill-repository" 主题明确 |
+| `features/skill/copier.ts` | 单技能单平台复制动作 | "copy"动作、"skill"+"platformItem" 不在文件名（"copier" 隐含对象）、目录名承担"skill"主题 |
+| `tools/string/truncate-text.ts` | 截断通用文本 | "truncate"动作、"text"对象——通用不耦合 description 概念 |
+| `features/skill/selected-builder.ts` | 按名字从 SkillEntry 列表过滤 | "selected" 前缀、`-builder` 后缀 |
+| `commands/install/command.ts` | install 主命令 | "install" 命令名 + "-command" 后缀 |
+
+### 9.8 文件内符号命名一致性（CLAUDE.md 同概念同词）
+
+v2.1 后所有引用技能元数据的代码统一走 `SkillEntry` 一个词（v2 已确定）。**绝不再引入 `SkillItem` / `SkillManifestEntry` / `SkillRecord` 等近义别名**。
+
+Error code 命名：
+- 值常量名：`AppErrorCode` + 一致风格后缀（`REMOTE_REPOSITORY_EMPTY` 全大写下划线）
+- 类型别名：`AppErrorCodeType`（不再用 `AppErrorCode as AppErrorCodeValues`）
+- types 桶：`AppErrorCodeType` 是公开类型别名、`AppErrorDefinition<K>` 是泛型版（future-proof，但不强制使用）
+
+类型来源单一性：
+- `SkillEntry`、`SkillComparisonRow`、`SkillInstallResult`、`SkillFrontmatter`、`SkillComparisonStatus`、`SkillInstallStatus` 都**只在 `types/skill/` 定义并唯一 export**
+- 不在 features/ 命令/ 任何其他地方重复定义新 interface
+
+### 9.9 删除/合并的清理动作对应位置
+
+| ID | 文件位置 |
+|---|---|
+| A1 | `tools/package-json/load-info.ts:25` 去掉中间变量 |
+| A2 | `error/commander-adapter.ts:100` + 内部 helper 签名调整 |
+| A3 | `error/definitions.ts:3` (`as AppErrorCodeValues` 删除) + `types/error/index.ts` 内容更新 |
+| A4 | `commands/install/command.ts` (Record 分发表) + `commands/update/command.ts`（已删，无需修）|
+| A5 | `truncate-text.ts` 新建；`commands/list/command.ts` 改用工具；`tools/string/index.ts` 加桶 |
+| A6 | `commands/install/command.ts` 删 `batchInstallSkillEntryListToPlatformList` 私有方法，改 inline |
+| A7 | `error/definitions.ts` 全部 6 处 `as` 收窄 |
+| B1 | `features/platform/resolver.ts:95` + `types/error/types.ts` + `error/definitions.ts` |
+| B2 | `features/skill/selected-builder.ts` 加 `ensureRemoteSkillNamesExist` 或 inline 校验 |
+| B3 | `features/platform/resolver.ts` 加 `ensureSkillsDirectory`（新建或内联）|
+| B4 | `features/skill/copier.ts` 前置 existsSync |
+| B5 | `features/github/repository.ts:76-88` catch 提取字段路径 |
+| B6 | `error/definitions.ts` `REMOTE_REPOSITORY_EMPTY` 消息 |
+| B7 | `features/skill/copier.ts` + `types/error/types.ts` `FILE_COPY_FAILED` 参数 |
+| B8 | `tools/filesystem/directory.ts` `computeDirectoryContentHash` |
+| C1 | `error/code.ts:60` + `error/definitions.ts:82` + `types/error/types.ts:47` 三处同步 |
+| C2 | `schemas/skill/frontmatter.ts:7-8` TSDoc |
+| C3 | `config/repository/index.ts`（F3 后）comment |
+| C4 | `tools/string/split-csv.ts` TSDoc |
+| D3 | `commands/install/command.ts` + `types/command/install.ts` + `features/skill/copier.ts` |
+| D4 | `commands/install/command.ts` + `features/skill/copier.ts` |
+| D5 | `features/github/repository.ts` `getRepositoryDirectoryPath` 加 `options` 参数 + `commands/install/command.ts` 传 flag + `types/command/install.ts` |
+| D6 | `main.ts` addHelpText |
+| F1 | `types/skill/index.ts` 桶导出删除 2 行 |
+| F2 | 删 `types/command/install/index.ts` + `types/command/install/options.ts`；合并为 `types/command/install.ts`；`types/command/list/` 同理；`types/command/index.ts` 桶更新 |
+| F3 | 删 `src/config/platform.ts`、`src/config/repository.ts`；新建 `src/config/platform/index.ts`、`src/config/repository/index.ts`；`src/config/index.ts` 桶 re-export |
+| F4 | `features/platform/config.ts` `private constructor` 中去掉 `[...platformConfig.platformList]` 深拷 |
+| E1 | `cli/README.md` |
+| E2 | `cli/CHANGELOG.md` 新建 |
+| E3 | `README.md`（仓库根）|
+
+## 10. 关联文档
 
 - PRD：`cli/docs/superpowers/specs/2026-06-30-yeizi-skills-v2-prd.md`
 - v2 重构 spec：`cli/docs/superpowers/specs/2026-06-30-manifest-removal-refactor-design.md`
 - plan：稍后由 writing-plans 生成
 - audit 来源（4 个 agent 报告）：`.superpowers/sdd/audit-*.md`（将由这次 spec 撰写时同步落档）
+
+
