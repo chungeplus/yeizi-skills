@@ -1,8 +1,10 @@
 import type { Command } from "commander"
 import type { BaseCommand, CommandOptionDefinition } from "@/types/command"
 import type { InstallCommandOptions, RawInstallCommandOptions } from "@/types/command/install"
-import type { PlatformName } from "@/types/platform"
+import type { PlatformItem, PlatformName } from "@/types/platform"
 import type { SkillEntry, SkillInstallResult } from "@/types/skill"
+
+import { mkdir } from "node:fs/promises"
 
 import { AppError, AppErrorCode } from "@/error"
 import { renderSummaryDisplay } from "@/features/display"
@@ -209,6 +211,35 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
   }
 
   /**
+   * 选定平台目标项列表，并对每个平台的 skills 目录自动 mkdir -p。
+   *
+   * 第三个参数 `allowMissingSkillDirectory` 传 `true` 是为了绕开 `buildSelectedPlatformList`
+   * 默认的严格校验：install 流程在拿到 PlatformItem 后会立即 `mkdir -p` 创建目标目录，
+   * 因此首次运行（如 `~/.claude/skills` 不存在时执行 `install --platform claude`）必须允许
+   * 平台技能目录暂时不存在，否则 `mkdir` 还没机会执行就会先抛 `PLATFORM_NOT_FOUND`。
+   *
+   * @param availablePlatformList - 所有支持的 {@link PlatformItem} 列表。
+   * @param selectedPlatformNameList - 用户选中的平台名称列表。
+   * @returns 选中的 {@link PlatformItem} 数组，且每个 `platformSkillDirectoryPath` 已创建。
+   */
+  private async selectAndEnsurePlatformItemList(
+    availablePlatformList: PlatformItem[],
+    selectedPlatformNameList: PlatformName[],
+  ): Promise<PlatformItem[]> {
+    const selectedPlatformList = buildSelectedPlatformList(
+      availablePlatformList,
+      selectedPlatformNameList,
+      true,
+    )
+
+    for (const platformItem of selectedPlatformList) {
+      await mkdir(platformItem.platformSkillDirectoryPath, { recursive: true })
+    }
+
+    return selectedPlatformList
+  }
+
+  /**
    * 解析参数、拉取远端仓库快照、扫描候选技能并将选中的技能安装到指定平台。
    *
    * 流程顺序：
@@ -225,7 +256,7 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
       this.platformConfig.getPlatformNameList(),
       commandOptions.platformNameList,
     )
-    const selectedPlatformList = buildSelectedPlatformList(
+    const selectedPlatformList = await this.selectAndEnsurePlatformItemList(
       this.platformConfig.getPlatformList(),
       selectedPlatformNameList,
     )
