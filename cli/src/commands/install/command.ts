@@ -265,6 +265,23 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
 
     try {
       const { skillEntryList: remoteSkillEntryList, warningList } = await scanSkillEntryList(repositoryDirectoryPath)
+
+      // B2: 拉仓库并扫完远端条目后立刻校验 --skill 输入是否在远端存在
+      if (commandOptions.skillNameList.length > 0) {
+        const remoteSkillNameSet = new Set(
+          remoteSkillEntryList.map(remoteSkillEntryItem => remoteSkillEntryItem.name),
+        )
+        const missingInputSkillNameList = commandOptions.skillNameList.filter(
+          inputSkillNameItem => !remoteSkillNameSet.has(inputSkillNameItem),
+        )
+
+        if (missingInputSkillNameList.length > 0) {
+          throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
+            params: { skillNameList: missingInputSkillNameList },
+          })
+        }
+      }
+
       const selectedSkillNameList = await this.buildSelectedSkillNameList(
         remoteSkillEntryList,
         commandOptions.skillNameList,
