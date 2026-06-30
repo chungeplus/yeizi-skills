@@ -1,4 +1,4 @@
-# yeizi-skills 重构设计：去 manifest、覆盖即升级
+# yeizi-skills 重构设计：去 manifest、覆盖即升级、去 update
 
 ## 1. 背景
 
@@ -12,15 +12,18 @@
 2. **同步负担**：`manifest.json` 与 `SKILL.md` 两处必须手工保持一致
 3. **概念不一致**：与 Claude Code 官方约定不对齐
 
-本次重构把 CLI 收敛到"git 仓库即唯一数据源、覆盖即升级"的纯净模型。
+去掉版本号比对后，`update` 命令在新模型下退化为 `install` 的真子集：同一份远端数据、同一种复制行为、唯一差异是"自动选已装的、不弹 prompt"。按 CLAUDE.md "现有结构能满足时必须复用 / 不为未来变化提前扩展"原则，`update` 命令一并删除。
+
+本次重构把 CLI 收敛到"git 仓库即唯一数据源、覆盖即升级、只有 install + list 两个命令"的纯净模型。
 
 ## 2. 目标
 
 - 删除 `manifest.json` 这条数据源，统一从 GitHub 仓库目录结构推导技能集合
 - 去除全部本地/远端版本号字段及比对逻辑
 - 对齐 Claude Code 官方 frontmatter 约定（`name + description`）
-- `install` / `list` / `update` 三个命令在新模型下重新定义语义
-- 同步删除随之失效的死代码（service/request、axios、ManifestConfigService 等）
+- **删除 `update` 命令**——新模型下它已退化为 install 真子集
+- `install` / `list` 两个命令在新模型下重新定义语义
+- 同步删除随之失效的死代码（service/request、axios、ManifestConfigService、UpdateCommand 等）
 - 不引入新的间接层、不为未来变化提前扩展
 
 ## 3. 总体架构
@@ -57,15 +60,14 @@ GitHub repo (chungeplus/yeizi-skills)
 | 4 | SKILL.md frontmatter 字段 | `name + description`（去除 `version`） |
 | 5 | frontmatter schema 字段名 | 沿用官方 `name` / `description`，CLI 内部类型同步重命名（不再保留 `skillName`/`skillVersion` 这类 `skill` 前缀变体） |
 | 6 | install 流程 | 拉仓库 → 扫子目录 + 解析 SKILL.md → inquirer 带 description → 复制 |
-| 7 | list 表格列 | 平台 / 技能 / 状态 / 介绍（description 单列，截断到 60 字符） |
-| 8 | list 技能集合 | 远端 `∪` 各选中平台已装本地 `yeizi-*` 目录；本地有而远端没有的行状态显示"远端已移除" |
-| 9 | update 语义 | 只刷该平台已装的技能（不补装未装的） |
-| 10 | update 报告新技能 | 结束后追加一行汇总"远端新增 N 个未安装技能：...，可运行 install 安装" |
-| 11 | update 覆盖前 hash 比对 | 比对源/目标目录递归内容 hash，相同则汇报"无变化"、不复制 |
-| 12 | giget 缓存策略 | 三个命令均**去掉 `preferOffline: true`**，每次联网校新鲜度（giget 自身仍会用 etag 走 304，正常使用无明显延迟） |
-| 13 | install Ctrl-C 中断 | 不做原子性保证；半成品由用户重跑 install 覆盖修复 |
-| 14 | frontmatter 解析降级 | per-skill 容错：YAML 损坏或 `name` 缺失 → 跳过该技能、加入命令末尾 warning；`description` 缺失 → 仍纳入列表、description 列显示空 |
-| 15 | 边界场景报错策略 | "该平台未安装任何技能"、"--skill 在所有平台都未装"等异常情况统一在 summary 行提示，不抛 AppError、不退出非零状态；只有"远端仓库一个 yeizi-* 都没有"才报错（说明仓库异常） |
+| 7 | install 复制前 hash 比对 | 复制前比对源/目标目录递归内容 hash，相同则汇报"无变化"、不复制 |
+| 8 | list 表格列 | 平台 / 技能 / 状态 / 介绍（description 单列，截断到 60 字符） |
+| 9 | list 技能集合 | 远端 `∪` 各选中平台已装本地 `yeizi-*` 目录；本地有而远端没有的行状态显示"远端已移除" |
+| 10 | update 命令 | **删除**。"重装已装"的需求由 `install` 覆盖；"远端有哪些新技能"由 `list` 表格直接看到 |
+| 11 | giget 缓存策略 | 两个命令均**去掉 `preferOffline: true`**，每次联网校新鲜度（giget 自身仍会用 etag 走 304，正常使用无明显延迟） |
+| 12 | install Ctrl-C 中断 | 不做原子性保证；半成品由用户重跑 install 覆盖修复 |
+| 13 | frontmatter 解析降级 | per-skill 容错：YAML 损坏或 `name` 缺失 → 跳过该技能、加入命令末尾 warning；`description` 缺失 → 仍纳入列表、description 列显示空 |
+| 14 | 边界场景报错策略 | "未选中任何技能"等异常情况统一在 summary 行提示，不抛 AppError、不退出非零状态；只有"远端仓库一个 yeizi-* 都没有"才报错（说明仓库异常） |
 
 ## 5. 命令流程
 
@@ -73,13 +75,18 @@ GitHub repo (chungeplus/yeizi-skills)
 
 ```
 1. 拉仓库到临时目录（giget，无 preferOffline）
-2. 扫临时目录根下的 yeizi-* 子目录 → 候选 SkillEntry 列表
+2. 扫临时目录根下的 yeizi-* 子目录 → 候选 SkillEntry 列表（每个 entry 含 name + description）
 3. 逐个读 SKILL.md，解析 frontmatter → 补 description（容错：损坏/缺 name 跳过 + warning）
 4. inquirer prompt 显示（技能名 + description 一行）让用户选
-5. 选完后 copyDirectory 复制到每个目标平台 skills 目录
+5. 选完后对每个 (平台, 技能) 对：
+   - 计算源目录和目标目录的递归内容 hash
+   - 相同 → 跳过、汇报"无变化"
+   - 不同 / 目标不存在 → copyDirectory 覆盖、汇报"已安装"
 6. finally 清理临时目录
 7. 输出 summary
 ```
+
+**install 同时承担"安装"和"重装/升级"两种语义**——用户在第 4 步可以勾选任意已装/未装的技能；第 5 步的 hash 比对决定"是否真复制"，避免无变化时无意义写入。
 
 ### 5.2 list
 
@@ -94,25 +101,7 @@ GitHub repo (chungeplus/yeizi-skills)
 5. finally 清理临时目录
 ```
 
-### 5.3 update
-
-```
-1. 拉仓库到临时目录（giget，无 preferOffline）
-2. 扫临时目录得到远端 SkillEntry 列表
-3. 对每个选中平台：扫平台 skills 目录得到本地已装 yeizi-* 子目录列表
-4. 计算 update 集合：
-   - 不传 --skill：每个平台已装的全部技能 ∩ 远端仍存在的技能
-   - 传 --skill X：以上交集再按 X 过滤
-   - 本地有但远端已移除 → 在结果里显示"远端已移除，已跳过"
-   - 平台没装任何技能 → 显示"未安装任何技能，已跳过"
-   - 用户传的 --skill X 在所有平台都没装 → summary 显示"未安装、未更新"
-5. 对 update 集合里每个 (平台, 技能) 对：
-   - 计算源目录和目标目录的递归内容 hash
-   - 相同 → 跳过、汇报"无变化"
-   - 不同 → copyDirectory 覆盖、汇报"已更新"
-6. 结束后扫"远端有但所有选中平台都没装"的技能 → 输出提示行"远端新增 N 个未安装技能：..."
-7. finally 清理临时目录
-```
+用户通过 list 一眼看清"远端有哪些新技能未安装"、"本地有哪些孤儿"，决策后再跑 install。**不再需要 update 命令承担"汇报新增/重装"职责**。
 
 ## 6. 模块改动清单
 
@@ -130,6 +119,12 @@ GitHub repo (chungeplus/yeizi-skills)
 | `cli/src/service/apis/github/index.ts` | 同上 |
 | `cli/src/service/` 整目录 | 全部失去使用方 |
 | `cli/src/features/skill/document-parser.ts` | parseSkillVersion 删除；parseFrontmatter 不再单独存在，逻辑合并到 `features/github/repository.ts` 的 `scanSkillEntryList` 内部（"扫目录 + 解析 frontmatter"是同一流程的两步，按 CLAUDE.md"同一流程步骤逻辑留在同文件"合并）。**整个 document-parser.ts 文件删除** |
+| `cli/src/commands/update/command.ts` | update 命令删除（新模型下退化为 install 真子集） |
+| `cli/src/commands/update/index.ts` | 桶文件失去内容 |
+| `cli/src/commands/update/` 整目录 | update 命令删除 |
+| `cli/src/types/command/update/options.ts` | UpdateCommandOptions 不再需要 |
+| `cli/src/types/command/update/index.ts` | 桶文件失去内容 |
+| `cli/src/types/command/update/` 整目录 | update 类型删除 |
 
 ### 6.2 修改文件
 
@@ -145,15 +140,15 @@ GitHub repo (chungeplus/yeizi-skills)
 | `cli/src/features/github/repository.ts` | 去掉 `preferOffline: true`；新增导出 `scanSkillEntryList(repositoryDirectoryPath): SkillEntry[]`，封装"扫 `yeizi-*` 子目录 + 用 gray-matter 读 SKILL.md frontmatter + zod 校验"三步，所有平台/命令共享同一个数据源 |
 | `cli/src/features/github/index.ts` | 桶导出更新：移除 `loadManifestConfig`，新增 `scanSkillEntryList` |
 | `cli/src/tools/filesystem/` | 新增 `compareDirectoryContentHash(srcDir, destDir): Promise<boolean>` 函数（Node 自带 crypto，递归 SHA-256），归入既有 `tools/filesystem/` 目录，作为通用文件操作能力，被 copier 复用 |
-| `cli/src/features/skill/comparison-builder.ts` | 重写：buildComparisonRows 改为 (remoteSkillEntryList, selectedPlatformList) → 行集合 = 远端 ∪ 本地、状态按 4 态判定；删除 `buildUpdateRows` / `buildUpdateSkillNameList` / `buildSelectedRows`（update 不再依赖此模块） |
+| `cli/src/features/skill/comparison-builder.ts` | 重写：buildComparisonRows 改为 (remoteSkillEntryList, selectedPlatformList) → 行集合 = 远端 ∪ 本地、状态按 4 态判定；**删除 `buildUpdateRows` / `buildUpdateSkillNameList` / `buildSelectedRows`**（update 命令已不存在，整套"更新行筛选"逻辑废弃） |
 | `cli/src/features/skill/selected-builder.ts` | 入参类型从 `SkillItem[]` 调整为新的 `SkillEntry[]`（字段从 `skillName` 调整为 `name`），其余不变 |
 | `cli/src/features/skill/copier.ts` | 函数参数 `skillItem` 调整为 `skillEntry`（`name` 字段）；复制前先调 `tools/filesystem/compareDirectoryContentHash` 比对、相同则返回 NO_CHANGE |
-| `cli/src/features/skill/prompt.ts` | inquirer choice 改为 `{ name: ` 技能名 + 缩进 description `, value: skillEntry.name }` |
+| `cli/src/features/skill/prompt.ts` | inquirer choice 改为 `{ name: ` 技能名 + 缩进 description `, value: skillEntry.name }`；**删除 `promptSkillNameListToUpdate`**（仅 update 用） |
 | `cli/src/features/skill/name-parser.ts` | 不动 |
-| `cli/src/features/skill/index.ts` | 桶导出更新：移除 ManifestConfigService、buildUpdateRows 等；新增 SkillEntry 相关导出 |
-| `cli/src/commands/install/command.ts` | 移除 ManifestConfigService 依赖；execute 顺序：拉仓库 → 调 `scanSkillEntryList` 拿候选 → inquirer prompt 带 description → 用户选完 → copier 复制到每个选中平台 → finally 清理临时目录 |
+| `cli/src/features/skill/index.ts` | 桶导出更新：移除 ManifestConfigService、buildUpdateRows、buildUpdateSkillNameList、buildSelectedRows、promptSkillNameListToUpdate；新增 SkillEntry 相关导出 |
+| `cli/src/commands/install/command.ts` | 移除 ManifestConfigService 依赖；execute 顺序：拉仓库 → 调 `scanSkillEntryList` 拿候选 → inquirer prompt 带 description → 用户选完 → copier 复制（内部 hash 比对决定是否真复制） → finally 清理临时目录 |
 | `cli/src/commands/list/command.ts` | 重写为：拉仓库 → scan → 渲染表格（含 description 列、4 态状态）→ finally 清理临时目录 |
-| `cli/src/commands/update/command.ts` | 重写为：拉仓库 → scan → 对每个选中平台扫已装 → 计算 update 集合（已装 ∩ 远端）→ 对每个 (平台, 技能) 调 copier（内部 hash 比对决定是否真复制）→ 输出"新增技能未安装"提示 → finally 清理临时目录。命令本身 exit 0，仅 §9 列出的硬错误才 exit 1 |
+| `cli/src/main.ts` | 删除 `new UpdateCommand().register(program)` 一行及对应 import |
 | `cli/src/error/code.ts` | 删除 `REMOTE_SKILL_CATALOG_INVALID`；新增 `REMOTE_REPOSITORY_EMPTY`（仓库一个 yeizi-* 都没有时） |
 | `cli/src/error/definitions.ts` | 同步增删 buildMessage |
 | `cli/package.json` | 移除依赖：`axios`、`semver`；移除 devDependency `@types/semver` |
@@ -224,20 +219,26 @@ const SkillInstallStatus = {
 
 - `REMOTE_SKILL_DOCUMENT_INVALID`：仍用于 frontmatter 解析失败的硬错误（YAML 不可读时）。注意 install 流程对此错误是 per-skill 容错（跳过 + warning），不再让单个坏 SKILL.md 中止整个命令
 
-## 9. 多平台 update 边界场景示例
+## 9. 命令边界场景与退出码契约
 
-| 场景 | 平台 codex 行为 | 平台 claude 行为 |
-|---|---|---|
-| codex 装了 [A, B]，claude 装了 [B, C]，`update` | 刷 A、B | 刷 B、C |
-| 同上，`update --skill A` | 刷 A | 显示 A 未安装、跳过、不报错 |
-| 同上，`update --skill W`（W 哪都没装） | 显示未安装、跳过 | 显示未安装、跳过；命令末尾 summary 显示"--skill W 在所有选中平台未安装" |
-| codex 装了 [A]，远端已移除 A，`update` | 显示 A 远端已移除、跳过 | 跳过（claude 一个都没装，summary 给"未安装任何技能"） |
+### 9.1 install
 
-**退出码契约**：以上所有边界场景，update 命令一律以 exit 0 结束——这些不是 CLI 错误，而是用户已被告知的中间状态。仅以下三种 update 异常以 exit 1 退出并打印 AppError：
+| 场景 | 行为 |
+|---|---|
+| 用户在 inquirer 里一个也没选 | summary 显示"未选中任何技能"，exit 0 |
+| 选中的技能 + 平台组合里有任意一个 (skill, platform) 已存在且 hash 相同 | 该项 summary 显示"无变化"，其余正常复制，exit 0 |
+| 远端仓库扫不到任何 yeizi-* 子目录 | 抛 `REMOTE_REPOSITORY_EMPTY`，exit 1 |
+| 远端某个 SKILL.md YAML 损坏 | 该技能跳过 + 末尾 warning，其它技能正常处理，exit 0 |
+| 文件系统级 IO 错误（权限、磁盘满） | 抛对应既有错误码，exit 1 |
 
-- `REMOTE_REPOSITORY_EMPTY`：远端仓库一个 yeizi-* 都没有（仓库异常）
-- `PLATFORM_NOT_FOUND`：用户传入的平台不在配置里
-- 文件系统级 IO 错误（无权限、磁盘满等，对应 `DIRECTORY_REMOVE_FAILED` 等既有错误码）
+### 9.2 list
+
+| 场景 | 行为 |
+|---|---|
+| 选中平台 skills 目录不存在 | 该平台所有行状态显示"平台 skills 目录缺失"，exit 0 |
+| 远端有但本地未装 | 状态"未安装"，exit 0 |
+| 本地有但远端已移除 | 状态"远端已移除"，exit 0 |
+| 远端仓库扫不到任何 yeizi-* 子目录 | 抛 `REMOTE_REPOSITORY_EMPTY`，exit 1 |
 
 ## 10. 迁移代价
 
@@ -254,8 +255,10 @@ const SkillInstallStatus = {
 
 ### 10.3 已装老用户代价
 
-- 已经装过老版本（带 `version` 字段）的用户跑 `update` 不会失败（passthrough）
-- 唯一可见变化：`list` 表格不再显示版本列，update 不再按版本号筛选
+- 已经装过老版本（带 `version` 字段）的用户跑 install 不会失败（passthrough）
+- `update` 命令消失：习惯打 `yeizi-skills update` 的用户会被 commander 提示"未知命令"
+  - 缓解：可在 README 加 changelog 节明示"update 命令已并入 install，运行 `yeizi-skills install` 重选已装技能即可重装"
+- `list` 表格不再显示版本列
 
 ## 11. 未来演进路径预留
 
@@ -272,19 +275,25 @@ const SkillInstallStatus = {
 - `bun run build` 编译通过
 - `bun run lint` 通过（按 CLAUDE.md 命名/语句规则）
 - `npx tsc --noEmit` 通过
-- 手工跑 `yeizi-skills install` / `list` / `update` 在 codex/claude/trae 三个平台上得到预期输出
+- 手工跑 `yeizi-skills install` / `list` 在 codex/claude/trae 三个平台上得到预期输出
+- 运行 `yeizi-skills update` 应得到 commander "未知命令"提示
 - 仓库根 3 个 SKILL.md 已去除 `version` 行
 - 卸载 axios/semver 后包安装大小变小（dependencies 从 9 个减为 7 个）
+- main.ts 不再 register UpdateCommand
+- `cli/src/commands/update/` 与 `cli/src/types/command/update/` 目录已删除
 
 ## 13. 实施顺序建议（供 writing-plans 参考）
 
 1. types + schemas 重写（SkillEntry / passthrough frontmatter / 状态枚举）
 2. constants 重写（status 常量）
 3. features/github 改写（去 preferOffline + 加 scanSkillEntryList）
-4. features/skill 改写（comparison-builder 重写 + copier 加 hash + prompt 带 description + 删 document-parser/manifest-config）
-5. commands 改写（三个 command.ts）
-6. error 增删（code + definitions）
-7. 仓库根 SKILL.md 去 version、删 manifest.json
-8. package.json 去依赖
-9. service/ 整目录删除
-10. 跑 typecheck / lint / 手工烟测
+4. tools/filesystem 加 compareDirectoryContentHash
+5. features/skill 改写（comparison-builder 重写 + copier 加 hash + prompt 带 description + 删 document-parser/manifest-config/promptSkillNameListToUpdate/buildUpdateRows 等）
+6. commands 改写（install 改写、list 改写、**update 整个目录删**）
+7. types/command/update 整个目录删
+8. main.ts 移除 UpdateCommand 注册
+9. error 增删（code + definitions）
+10. 仓库根 SKILL.md 去 version、删 manifest.json
+11. package.json 去依赖 axios/semver
+12. service/ 整目录删除
+13. 跑 typecheck / lint / 手工烟测
