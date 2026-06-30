@@ -1,7 +1,7 @@
 import type { Command } from "commander"
 import type { BaseCommand, CommandOptionDefinition } from "@/types/command"
 import type { InstallCommandOptions, RawInstallCommandOptions } from "@/types/command/install"
-import type { PlatformItem, PlatformName } from "@/types/platform"
+import type { PlatformName } from "@/types/platform"
 import type { SkillEntry, SkillInstallResult } from "@/types/skill"
 
 import { AppError, AppErrorCode } from "@/error"
@@ -11,6 +11,50 @@ import { buildSelectedPlatformList, parsePlatformNameList, PlatformConfigService
 import { buildSelectedSkillList, copySkillEntryToPlatformItem, parseSkillNameList, promptSkillNameList } from "@/features/skill"
 import { removeDirectory } from "@/tools/filesystem"
 import { SkillInstallStatus } from "@/types/skill"
+
+/**
+ * 单次成功安装结果，便于 builder 函数签名对单个变体声明。
+ */
+type SuccessSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.SUCCESS }>
+
+/**
+ * 单次无变化安装结果，便于 builder 函数签名对单个变体声明。
+ */
+type NoChangeSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.NO_CHANGE }>
+
+/**
+ * 单次失败安装结果，便于 builder 函数签名对单个变体声明。
+ */
+type FailedSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.FAILED }>
+
+/**
+ * 按 SkillInstallStatus 分发的安装结果消息构造函数。
+ *
+ * 每个 builder 函数声明为对应单一变体的入参类型，调用前再按 `resultItem.status` 收窄。
+ */
+const installStatusMessageBuilderByStatus = {
+  "success": (resultItem: SuccessSkillInstallResult) =>
+    `已为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"。`,
+  "no-change": (resultItem: NoChangeSkillInstallResult) =>
+    `平台"${resultItem.platformName}"上的技能"${resultItem.skillName}"无变化、已跳过。`,
+  "failed": (resultItem: FailedSkillInstallResult) =>
+    `为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"失败：${resultItem.error.message}`,
+}
+
+/**
+ * 把单次安装结果转成展示用的中文消息，按 `resultItem.status` 收窄后调用对应 {@link installStatusMessageBuilderByStatus} builder。
+ */
+function buildInstallStatusMessage(resultItem: SkillInstallResult): string {
+  if (resultItem.status === SkillInstallStatus.SUCCESS) {
+    return installStatusMessageBuilderByStatus.success(resultItem)
+  }
+
+  if (resultItem.status === SkillInstallStatus.NO_CHANGE) {
+    return installStatusMessageBuilderByStatus["no-change"](resultItem)
+  }
+
+  return installStatusMessageBuilderByStatus.failed(resultItem)
+}
 
 /**
  * install 命令。
@@ -117,46 +161,6 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
   }
 
   /**
-   * 把选中的技能批量安装到选中的平台，按技能 × 平台展开。
-   *
-   * @param skillEntryList - 选中的技能条目列表。
-   * @param platformList - 选中的平台目录列表。
-   * @param repositoryDirectoryPath - 已下载的仓库根目录路径。
-   * @returns 每个技能在每个平台上的安装结果列表。
-   *
-   * @example
-   * ```typescript
-   * await this.batchInstallSkillEntryListToPlatformList(
-   *   [{ name: "yeizi-demo", description: "示例技能" }],
-   *   [{ platformName: "claude-code", platformHomeDirectoryPath: "/Users/demo/.claude", platformSkillDirectoryPath: "/Users/demo/.claude/skills" }],
-   *   "/tmp/yeizi-skills-repo-abc",
-   * )
-   * // [{ platformName: "claude-code", skillName: "yeizi-demo", status: "success" }]
-   * ```
-   */
-  private async batchInstallSkillEntryListToPlatformList(
-    skillEntryList: SkillEntry[],
-    platformList: PlatformItem[],
-    repositoryDirectoryPath: string,
-  ): Promise<SkillInstallResult[]> {
-    const resultList: SkillInstallResult[] = []
-
-    for (const skillEntryItem of skillEntryList) {
-      for (const platformItem of platformList) {
-        const resultItem = await copySkillEntryToPlatformItem(
-          skillEntryItem,
-          platformItem,
-          repositoryDirectoryPath,
-        )
-
-        resultList.push(resultItem)
-      }
-    }
-
-    return resultList
-  }
-
-  /**
    * 把批量安装结果转换成展示用的中文汇总消息列表。
    *
    * @param resultList - 批量安装结果列表。
@@ -179,17 +183,7 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
    * ```
    */
   private buildInstallSummaryMessageList(resultList: SkillInstallResult[]): string[] {
-    return resultList.map((resultItem) => {
-      if (resultItem.status === SkillInstallStatus.SUCCESS) {
-        return `已为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"。`
-      }
-
-      if (resultItem.status === SkillInstallStatus.NO_CHANGE) {
-        return `平台"${resultItem.platformName}"上的技能"${resultItem.skillName}"无变化、已跳过。`
-      }
-
-      return `为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"失败：${resultItem.error.message}`
-    })
+    return resultList.map(resultItem => buildInstallStatusMessage(resultItem))
   }
 
   /**
@@ -249,10 +243,16 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
         selectedSkillNameList,
       )
 
-      const installResultList = await this.batchInstallSkillEntryListToPlatformList(
-        selectedSkillEntryList,
-        selectedPlatformList,
-        repositoryDirectoryPath,
+      const installResultList: SkillInstallResult[] = await Promise.all(
+        selectedSkillEntryList.flatMap(skillEntryItem =>
+          selectedPlatformList.map(async platformItem =>
+            copySkillEntryToPlatformItem(
+              skillEntryItem,
+              platformItem,
+              repositoryDirectoryPath,
+            ),
+          ),
+        ),
       )
       const summaryMessageList = this.buildInstallSummaryMessageList(installResultList)
 
