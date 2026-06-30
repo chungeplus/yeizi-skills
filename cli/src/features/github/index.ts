@@ -1,2 +1,2 @@
-export { downloadRepository } from "./download-repository"
-export { loadGitHubSkillManifest } from "./github-source"
+export { loadManifestConfig } from "./load-manifest-config"
+export { getRepositoryDirectoryPath } from "./repository"

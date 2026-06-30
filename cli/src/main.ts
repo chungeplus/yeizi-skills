@@ -2,20 +2,22 @@ import process from "node:process"
 
 import { Command } from "commander"
 
-import { registerCommands } from "@/commands"
-import { AppError, AppErrorCode, handleFatalError } from "@/errors"
-import { loadPackageJsonInfo } from "@/tools"
+import { InstallCommand } from "@/commands/install"
+import { ListCommand } from "@/commands/list"
+import { UpdateCommand } from "@/commands/update"
+import { AppError, AppErrorCode, handleFatalError } from "@/error"
+import { loadPackageJsonInfo } from "@/tools/package-json/load-info"
 
 /**
  * 创建 CLI 程序实例。
  *
  * @returns Commander 程序实例
  */
-function createProgram(): Command {
-  const packageJsonInfo = loadPackageJsonInfo()
-  const programNames = Object.keys(packageJsonInfo.bin)
+async function createProgram(): Promise<Command> {
+  const packageJsonInfo = await loadPackageJsonInfo()
+  const programNameList = Object.keys(packageJsonInfo.bin)
 
-  if (programNames.length === 0) {
+  if (programNameList.length === 0) {
     throw new AppError(AppErrorCode.PACKAGE_BIN_CONFIG_MISSING)
   }
 
@@ -23,38 +25,38 @@ function createProgram(): Command {
 
   program.exitOverride()
   program.configureOutput({
-    outputError: () => {},
+    outputError: () => { },
   })
-  program.name(programNames[0])
+  program.name(programNameList[0])
   program.description(packageJsonInfo.description)
   program.version(packageJsonInfo.version)
 
-  registerCommands(program)
+  new ListCommand().register(program)
+  new InstallCommand().register(program)
+  new UpdateCommand().register(program)
 
   return program
 }
 
 /**
  * 运行 CLI 主入口流程。
+ *
+ * @returns Promise 完成时无返回值。
  */
 async function runCli(): Promise<void> {
   try {
-    const program = createProgram()
+    const program = await createProgram()
 
     await program.parseAsync(process.argv)
   }
   catch (error) {
-    let normalizedError: Error
-
     if (error instanceof Error) {
-      normalizedError = error
-    }
-    else {
-      normalizedError = new Error(String(error))
+      handleFatalError(error)
+      return
     }
 
-    handleFatalError(normalizedError)
+    handleFatalError(new AppError(AppErrorCode.UNEXPECTED_ERROR))
   }
 }
 
-export default runCli
+export { runCli }

@@ -1,1 +1,1 @@
-export * from "./command"
+export { UpdateCommand } from "./command"

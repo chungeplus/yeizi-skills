@@ -1,1 +1,1 @@
-export * from "./command"
+export { ListCommand } from "./command"

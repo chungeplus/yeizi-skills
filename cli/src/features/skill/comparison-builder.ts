@@ -3,7 +3,7 @@ import type { SkillComparisonRow, SkillItem } from "@/types/skill"
 
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
-import { default as semver } from "semver"
+import semver from "semver"
 
 import { SkillComparisonStatus } from "@/types/skill"
 import { parseSkillVersion } from "./document-parser"
@@ -12,7 +12,7 @@ import { parseSkillVersion } from "./document-parser"
  * 组装平台与技能的比较结果。
  *
  * @param skillList - 远端技能清单条目列表。
- * @param platformItemList - 平台目标目录列表。
+ * @param platformList - 平台目标目录列表。
  * @returns 比较结果行列表。
  *
  * @example
@@ -26,11 +26,11 @@ import { parseSkillVersion } from "./document-parser"
  */
 async function buildComparisonRows(
   skillList: SkillItem[],
-  platformItemList: PlatformItem[],
+  platformList: PlatformItem[],
 ): Promise<SkillComparisonRow[]> {
   const resultRowList: SkillComparisonRow[] = []
 
-  for (const platformItem of platformItemList) {
+  for (const platformItem of platformList) {
     for (const skillItem of skillList) {
       const localSkillDocumentPath = join(
         platformItem.platformSkillDirectoryPath,

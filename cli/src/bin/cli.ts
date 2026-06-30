@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import runCli from "../main"
+import { runCli } from "../main"
 
 void runCli()
