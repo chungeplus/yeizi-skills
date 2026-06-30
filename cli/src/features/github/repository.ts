@@ -1,14 +1,22 @@
-import { mkdtemp } from "node:fs/promises"
+import type { SkillEntry } from "@/types/skill"
+
+import { existsSync } from "node:fs"
+import { mkdtemp, readdir, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { downloadTemplate } from "giget"
+import matter from "gray-matter"
 
 import { repositoryConfig } from "@/config/repository"
+import { AppError, AppErrorCode } from "@/error"
+import { skillFrontmatterSchema } from "@/schemas/skill/frontmatter"
 
 /**
  * 获取技能仓库本地目录路径（下载到临时目录）。
  *
- * @returns 仓库临时目录路径
+ * 每次调用都会联网请求 giget 下载最新仓库快照，不使用离线缓存，保证拉到的是最新内容。
+ *
+ * @returns 仓库临时目录路径。
  *
  * @example
  * ```typescript
@@ -23,11 +31,68 @@ async function getRepositoryDirectoryPath(): Promise<string> {
     {
       dir: tempDirectoryPath,
       forceClean: true,
-      preferOffline: true,
     },
   )
 
   return downloadResult.dir
 }
 
-export { getRepositoryDirectoryPath }
+/**
+ * 扫描本地已下载仓库目录，收集所有 `yeizi-` 前缀子目录里的技能条目。
+ *
+ * 每个候选子目录读取根目录下的 `SKILL.md`，按 gray-matter + Zod schema 解析 frontmatter，得到 `{ name, description }`。
+ * 单个 `SKILL.md` 缺失会跳过；解析失败会被吞掉并继续处理其它技能，避免一个坏文档阻塞整次扫描。
+ * 扫描结果按 name 升序返回。
+ *
+ * @param repositoryDirectoryPath - 已下载到本地的仓库根目录路径。
+ * @returns 仓库内合法的技能条目列表，按 name 升序。
+ * @throws 仓库根目录下没有任何 `yeizi-` 前缀子目录时抛出 {@link AppError}（错误码 `REMOTE_REPOSITORY_EMPTY`）。
+ *
+ * @example
+ * ```typescript
+ * await scanSkillEntryList("/tmp/yeizi-skills-repo-abc123")
+ * // [{ name: "yeizi-demo", description: "示例技能" }]
+ * ```
+ */
+async function scanSkillEntryList(repositoryDirectoryPath: string): Promise<SkillEntry[]> {
+  const directoryEntryList = await readdir(repositoryDirectoryPath, { withFileTypes: true })
+  const candidateEntryList = directoryEntryList.filter(
+    directoryEntryItem => directoryEntryItem.isDirectory() && directoryEntryItem.name.startsWith("yeizi-"),
+  )
+
+  if (candidateEntryList.length === 0) {
+    throw new AppError(AppErrorCode.REMOTE_REPOSITORY_EMPTY)
+  }
+
+  const skillEntryList: SkillEntry[] = []
+
+  for (const candidateEntryItem of candidateEntryList) {
+    const skillDocumentPath = join(repositoryDirectoryPath, candidateEntryItem.name, "SKILL.md")
+
+    if (!existsSync(skillDocumentPath)) {
+      continue
+    }
+
+    try {
+      const skillDocumentText = await readFile(skillDocumentPath, "utf-8")
+      const frontmatterResult = matter(skillDocumentText)
+      const skillFrontmatter = skillFrontmatterSchema.parse(frontmatterResult.data)
+
+      skillEntryList.push({
+        name: skillFrontmatter.name,
+        description: skillFrontmatter.description,
+      })
+    }
+    catch {
+      continue
+    }
+  }
+
+  skillEntryList.sort((leftSkillEntryItem, rightSkillEntryItem) =>
+    leftSkillEntryItem.name.localeCompare(rightSkillEntryItem.name),
+  )
+
+  return skillEntryList
+}
+
+export { getRepositoryDirectoryPath, scanSkillEntryList }
