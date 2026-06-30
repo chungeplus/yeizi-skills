@@ -16,6 +16,8 @@
 
 **Parent commit:** batch-2 ends.
 
+**Note:** batch-2 originally excluded `runWithSkillRepository` — this batch adds it as Task 3.0 because install/list both need it now, and batch-3 is where install execute lands and reuses it.
+
 ## Global Constraints
 
 - 项目无单元测试。验证 gate = `cd cli && bun run typecheck && bun run lint` 全过。
@@ -28,7 +30,11 @@
 
 ## File Structure（batch-3 涉及）
 
+**Create:**
+- `cli/src/features/github/run-with-skill-repository.ts`（Task 3.0 新建）
+
 **Modify:**
+- `cli/src/features/github/index.ts`（Task 3.0：桶加 export）
 - `cli/src/types/error/types.ts`（B1：调 record entry）
 - `cli/src/features/platform/resolver.ts`（B1：params 改数组 + B3：ensureSkillsDirectory）
 - `cli/src/error/definitions.ts`（B1：模板改用 join("、")）
@@ -37,6 +43,106 @@
 
 **Optional Modify:**
 - 现有 `buildSelectedPlatformList` 可能在 `features/platform/resolver.ts`；B3 也可以不引入新函数、直接 inline 在 install execute 内。**先看 resolver 是否已有 `existsSync` 检查、不重复改两次**。
+
+---
+
+### Task 3.0: runWithSkillRepository 高阶函数
+
+**Files:**
+- Create: `cli/src/features/github/run-with-skill-repository.ts`
+- Modify: `cli/src/features/github/index.ts`（桶加 export）
+
+**Interfaces produced:**
+```typescript
+async function runWithSkillRepository<T>(
+  runner: (repositoryDirectoryPath: string) => Promise<T>,
+): Promise<T>
+```
+
+**Why:** spec §10.5 把 `runWithSkillRepository` 列为 install/list 都应走的公共 helper。Task 3.3/3.4 的 install execute 与 batch-4/5 的 list execute 都需要它、避免各自写 `try/finally` + `removeDirectory` 模板。
+
+**保留行为**（与现 install/list 各自的 try/finally 一致）：拉仓库到临时目录、跑 runner、最终清理；cleanup 失败抛 `DIRECTORY_REMOVE_FAILED`。
+
+- [ ] **Step 1: Read `cli/src/features/github/repository.ts` 全文**，确认 `getRepositoryDirectoryPath` 当前签名（Task 5.2 后会加 `options` 参数——本任务不依赖、可并行）;`cli/src/features/github/index.ts` 当前桶
+
+- [ ] **Step 2: 新建 `cli/src/features/github/run-with-skill-repository.ts`**
+
+```typescript
+import { AppError, AppErrorCode } from "@/error"
+import { removeDirectory } from "@/tools/filesystem"
+import { getRepositoryDirectoryPath } from "./repository"
+
+/**
+ * 拉取远端仓库到临时目录、运行 runner、最终清理临时目录的统一包装。
+ * install / list 等需要 \"拉一次、用一次\" 仓库内容的命令都应走这个高阶函数、
+ * 避免各自写 try/finally 与 removeDirectory 模板。
+ *
+ * @param runner - 接收临时仓库路径、返回业务结果或抛错的回调。
+ * @returns runner 的返回值。
+ * @throws runner 抛错透传；cleanup 失败抛 AppError(DIRECTORY_REMOVE_FAILED)。
+ */
+async function runWithSkillRepository<T>(
+  runner: (repositoryDirectoryPath: string) => Promise<T>,
+): Promise<T> {
+  const repositoryDirectoryPath = await getRepositoryDirectoryPath()
+
+  try {
+    return await runner(repositoryDirectoryPath)
+  }
+  finally {
+    try {
+      await removeDirectory(repositoryDirectoryPath)
+    }
+    catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(AppErrorCode.DIRECTORY_REMOVE_FAILED, {
+          params: { directoryPath: repositoryDirectoryPath },
+          cause: error,
+        })
+      }
+
+      throw error
+    }
+  }
+}
+
+export { runWithSkillRepository }
+```
+
+- [ ] **Step 3: 修改 `cli/src/features/github/index.ts` 桶加 export**
+
+```typescript
+export { getRepositoryDirectoryPath, scanSkillEntryList } from "./repository"
+export { runWithSkillRepository } from "./run-with-skill-repository"
+```
+
+- [ ] **Step 4: typecheck**
+
+```bash
+cd cli && bun run typecheck 2>&1 | tail -5
+```
+
+Expected: 本任务文件 0 错。
+
+- [ ] **Step 5: lint**
+
+```bash
+cd cli && bun run lint src/features/github/
+```
+
+Expected: 0 error。
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add cli/src/features/github/run-with-skill-repository.ts cli/src/features/github/index.ts
+git commit -m "feat(github): add runWithSkillRepository higher-order wrapper
+
+spec §10.5 install/list 共用 helper。Task 3.3 install 流程重构、batch-4 list 流程重构
+都会基于本 task 落地、避免各自写 try/finally+removeDirectory。
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+```
 
 ---
 
