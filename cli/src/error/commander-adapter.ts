@@ -38,16 +38,51 @@ function buildCommanderAppError(error: CommanderError): AppError {
  */
 function buildCommanderErrorMessage(error: CommanderError): string {
   const messageBuilderMap: CommanderMessageBuilderMap = {
-    "commander.unknownCommand": currentError =>
-      `命令“${extractQuotedValue(currentError.message)}”不存在，请使用 --help 查看可用命令。`,
-    "commander.unknownOption": currentError =>
-      `选项“${extractQuotedValue(currentError.message)}”不受支持，请使用 --help 查看可用选项。`,
-    "commander.optionMissingArgument": currentError =>
-      `选项“${extractQuotedValue(currentError.message)}”缺少参数值。`,
-    "commander.missingMandatoryOptionValue": currentError =>
-      `缺少必填选项“${extractQuotedValue(currentError.message)}”。`,
-    "commander.missingArgument": currentError =>
-      `缺少必填参数“${extractQuotedValue(currentError.message)}”。`,
+    "commander.unknownCommand": (currentError) => {
+      const quotedValue = extractQuotedValue(currentError.message)
+
+      if (quotedValue === null) {
+        return "未知命令错误。"
+      }
+
+      return `命令“${quotedValue}”不存在，请使用 --help 查看可用命令。`
+    },
+    "commander.unknownOption": (currentError) => {
+      const quotedValue = extractQuotedValue(currentError.message)
+
+      if (quotedValue === null) {
+        return "未知选项错误。"
+      }
+
+      return `选项“${quotedValue}”不受支持，请使用 --help 查看可用选项。`
+    },
+    "commander.optionMissingArgument": (currentError) => {
+      const quotedValue = extractQuotedValue(currentError.message)
+
+      if (quotedValue === null) {
+        return "未知选项缺少参数值。"
+      }
+
+      return `选项“${quotedValue}”缺少参数值。`
+    },
+    "commander.missingMandatoryOptionValue": (currentError) => {
+      const quotedValue = extractQuotedValue(currentError.message)
+
+      if (quotedValue === null) {
+        return "缺少必填选项值。"
+      }
+
+      return `缺少必填选项“${quotedValue}”。`
+    },
+    "commander.missingArgument": (currentError) => {
+      const quotedValue = extractQuotedValue(currentError.message)
+
+      if (quotedValue === null) {
+        return "缺少必填参数。"
+      }
+
+      return `缺少必填参数“${quotedValue}”。`
+    },
     "commander.excessArguments": currentError =>
       buildExcessArgumentsMessage(currentError.message),
   }
@@ -84,20 +119,21 @@ function buildExcessArgumentsMessage(message: string): string {
 }
 
 /**
- * 从 Commander 错误消息中提取单引号包裹的值。
+ * 从 Commander 错误消息中匹配单引号包围的整段引文。
  *
- * @param message - Commander 抛出的原始错误消息。
- * @returns 单引号内的字符串（Commander 已知错误码下必定存在）。
+ * @param errorMessageText - commander 提供的错误消息原文。
+ * @returns 命中单引号包围时的内容；未命中返回 null。
  *
  * @example
  * ```typescript
  * extractQuotedValue("error: unknown command 'foo'") // "foo"
+ * extractQuotedValue("no quoted value here") // null
  * ```
  */
-function extractQuotedValue(message: string): string {
-  const matchedResult = message.match(/'([^']+)'/)
+function extractQuotedValue(errorMessageText: string): string | null {
+  const matchedResult = errorMessageText.match(/'([^']+)'/)
 
-  return matchedResult![1]
+  return matchedResult === null ? null : matchedResult[1]
 }
 
 export { buildCommanderAppError }
