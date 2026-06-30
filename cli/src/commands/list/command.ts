@@ -12,6 +12,7 @@ import { getRepositoryDirectoryPath, scanSkillEntryList } from "@/features/githu
 import { buildSelectedPlatformList, parsePlatformNameList, PlatformConfigService, promptPlatformNameList } from "@/features/platform"
 import { buildComparisonRows } from "@/features/skill"
 import { removeDirectory } from "@/tools/filesystem"
+import { truncateText } from "@/tools/string"
 
 /**
  * list 命令。
@@ -84,30 +85,6 @@ class ListCommand implements BaseCommand<ListCommandOptions> {
   }
 
   /**
-   * 把技能简介按 {@link descriptionTruncateLimit} 截断，超出部分尾部追加省略号。
-   *
-   * @param description - 原始技能简介。
-   * @returns 截断后的展示用文本。
-   *
-   * @example
-   * ```typescript
-   * this.truncateDescription("简短简介") // "简短简介"
-   * ```
-   *
-   * @example
-   * ```typescript
-   * this.truncateDescription("非常长的简介……重复 100 次") // "非常长的简介……重复 100 次的前 60 字符…"
-   * ```
-   */
-  private truncateDescription(description: string): string {
-    if (description.length <= this.descriptionTruncateLimit) {
-      return description
-    }
-
-    return `${description.slice(0, this.descriptionTruncateLimit)}…`
-  }
-
-  /**
    * 渲染并显示技能比较表格到 stdout。
    *
    * @param title - 标题文案。
@@ -123,7 +100,7 @@ class ListCommand implements BaseCommand<ListCommandOptions> {
       comparisonRowItem.platformName,
       comparisonRowItem.skillName,
       comparisonRowItem.statusMessage,
-      this.truncateDescription(comparisonRowItem.description),
+      truncateText(comparisonRowItem.description, this.descriptionTruncateLimit),
     ])
     const lineRowList = [headerCellList, dividerCellList, ...bodyRowList]
     const tableText = lineRowList.map(lineCellList => lineCellList.join(" | ")).join("\n")
