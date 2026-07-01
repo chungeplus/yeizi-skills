@@ -61,13 +61,13 @@ async function computeDirectoryContentHash(directoryPath: string): Promise<strin
 /**
  * 比对两个目录的内容哈希。
  *
- * 先判断 `targetDirectoryPath` 是否存在且为目录；不满足直接返回 `false`。
+ * 先判断 `sourceDirectoryPath` 与 `targetDirectoryPath` 是否都存在且为目录；
+ * 任一不满足直接返回 `false`。
  * 满足后分别计算两边的递归 SHA-256，hash 相同视为内容一致。
  *
- * @param sourceDirectoryPath - 源目录路径，必须存在且为目录。
- * @param targetDirectoryPath - 目标目录路径，允许不存在或非目录。
- * @returns 两侧内容一致返回 `true`；目标不存在、非目录或内容不同时返回 `false`。
- * @throws 源目录不存在或读取失败时抛出 `node:fs` 的原始错误。
+ * @param sourceDirectoryPath - 源目录路径，允许不存在或非目录（视为内容不同）。
+ * @param targetDirectoryPath - 目标目录路径，允许不存在或非目录（视为内容不同）。
+ * @returns 两侧内容一致返回 `true`；任一不存在、非目录或内容不同时返回 `false`。
  *
  * @example
  * ```typescript
@@ -81,7 +81,11 @@ async function compareDirectoryContentHash(
   sourceDirectoryPath: string,
   targetDirectoryPath: string,
 ): Promise<boolean> {
-  if (!existsSync(targetDirectoryPath)) {
+  if (!existsSync(sourceDirectoryPath) || !existsSync(targetDirectoryPath)) {
+    return false
+  }
+  const sourceStat = await stat(sourceDirectoryPath)
+  if (!sourceStat.isDirectory()) {
     return false
   }
   const targetStat = await stat(targetDirectoryPath)
