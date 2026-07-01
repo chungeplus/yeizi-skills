@@ -7,6 +7,17 @@
 - `yeizi-command-*`：用户显式输入命令后触发
 - `yeizi-auto-*`：根据关键词和上下文条件自动触发
 
+## 安装与使用
+
+通过 `yeizi-skills` CLI 把仓库里的 skill 同步到本地 AI 工具的技能目录：
+
+```bash
+npx yeizi-skills install --platform claude,codex --skill yeizi-auto-self-review
+npx yeizi-skills list --platform claude,codex,trae
+```
+
+详细的命令参数、支持平台、维护者开发流程和 `SKILL.md` frontmatter 规范见 [`cli/README.md`](./cli/README.md)。
+
 ## `.development-reference`
 
 这是一个**不属于任何 skill** 的参考文档目录。
