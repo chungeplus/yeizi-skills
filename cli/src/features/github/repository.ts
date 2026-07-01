@@ -67,7 +67,13 @@ async function scanSkillEntryList(
   )
 
   if (candidateEntryList.length === 0) {
-    throw new AppError(AppErrorCode.REMOTE_REPOSITORY_EMPTY)
+    throw new AppError(AppErrorCode.REMOTE_REPOSITORY_EMPTY, {
+      params: {
+        repositoryOwner: repositoryConfig.repositoryOwner,
+        repositoryName: repositoryConfig.repositoryName,
+        repositoryBranch: repositoryConfig.repositoryBranch,
+      },
+    })
   }
 
   const skillEntryList: SkillEntry[] = []

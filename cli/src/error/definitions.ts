@@ -75,7 +75,8 @@ const errorDefinitionMap: {
   },
   [AppErrorCode.REMOTE_REPOSITORY_EMPTY]: {
     title: "远端仓库异常",
-    buildMessage: () => "远端仓库未发现任何技能，请检查仓库内容。",
+    buildMessage: (params: AppErrorParamsMap[typeof AppErrorCode.REMOTE_REPOSITORY_EMPTY]) =>
+      `仓库 ${params.repositoryOwner}/${params.repositoryName}@${params.repositoryBranch} 内未发现任何 yeizi- 前缀技能目录。请确认：(1) 配置仓库地址正确；(2) 顶层存在至少一个 yeizi-xxx 子目录且包含 SKILL.md。`,
   },
   [AppErrorCode.FILE_COPY_FAILED]: {
     title: "文件复制失败",

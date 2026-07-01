@@ -88,7 +88,10 @@ async function copySkillEntryToPlatformItem(
 
     if (error instanceof Error) {
       const appError = new AppError(AppErrorCode.FILE_COPY_FAILED, {
-        params: { sourcePath: skillSourceDirectoryPath, targetPath: targetSkillDirectoryPath },
+        params: {
+          sourcePath: `仓库临时目录/${skillEntry.name}`,
+          targetPath: targetSkillDirectoryPath,
+        },
         cause: error,
       })
 
