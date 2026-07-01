@@ -1,7 +1,9 @@
+import type { CopyOptions } from "@/types/command/install"
 import type { PlatformItem } from "@/types/platform"
 import type { SkillEntry, SkillInstallResult } from "@/types/skill"
 
 import { existsSync } from "node:fs"
+import { rename } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { AppError, AppErrorCode } from "@/error"
@@ -12,13 +14,15 @@ import { SkillInstallStatus } from "@/types/skill"
  * 把单个技能复制到单个平台。
  *
  * 流程：先用 {@link compareDirectoryContentHash} 比对源与目标，内容一致直接返回 NO_CHANGE；
- * 不一致再 {@link copyDirectory} 覆盖目标并返回 SUCCESS；
+ * 不一致时按 {@link CopyOptions} 决定后续行为：先 backup（覆盖前 rename），再 dry-run（仅返回 NO_CHANGE），
+ * 都不命中才走 {@link copyDirectory} 覆盖目标并返回 SUCCESS；
  * 抛出 {@link AppError} 时按失败结果原样回填，其他 Error 包成 FILE_COPY_FAILED 的 {@link AppError}，
  * 非 Error 异常直接向上传播。
  *
  * @param skillEntry - 当前要安装的技能条目。
  * @param platformItem - 当前要安装到的平台目录。
  * @param repositoryDirectoryPath - 已下载的仓库根目录路径。
+ * @param options - 复制选项，控制 dry-run / backup。默认全关闭。
  * @returns 该次复制的安装结果项。
  *
  * @example
@@ -27,6 +31,7 @@ import { SkillInstallStatus } from "@/types/skill"
  *   { name: "yeizi-demo", description: "示例技能" },
  *   { platformName: "codex", platformHomeDirectoryPath: "/Users/demo/.codex", platformSkillDirectoryPath: "/Users/demo/.codex/skills" },
  *   "/tmp/repo-download",
+ *   { dryRun: false, backup: true },
  * )
  * // { platformName: "codex", skillName: "yeizi-demo", status: "success" }
  * ```
@@ -35,6 +40,7 @@ async function copySkillEntryToPlatformItem(
   skillEntry: SkillEntry,
   platformItem: PlatformItem,
   repositoryDirectoryPath: string,
+  options: CopyOptions = { dryRun: false, backup: false },
 ): Promise<SkillInstallResult> {
   const skillSourceDirectoryPath = resolve(repositoryDirectoryPath, skillEntry.name)
   const targetSkillDirectoryPath = resolve(platformItem.platformSkillDirectoryPath, skillEntry.name)
@@ -61,6 +67,22 @@ async function copySkillEntryToPlatformItem(
     )
 
     if (isContentIdentical) {
+      return {
+        platformName: platformItem.platformName,
+        skillName: skillEntry.name,
+        status: SkillInstallStatus.NO_CHANGE,
+      }
+    }
+
+    // D4: backup —— 覆盖前 rename，失败则 abort
+    if (options.backup && existsSync(targetSkillDirectoryPath)) {
+      const backupPath = `${targetSkillDirectoryPath}.bak-${Date.now()}`
+
+      await rename(targetSkillDirectoryPath, backupPath)
+    }
+
+    // D3: dry-run —— 已 rename 时也只返回 NO_CHANGE、不真 cp
+    if (options.dryRun) {
       return {
         platformName: platformItem.platformName,
         skillName: skillEntry.name,
