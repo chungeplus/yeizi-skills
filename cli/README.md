@@ -7,11 +7,12 @@
 - `codex`
 - `claude`
 - `trae`
+- `all`
 
 ## 使用前提
 
 - Node.js `>= 20`
-- 需要可访问 GitHub 的网络环境，因为 CLI 会拉取远端元数据和内容
+- 需要可访问 GitHub 的网络环境，因为 CLI 会用 git 协议拉取整个仓库快照到临时目录
 - 目标平台的 `skills` 目录已经存在
 
 默认技能目录如下：
@@ -19,6 +20,7 @@
 - `~/.codex/skills`
 - `~/.claude/skills`
 - `~/.trae/skills`
+- `~/.yeizi-skills/skills`
 
 如果所选平台还没有 `skills` 目录，CLI 会跳过该平台，不会自动创建目录。
 
@@ -36,7 +38,6 @@ npx yeizi-skills
 
 - `list` 必须传 `--platform`
 - `install` 必须传 `--platform` 和 `--skill`
-- `update` 必须传 `--platform` 和 `--skill`
 
 查看支持平台上的技能列表：
 
@@ -48,12 +49,6 @@ npx yeizi-skills list --platform codex,claude,trae
 
 ```bash
 npx yeizi-skills install --platform codex,claude --skill yeizi-auto-self-review
-```
-
-更新已安装技能：
-
-```bash
-npx yeizi-skills update --platform codex --skill yeizi-auto-self-review
 ```
 
 ## 维护者开发流程
@@ -75,3 +70,16 @@ bun run build
 bun run check
 bun publish
 ```
+
+## SKILL.md frontmatter 规范
+
+每个 skill 目录下 `SKILL.md` 必须含以下 frontmatter 字段：
+
+```yaml
+---
+name: yeizi-your-skill          # 必填、唯一
+description: 一句话说明这个 skill 用来做什么  # 必填
+---
+```
+
+历史遗留的 `version` 字段已废弃（写了不读）；其它字段（如 `tags`）会被保留不报错，但仅 `name` / `description` 参与 CLI 读取。
