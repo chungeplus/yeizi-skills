@@ -77,8 +77,8 @@ bun publish
 
 ```yaml
 ---
-name: yeizi-your-skill          # 必填、唯一
-description: 一句话说明这个 skill 用来做什么  # 必填
+name: yeizi-your-skill # 必填、唯一
+description: 一句话说明这个 skill 用来做什么 # 必填
 ---
 ```
 
