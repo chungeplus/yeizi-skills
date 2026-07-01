@@ -34,9 +34,7 @@ class PlatformConfigService {
    * 私有构造函数。
    */
   private constructor() {
-    this.platformConfig = {
-      platformList: [...platformConfig.platformList],
-    }
+    this.platformConfig = platformConfig
   }
 
   /**
@@ -51,7 +49,7 @@ class PlatformConfigService {
    * ```
    */
   public getPlatformList(): PlatformItem[] {
-    return this.platformConfig.platformList
+    return [...this.platformConfig.platformList]
   }
 
   /**

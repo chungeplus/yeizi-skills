@@ -27,7 +27,7 @@ interface PlatformConfig {
   /**
    * 平台条目列表。
    */
-  platformList: PlatformItem[]
+  readonly platformList: readonly PlatformItem[]
 }
 
 export type { PlatformConfig, PlatformItem }
