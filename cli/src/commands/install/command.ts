@@ -1,6 +1,6 @@
 import type { Command } from "commander"
 import type { BaseCommand, CommandOptionDefinition } from "@/types/command"
-import type { InstallCommandOptions, RawInstallCommandOptions } from "@/types/command/install"
+import type { CopyOptions, InstallCommandOptions, RawInstallCommandOptions } from "@/types/command/install"
 import type { PlatformItem, PlatformName } from "@/types/platform"
 import type { SkillEntry, SkillInstallResult } from "@/types/skill"
 
@@ -88,6 +88,18 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
     {
       flags: "--skill <skills>",
       description: "逗号分隔的技能列表。",
+    },
+    {
+      flags: "--dry-run",
+      description: "仅打印将执行的操作、不实际复制。",
+    },
+    {
+      flags: "--backup",
+      description: "覆盖前把目标目录重命名为 .bak-{timestamp}。",
+    },
+    {
+      flags: "--offline",
+      description: "giget 离线模式拉取，优先使用缓存。",
     },
   ]
 
@@ -261,7 +273,14 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
       selectedPlatformNameList,
     )
 
-    const repositoryDirectoryPath = await getRepositoryDirectoryPath()
+    const copyOptions: CopyOptions = {
+      dryRun: commandOptions.dryRun,
+      backup: commandOptions.backup,
+    }
+
+    const repositoryDirectoryPath = await getRepositoryDirectoryPath({
+      offline: commandOptions.offline,
+    })
 
     try {
       const { skillEntryList: remoteSkillEntryList, warningList } = await scanSkillEntryList(repositoryDirectoryPath)
@@ -298,6 +317,7 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
               skillEntryItem,
               platformItem,
               repositoryDirectoryPath,
+              copyOptions,
             ),
           ),
         ),
@@ -334,6 +354,9 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
       const commandOptions: InstallCommandOptions = {
         platformNameList,
         skillNameList,
+        dryRun: rawOptions.dryRun,
+        backup: rawOptions.backup,
+        offline: rawOptions.offline,
       }
 
       await this.execute(commandOptions)

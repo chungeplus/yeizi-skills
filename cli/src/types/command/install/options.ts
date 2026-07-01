@@ -61,6 +61,21 @@ interface InstallCommandOptions {
    * 技能名称列表。
    */
   skillNameList: string[]
+
+  /**
+   * 仅打印将执行的操作、不实际复制。
+   */
+  dryRun: boolean
+
+  /**
+   * 覆盖前把目标目录重命名为 .bak-{timestamp}。
+   */
+  backup: boolean
+
+  /**
+   * giget 离线模式拉取，优先使用缓存。
+   */
+  offline: boolean
 }
 
 export type { CopyOptions, InstallCommandOptions, RawInstallCommandOptions }
