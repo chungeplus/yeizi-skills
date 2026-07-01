@@ -15,16 +15,21 @@ import { skillFrontmatterSchema } from "@/schemas/skill/frontmatter"
 /**
  * 获取技能仓库本地目录路径（下载到临时目录）。
  *
- * 每次调用都会联网请求 giget 下载最新仓库快照，不使用离线缓存，保证拉到的是最新内容。
+ * 每次调用都会通过 giget 下载仓库快照。默认走在线拉取；`options.offline` 为 `true` 时把 offline 透传给 giget，让缓存命中优先。
  *
+ * @param options - 下载行为选项。
+ * @param options.offline - 是否走 giget 离线模式（命中本地缓存优先），默认 `false`。
  * @returns 仓库临时目录路径。
  *
  * @example
  * ```typescript
  * await getRepositoryDirectoryPath() // "/tmp/yeizi-skills-repo-abc123"
+ * await getRepositoryDirectoryPath({ offline: true }) // 优先命中 giget 本地缓存
  * ```
  */
-async function getRepositoryDirectoryPath(): Promise<string> {
+async function getRepositoryDirectoryPath(
+  options?: { offline?: boolean },
+): Promise<string> {
   const tempDirectoryPath = await mkdtemp(join(tmpdir(), "yeizi-skills-repo-"))
 
   const downloadResult = await downloadTemplate(
@@ -32,6 +37,7 @@ async function getRepositoryDirectoryPath(): Promise<string> {
     {
       dir: tempDirectoryPath,
       forceClean: true,
+      offline: options?.offline === true,
     },
   )
 
