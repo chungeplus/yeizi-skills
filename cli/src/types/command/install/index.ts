@@ -1,1 +1,5 @@
-export type { InstallCommandOptions, RawInstallCommandOptions } from "./options"
+export type {
+  CopyOptions,
+  InstallCommandOptions,
+  RawInstallCommandOptions,
+} from "./options"

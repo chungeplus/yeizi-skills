@@ -14,6 +14,37 @@ interface RawInstallCommandOptions {
    * 逗号分隔的技能名称列表。
    */
   skill?: string
+
+  /**
+   * 仅打印将执行的操作、不实际复制。
+   */
+  dryRun: boolean
+
+  /**
+   * 覆盖前把目标目录重命名为 .bak-{timestamp}。
+   */
+  backup: boolean
+
+  /**
+   * giget 离线模式拉取，优先使用缓存。
+   */
+  offline: boolean
+}
+
+/**
+ * 复制单技能到单平台时的选项。
+ */
+interface CopyOptions {
+  /**
+   * 只打印"将执行的操作"、不动真实目录。
+   * 配合 hash 比对后会输出 planned action、不会真 cp。
+   */
+  dryRun: boolean
+
+  /**
+   * 在覆盖前把目标目录重命名为 `<target>.bak-{ts}`，失败则 abort。
+   */
+  backup: boolean
 }
 
 /**
@@ -32,4 +63,4 @@ interface InstallCommandOptions {
   skillNameList: string[]
 }
 
-export type { InstallCommandOptions, RawInstallCommandOptions }
+export type { CopyOptions, InstallCommandOptions, RawInstallCommandOptions }
