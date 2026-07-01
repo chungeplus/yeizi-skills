@@ -6,6 +6,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { downloadTemplate } from "giget"
 import matter from "gray-matter"
+import { z } from "zod"
 
 import { repositoryConfig } from "@/config/repository"
 import { AppError, AppErrorCode } from "@/error"
@@ -53,7 +54,7 @@ async function getRepositoryDirectoryPath(): Promise<string> {
  * await scanSkillEntryList("/tmp/yeizi-skills-repo-abc123")
  * // {
  * //   skillEntryList: [{ name: "yeizi-demo", description: "示例技能" }],
- * //   warningList: ['跳过技能候选目录"yeizi-broken"：frontmatter 解析失败。'],
+ * //   warningList: ['跳过技能候选目录"yeizi-broken"：name 字段 技能名不能为空。'],
  * // }
  * ```
  */
@@ -90,8 +91,23 @@ async function scanSkillEntryList(
         description: skillFrontmatter.description,
       })
     }
-    catch {
-      warningList.push(`跳过技能候选目录“${candidateEntryItem.name}”：frontmatter 解析失败。`)
+    catch (error) {
+      let warningMessage: string
+
+      if (error instanceof z.ZodError) {
+        const firstIssue = error.issues[0]
+        const fieldPath = firstIssue?.path.join(".") ?? ""
+        const issueMessage = firstIssue?.message ?? "格式不符"
+
+        warningMessage = fieldPath.length > 0
+          ? `跳过技能候选目录“${candidateEntryItem.name}”：${fieldPath} 字段 ${issueMessage}。`
+          : `跳过技能候选目录“${candidateEntryItem.name}”：frontmatter ${issueMessage}。`
+      }
+      else {
+        warningMessage = `跳过技能候选目录“${candidateEntryItem.name}”：frontmatter 解析失败。`
+      }
+
+      warningList.push(warningMessage)
       continue
     }
   }
