@@ -4,7 +4,8 @@ import { z } from "zod"
 /**
  * 技能文档 frontmatter 的校验 schema。
  *
- * 使用 passthrough 容忍历史遗留的 version 等额外字段，仅强校验 name 与 description。
+ * 仅强校验 name 与 description；使用 passthrough 保留 frontmatter 上可能存在的额外字段（如版本号、tags）、
+ * 但不参与业务读取。
  */
 const skillFrontmatterSchema: z.ZodSchema<SkillFrontmatter> = z
   .object({

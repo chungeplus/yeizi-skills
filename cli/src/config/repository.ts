@@ -11,7 +11,7 @@ const repositoryConfig = {
    */
   repositoryName: "yeizi-skills",
   /**
-   * 拼接 raw URL 与 Contents API ?ref= 时使用的分支名。
+   * 调用 giget 拉取指定分支时的分支标识。
    */
   repositoryBranch: "main",
 } as const
