@@ -22,6 +22,20 @@ async function createProgram(): Promise<Command> {
 
   const program = new Command()
 
+  program.addHelpText(
+    "beforeAll",
+    `
+yeizi-skills — 将远程仓库内 yeizi-* 子目录分装到本地各 AI 平台
+
+快速上手:
+  $ yeizi-skills install --platform claude
+  $ yeizi-skills list
+
+支持平台: codex | claude | trae | all
+
+`,
+  )
+
   program.exitOverride()
   program.configureOutput({
     outputError: () => { },
