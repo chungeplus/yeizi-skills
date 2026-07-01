@@ -4,7 +4,7 @@
 
 `yeizi-skills` CLI 项目（`C:/Users/yeizi/Desktop/yeizi-skills/cli`）当前分支 `v2.1-cleanup` 已合入 v2 重构（删 manifest）与 v2.1 followup 的 6 批次清理（27 项修复全部 commit）。但上游 `yeizi-styles/rules-project/rules/` 在外部仓库被更新，更新内容未同步到 `cli/CLAUDE.md` / `AGENTS.md`，且 `tasks/` 目录下有 3 个规则细化 PRD 待落地（option-suffix、iteration-item、raw-text-payload）。
 
-本次任务是**对全项目做一次新规则审计**，只出报告，不动代码。审计对象是当前 `src/` 下 70+ 个 .ts 文件在当前 `CLAUDE.md` 规则下的合规性，目标是产出一份违规清单 + 修复建议，支撑后续代码重构决策。
+本次任务是**对全项目做一次新规则审计**，只出报告，不动代码。审计对象是当前 `src/` 下 57 个 .ts 文件在当前 `CLAUDE.md` 规则下的合规性，目标是产出一份违规清单 + 修复建议，支撑后续代码重构决策。
 
 **约束**（来自用户确认 + 项目 memory `rule-review-scope`）：
 
@@ -35,7 +35,7 @@
 
 ### 2.2 覆盖规则
 
-当前 `CLAUDE.md` 中 7 个分类下的全部条款（`### ` 段落）。详细 ID 与文本在 S1 阶段从 CLAUDE.md 动态提取。
+当前 `CLAUDE.md` 中 8 个分类下的全部条款（`### ` 段落）。详细 ID 与文本在 S1 阶段从 CLAUDE.md 动态提取。
 
 ### 2.3 不覆盖
 
@@ -54,7 +54,7 @@ S1: 解析 CLAUDE.md 提取规则清单 (rule-list)
 S2: 创建报告骨架 (§0/§1/§5)
          │
          ▼
-S3: 7 个 per-rule 子任务并行 (shared-rules / code-rules / comment-rules
+S3: 8 个 per-category 子任务并行 (shared-rules / code-rules / comment-rules
          / implementation-rules / naming-rules / statement-rules
          / type-rules / directory-rules)
          │
@@ -97,7 +97,7 @@ interface RuleEntry {
 - **type-rules**（3 条）：`enum` 关键字（grep `\benum\s+[A-Z]`）、`any` / `unknown` 兜底（grep `: any\b`、`as any\b`、`: unknown\b`、`as unknown`）、`as` 断言（同上）
 - **directory-rules**（4 条）：桶文件存在 `export \*`、跨目录导入绕进文件内部（非桶路径）、文件名含角色词（grep 目录名重复在文件名中）、单文件目录命名（grep `src/[^/]+/[^/]+\.ts` 的目录是否需要进一步拆）
 
-### 3.3 S3 per-rule 子任务
+### 3.3 S3 per-category 子任务
 
 每个分类起 1 个子任务（不是每条规则 1 个子任务——粒度太细），子任务职责：
 
@@ -152,7 +152,7 @@ severityHint 在 S1 阶段给定，但子任务可基于上下文调整（如规
 - 审计员: Claude (M3)
 - 范围: src/ 下 57 个 .ts 文件
 - 依据: CLAUDE.md (commit <hash> 或 untracked 当前内容)
-- 方法论: pipeline per-rule 深度审计 + 跨规则聚合
+- 方法论: pipeline per-category 深度审计 + 跨规则聚合
 - 严重度: 🔴 CRITICAL / 🟠 MAJOR / 🟡 MINOR
 - 边界: 不动代码 / 不动 CLAUDE.md / 不动 tasks/ 3 个 PRD
 - 引用: v2.1 followup design §X.X, batch-Y commit <hash>
@@ -217,9 +217,9 @@ severityHint 在 S1 阶段给定，但子任务可基于上下文调整（如规
 
 | 步骤 | 任务 | 产物 | 验证点 |
 |---|---|---|---|
-| S1 | 解析 CLAUDE.md 提取规则清单 | `rule-list.json`（内部） | 7 个分类全覆盖、每条规则有 ID + 文本 + 判定要点 |
+| S1 | 解析 CLAUDE.md 提取规则清单 | `rule-list.json`（内部） | 8 个分类全覆盖、每条规则有 ID + 文本 + 判定要点 |
 | S2 | 创建报告骨架 | `2026-07-01-rules-compliance-audit.md` | 文件位置在 `docs/superpowers/specs/` |
-| S3 | 7 个 per-rule 子任务并行 | finding 集合（JSON） | 每条 finding 都有 file:line + rule-id + 片段 + 修复 |
+| S3 | 8 个 per-category 子任务并行 | finding 集合（JSON） | 每条 finding 都有 file:line + rule-id + 片段 + 修复 |
 | S4 | 跨规则聚合 | `merged-findings.json` | 同一 file:line 不重复记账 |
 | S5 | 写入 §2 各小节 | 报告主体 | 严重度排序正确、表格列齐全 |
 | S6 | 生成 §3 双索引 + §4 引用 | 报告索引段 | 排序与目录树一致、规则 ID 字母序正确 |
@@ -248,7 +248,7 @@ severityHint 在 S1 阶段给定，但子任务可基于上下文调整（如规
 |---|---|
 | grep 假阳性泛滥 | S3 子任务不只 grep，必须 Read 文件上下文 ≥ 5 行后再判定 |
 | 规则文本理解偏差 | S1 阶段对每条规则写"判定要点"短句，子任务按要点判断 |
-| 审计耗时过长 | S3 子任务并行启动 + per-rule 隔离（单条规则超时不影响其他） |
+| 审计耗时过长 | S3 子任务并行启动 + per-category 隔离（单条规则超时不影响其他） |
 | 工作区 M 文件状态漂移 | audit 开始时 Read 所有 M 文件生成 content snapshot，S3-S6 全程使用 snapshot |
 | v2.1 followup finding 重复 | S3 子任务跳过 v2.1 followup §3 已列出的 27 项位置 |
 
