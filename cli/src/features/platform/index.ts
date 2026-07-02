@@ -1,4 +1,4 @@
 export { LocalPlatformService } from "./local"
-export { PlatformContentService } from "./remote"
 export { promptPlatformNameList } from "./prompt"
+export { PlatformContentService } from "./remote"
 export { buildPlatformList } from "./resolver"
