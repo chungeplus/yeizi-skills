@@ -25,6 +25,8 @@
 
 - `src/features/repository/remote.ts`
   - 替换为 `RepositoryContentService` 类（`initRepositoryContent` / `getRepositoryDirectoryPath` / `getRepositorySkillDirectoryPath` / `removeContent`）
+- `src/features/skill/copy.ts`
+  - 改 `repositoryConfig` → 直接通过 `RepositoryContentService.getRepositorySkillDirectoryPath()` 拼路径
 - `src/features/skill/remote.ts`
   - 替换为 `SkillContentService` 类（`initSkillContent` / `validateSkillNameListExistInSkillList` / `getRemoteSkillList`）
 - `src/features/platform/remote.ts`
@@ -174,7 +176,90 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 2: 重写 `src/features/skill/remote.ts` 为 `SkillContentService`
+### Task 2: 修 `src/features/skill/copy.ts` 改用 `RepositoryContentService.getRepositorySkillDirectoryPath`
+
+**Files:**
+- Modify: `src/features/skill/copy.ts`（改 import + 改路径拼接方式）
+
+**Interfaces:**
+- Consumes: `RepositoryContentService.getRepositorySkillDirectoryPath()` from Task 1
+- Produces: 不变（`copySkillListToPlatformList` / `copySkillItemToPlatformItem` 公开签名）
+
+- [ ] **Step 1: 修改 `src/features/skill/copy.ts`**
+
+整个文件替换为以下内容：
+
+```typescript
+import type { PlatformItem } from "@/types/platform"
+import type { SkillItem } from "@/types/skill"
+
+import { resolve } from "node:path"
+
+import { RepositoryContentService } from "@/features/repository"
+import { copyDirectory } from "@/tools/filesystem"
+
+/**
+ * 把技能条目按笛卡尔积（技能 × 平台）展开并复制到各平台。
+ *
+ * @param skillList - 技能条目列表。
+ * @param platformList - 平台条目列表。
+ */
+async function copySkillListToPlatformList(
+  skillList: SkillItem[],
+  platformList: PlatformItem[],
+): Promise<void> {
+  const skillSourceRootDirectoryPath = await RepositoryContentService.getRepositorySkillDirectoryPath()
+
+  await Promise.all(
+    skillList.flatMap(skillItem =>
+      platformList.map(async platformItem =>
+        copySkillItemToPlatformItem(skillItem, platformItem, skillSourceRootDirectoryPath),
+      ),
+    ),
+  )
+}
+
+async function copySkillItemToPlatformItem(
+  skillItem: SkillItem,
+  platformItem: PlatformItem,
+  skillSourceRootDirectoryPath: string,
+): Promise<void> {
+  const skillSourceDirectoryPath = resolve(skillSourceRootDirectoryPath, skillItem.skillName)
+  const targetSkillDirectoryPath = resolve(platformItem.platformSkillDirectoryPath, skillItem.skillName)
+
+  await copyDirectory(skillSourceDirectoryPath, targetSkillDirectoryPath)
+}
+
+export { copySkillListToPlatformList }
+```
+
+要点：
+- 删除 `import { repositoryConfig } from "@/config/repository"`（目录不存在）
+- 删除 `import type { SkillItem } from "@/types/skill"` 的 import 错误位置（按项目规则，import type 应当集中）
+- 改用 `RepositoryContentService.getRepositorySkillDirectoryPath()` 获取技能根目录，删掉 `repositoryConfig.repositorySkillDirectoryName` 引用
+- 私有参数从 `repositoryDirectoryPath` 改为 `skillSourceRootDirectoryPath`——更准确地描述其内容
+
+- [ ] **Step 2: 运行 `bun run check` 验证本文件无错**
+
+Run: `bunx tsc --noEmit 2>&1 | grep -E "features/skill/copy" || echo "copy.ts 无错"`
+Expected: 输出 `copy.ts 无错`。
+
+- [ ] **Step 3: 提交**
+
+```bash
+git add src/features/skill/copy.ts
+git commit -m "refactor(skill): copy.ts uses RepositoryContentService skill dir path
+
+旧 copy.ts 通过 repositoryConfig.repositorySkillDirectoryName 拼路径，
+但 @/config/repository 目录已删除。改用
+RepositoryContentService.getRepositorySkillDirectoryPath() 一步到位。
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 3: 重写 `src/features/skill/remote.ts` 为 `SkillContentService`
 
 **Files:**
 - Modify: `src/features/skill/remote.ts`（完整重写）
@@ -290,7 +375,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 3: 重写 `src/features/platform/remote.ts` 为 `PlatformContentService`
+### Task 4: 重写 `src/features/platform/remote.ts` 为 `PlatformContentService`
 
 **Files:**
 - Modify: `src/features/platform/remote.ts`（完整重写）
@@ -372,7 +457,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 4: 在 `src/features/platform/index.ts` 补 `LocalPlatformService` 导出
+### Task 5: 在 `src/features/platform/index.ts` 补 `LocalPlatformService` 导出
 
 **Files:**
 - Modify: `src/features/platform/index.ts`（补一行导出）
@@ -411,7 +496,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 5: 完整构建验证
+### Task 6: 完整构建验证
 
 **Files:** 无
 
@@ -437,13 +522,13 @@ Expected：两条 grep 都没有输出。如果有残留，按提示找到对应
 
 - [ ] **Step 4: 不单独提交**
 
-本任务只做最终验证，不引入新改动。如果前 4 个任务都做对了，本任务应该全部通过。如果发现遗漏，回到对应任务修复后再跑一次。
+本任务只做最终验证，不引入新改动。如果前 5 个任务都做对了，本任务应该全部通过。如果发现遗漏，回到对应任务修复后再跑一次。
 
 ---
 
 ## 已知不在范围内
 
-- `src/commands/install/command.ts:60` 单参数调用 `buildSelectedSkillList(selectedSkillNameList)`：函数签名是 `(remoteSkillList, selectedSkillNameList)`，install 命令只传了第二个。这是 pre-existing 调用方问题，不在四个 service 文件的收尾范围。`bun run check` 可能因此报错——遇到时单独跟进 install 命令的清理。
+- `src/commands/install/command.ts:60` 单参数调用 `buildSelectedSkillList(selectedSkillNameList)`：函数签名是 `(remoteSkillList, selectedSkillNameList)`，install 命令只传了第二个。这是 pre-existing 调用方问题，不在本次 service 文件收尾范围。`bun run check` 可能因此报错——遇到时单独跟进 install 命令的清理。
 - 不动 `LocalPlatformService` 的 `access` 检测逻辑
 - 不重构 `RepositoryConfig` 类型定义
 - 不引入新文件、新工具函数、新错误码
