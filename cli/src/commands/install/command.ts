@@ -1,338 +1,72 @@
 import type { Command } from "commander"
-import type { BaseCommand, CommandOptionDefinition } from "@/types/command"
-import type { CopyOptions, InstallCommandOptions, RawInstallCommandOptions } from "@/types/command/install"
-import type { PlatformItem, PlatformName } from "@/types/platform"
-import type { SkillEntry, SkillInstallResult } from "@/types/skill"
+import type { CommandOption } from "@/types/commands"
+import type { InstallCommandOption, RawInstallCommandOption } from "@/types/commands/install"
+import type { PlatformItem } from "@/types/platform"
+import type { SkillItem, SkillName } from "@/types/skill"
 
-import { mkdir } from "node:fs/promises"
-
-import { AppError, AppErrorCode } from "@/error"
 import { renderSummaryDisplay } from "@/features/display"
-import { getRepositoryDirectoryPath, scanSkillEntryList } from "@/features/github"
-import { buildSelectedPlatformList, parsePlatformNameList, PlatformConfigService, promptPlatformNameList } from "@/features/platform"
-import { buildSelectedSkillList, copySkillEntryToPlatformItem, parseSkillNameList, promptSkillNameList } from "@/features/skill"
-import { removeDirectory } from "@/tools/filesystem"
-import { SkillInstallStatus } from "@/types/skill"
-
-/**
- * 单次成功安装结果，便于 builder 函数签名对单个变体声明。
- */
-type SuccessSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.SUCCESS }>
-
-/**
- * 单次无变化安装结果，便于 builder 函数签名对单个变体声明。
- */
-type NoChangeSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.NO_CHANGE }>
-
-/**
- * 单次失败安装结果，便于 builder 函数签名对单个变体声明。
- */
-type FailedSkillInstallResult = Extract<SkillInstallResult, { status: typeof SkillInstallStatus.FAILED }>
-
-/**
- * 按 SkillInstallStatus 分发的安装结果消息构造函数。
- *
- * 每个 builder 函数声明为对应单一变体的入参类型，调用前再按 `resultItem.status` 收窄。
- */
-const installStatusMessageBuilderByStatus = {
-  "success": (resultItem: SuccessSkillInstallResult) =>
-    `已为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"。`,
-  "no-change": (resultItem: NoChangeSkillInstallResult) =>
-    `平台"${resultItem.platformName}"上的技能"${resultItem.skillName}"无变化、已跳过。`,
-  "failed": (resultItem: FailedSkillInstallResult) =>
-    `为平台"${resultItem.platformName}"安装技能"${resultItem.skillName}"失败：${resultItem.error.message}`,
-}
-
-/**
- * 把单次安装结果转成展示用的中文消息，按 `resultItem.status` 收窄后调用对应 {@link installStatusMessageBuilderByStatus} builder。
- */
-function buildInstallStatusMessage(resultItem: SkillInstallResult): string {
-  if (resultItem.status === SkillInstallStatus.SUCCESS) {
-    return installStatusMessageBuilderByStatus.success(resultItem)
-  }
-
-  if (resultItem.status === SkillInstallStatus.NO_CHANGE) {
-    return installStatusMessageBuilderByStatus["no-change"](resultItem)
-  }
-
-  return installStatusMessageBuilderByStatus.failed(resultItem)
-}
+import { buildPlatformList, PlatformContentService, promptPlatformNameList } from "@/features/platform"
+import { RepositoryContentService } from "@/features/repository"
+import { buildSelectedSkillList, copySkillListToPlatformList, parseSkillNameList, promptSkillNameList, SkillContentService } from "@/features/skill"
 
 /**
  * install 命令。
  */
-class InstallCommand implements BaseCommand<InstallCommandOptions> {
+class InstallCommand {
   /**
    * Commander 命令名。
    */
-  public readonly command = "install"
+  public readonly commandName = "install"
 
   /**
    * 展示在帮助信息中的命令说明。
    */
-  public readonly description = "安装技能。"
-
-  /**
-   * 平台配置服务。
-   */
-  private readonly platformConfig: PlatformConfigService
+  public readonly commandDescription = "安装技能。"
 
   /**
    * 命令支持的选项定义列表。
    */
-  public readonly optionList: readonly CommandOptionDefinition[] = [
+  public readonly commandOptionList: readonly CommandOption[] = [
     {
-      flags: "--platform <platforms>",
-      description: "逗号分隔的平台列表。",
-    },
-    {
-      flags: "--skill <skills>",
-      description: "逗号分隔的技能列表。",
-    },
-    {
-      flags: "--dry-run",
-      description: "仅打印将执行的操作、不实际复制。",
-    },
-    {
-      flags: "--backup",
-      description: "覆盖前把目标目录重命名为 .bak-{timestamp}。",
-    },
-    {
-      flags: "--offline",
-      description: "giget 离线模式拉取，优先使用缓存。",
+      commandOptionFlag: "--skill <skills>",
+      commandOptionDescription: "逗号分隔的技能列表。",
     },
   ]
 
   /**
-   * 构造函数。
-   */
-  public constructor() {
-    this.platformConfig = PlatformConfigService.getInstance()
-  }
-
-  /**
-   * 构建选中的平台名称列表。
-   * 命令行有值时直接沿用，无值时通过交互提示用户多选。
-   *
-   * @param availablePlatformNameList - 可用的平台名称列表。
-   * @param inputPlatformNameList - 命令行传入的平台名称列表。
-   * @returns 选中的平台名称列表。
-   *
-   * @example
-   * ```typescript
-   * await this.buildSelectedPlatformNameList(["claude-code", "codex"], ["claude-code"]) // ["claude-code"]
-   * ```
-   *
-   * @example
-   * ```typescript
-   * await this.buildSelectedPlatformNameList(["claude-code", "codex"], []) // 弹出多选提示，返回用户选择
-   * ```
-   */
-  private async buildSelectedPlatformNameList(
-    availablePlatformNameList: PlatformName[],
-    inputPlatformNameList: PlatformName[],
-  ): Promise<PlatformName[]> {
-    if (inputPlatformNameList.length > 0) {
-      return inputPlatformNameList
-    }
-
-    return promptPlatformNameList(availablePlatformNameList)
-  }
-
-  /**
-   * 构建选中的技能名称列表。
-   * 命令行有值时直接沿用，无值时通过交互提示从远端候选条目中选择。
-   *
-   * @param remoteSkillEntryList - 远端扫描到的技能条目列表，用于交互式提示展示。
-   * @param inputSkillNameList - 命令行传入的技能名称列表。
-   * @returns 选中的技能名称列表。
-   *
-   * @example
-   * ```typescript
-   * await this.buildSelectedSkillNameList(
-   *   [{ name: "yeizi-demo", description: "示例技能" }],
-   *   ["yeizi-demo"],
-   * ) // ["yeizi-demo"]
-   * ```
-   *
-   * @example
-   * ```typescript
-   * await this.buildSelectedSkillNameList(
-   *   [{ name: "yeizi-demo", description: "示例技能" }],
-   *   [],
-   * ) // 弹出多选提示，返回用户选择
-   * ```
-   */
-  private async buildSelectedSkillNameList(
-    remoteSkillEntryList: SkillEntry[],
-    inputSkillNameList: string[],
-  ): Promise<string[]> {
-    if (inputSkillNameList.length > 0) {
-      return inputSkillNameList
-    }
-
-    return promptSkillNameList(remoteSkillEntryList)
-  }
-
-  /**
-   * 把批量安装结果转换成展示用的中文汇总消息列表。
-   *
-   * @param resultList - 批量安装结果列表。
-   * @returns 中文汇总消息列表，顺序与 `resultList` 一致。
-   *
-   * @example
-   * ```typescript
-   * this.buildInstallSummaryMessageList([
-   *   { status: SkillInstallStatus.SUCCESS, skillName: "yeizi-demo", platformName: "claude-code" },
-   * ])
-   * // ['已为平台"claude-code"安装技能"yeizi-demo"。']
-   * ```
-   *
-   * @example
-   * ```typescript
-   * this.buildInstallSummaryMessageList([
-   *   { status: SkillInstallStatus.NO_CHANGE, skillName: "yeizi-demo", platformName: "claude-code" },
-   * ])
-   * // ['平台"claude-code"上的技能"yeizi-demo"无变化、已跳过。']
-   * ```
-   */
-  private buildInstallSummaryMessageList(resultList: SkillInstallResult[]): string[] {
-    return resultList.map(resultItem => buildInstallStatusMessage(resultItem))
-  }
-
-  /**
-   * 删除已下载的仓库临时目录，删除失败时统一抛出 {@link AppError}。
-   *
-   * @param repositoryDirectoryPath - 待删除的仓库临时目录路径。
-   * @throws 删除过程中底层抛出 {@link Error} 时，包装为 {@link AppErrorCode.DIRECTORY_REMOVE_FAILED} 错误。
-   */
-  private async removeRepositoryDirectory(repositoryDirectoryPath: string): Promise<void> {
-    try {
-      await removeDirectory(repositoryDirectoryPath)
-    }
-    catch (error) {
-      if (error instanceof Error) {
-        throw new AppError(AppErrorCode.DIRECTORY_REMOVE_FAILED, {
-          params: { directoryPath: repositoryDirectoryPath },
-          cause: error,
-        })
-      }
-
-      throw error
-    }
-  }
-
-  /**
-   * 选定平台目标项列表，并对每个平台的 skills 目录自动 mkdir -p。
-   *
-   * 第三个参数 `allowMissingSkillDirectory` 传 `true` 是为了绕开 `buildSelectedPlatformList`
-   * 默认的严格校验：install 流程在拿到 PlatformItem 后会立即 `mkdir -p` 创建目标目录，
-   * 因此首次运行（如 `~/.claude/skills` 不存在时执行 `install --platform claude`）必须允许
-   * 平台技能目录暂时不存在，否则 `mkdir` 还没机会执行就会先抛 `PLATFORM_NOT_FOUND`。
-   *
-   * @param availablePlatformList - 所有支持的 {@link PlatformItem} 列表。
-   * @param selectedPlatformNameList - 用户选中的平台名称列表。
-   * @returns 选中的 {@link PlatformItem} 数组，且每个 `platformSkillDirectoryPath` 已创建。
-   */
-  private async selectAndEnsurePlatformItemList(
-    availablePlatformList: PlatformItem[],
-    selectedPlatformNameList: PlatformName[],
-  ): Promise<PlatformItem[]> {
-    const selectedPlatformList = buildSelectedPlatformList(
-      availablePlatformList,
-      selectedPlatformNameList,
-      true,
-    )
-
-    for (const platformItem of selectedPlatformList) {
-      await mkdir(platformItem.platformSkillDirectoryPath, { recursive: true })
-    }
-
-    return selectedPlatformList
-  }
-
-  /**
    * 解析参数、拉取远端仓库快照、扫描候选技能并将选中的技能安装到指定平台。
    *
-   * 流程顺序：
-   * 1. 解析选中平台并校验。
-   * 2. 拉取远端仓库到临时目录。
-   * 3. 扫描候选技能、收集用户选择、批量安装。
-   * 4. 渲染汇总展示。
-   * 5. 无论成功或失败，最终清理临时目录。
-   *
-   * @param commandOptions - 命令选项。
+   * @param installCommandOption - 解析后的安装选项。
    */
-  public async execute(commandOptions: InstallCommandOptions): Promise<void> {
-    const selectedPlatformNameList = await this.buildSelectedPlatformNameList(
-      this.platformConfig.getPlatformNameList(),
-      commandOptions.platformNameList,
+  public async execute(installCommandOption: InstallCommandOption): Promise<void> {
+    await SkillContentService.initSkillContent()
+
+    await RepositoryContentService.initRepositoryContent()
+
+    await PlatformContentService.initPlatformContent()
+
+    const inputSkillNameList = parseSkillNameList(installCommandOption.rawSkillNameText)
+
+    await SkillContentService.validateSkillNameListExistInSkillList(inputSkillNameList)
+
+    let selectedSkillNameList: SkillName[] = inputSkillNameList
+
+    if (inputSkillNameList.length === 0) {
+      selectedSkillNameList = await promptSkillNameList()
+    }
+
+    const selectedPlatformNameList = await promptPlatformNameList()
+
+    const selectedPlatformList: PlatformItem[] = await buildPlatformList(selectedPlatformNameList)
+
+    const selectedSkillList: SkillItem[] = buildSelectedSkillList(
+      await SkillContentService.getRemoteSkillList(),
+      selectedSkillNameList,
     )
-    const selectedPlatformList = await this.selectAndEnsurePlatformItemList(
-      this.platformConfig.getPlatformList(),
-      selectedPlatformNameList,
-    )
 
-    const copyOptions: CopyOptions = {
-      dryRun: commandOptions.dryRun,
-      backup: commandOptions.backup,
-    }
+    await copySkillListToPlatformList(selectedSkillList, selectedPlatformList)
 
-    const repositoryDirectoryPath = await getRepositoryDirectoryPath({
-      offline: commandOptions.offline,
-    })
-
-    try {
-      const { skillEntryList: remoteSkillEntryList, warningList } = await scanSkillEntryList(repositoryDirectoryPath)
-
-      // B2: 拉仓库并扫完远端条目后立刻校验 --skill 输入是否在远端存在
-      if (commandOptions.skillNameList.length > 0) {
-        const remoteSkillNameSet = new Set(
-          remoteSkillEntryList.map(remoteSkillEntryItem => remoteSkillEntryItem.name),
-        )
-        const missingInputSkillNameList = commandOptions.skillNameList.filter(
-          inputSkillNameItem => !remoteSkillNameSet.has(inputSkillNameItem),
-        )
-
-        if (missingInputSkillNameList.length > 0) {
-          throw new AppError(AppErrorCode.SKILL_NOT_FOUND, {
-            params: { skillNameList: missingInputSkillNameList },
-          })
-        }
-      }
-
-      const selectedSkillNameList = await this.buildSelectedSkillNameList(
-        remoteSkillEntryList,
-        commandOptions.skillNameList,
-      )
-      const selectedSkillEntryList = buildSelectedSkillList(
-        remoteSkillEntryList,
-        selectedSkillNameList,
-      )
-
-      const installResultList: SkillInstallResult[] = await Promise.all(
-        selectedSkillEntryList.flatMap(skillEntryItem =>
-          selectedPlatformList.map(async platformItem =>
-            copySkillEntryToPlatformItem(
-              skillEntryItem,
-              platformItem,
-              repositoryDirectoryPath,
-              copyOptions,
-            ),
-          ),
-        ),
-      )
-      const summaryMessageList = this.buildInstallSummaryMessageList(installResultList)
-
-      renderSummaryDisplay("安装完成", summaryMessageList)
-
-      if (warningList.length > 0) {
-        renderSummaryDisplay("提示", warningList)
-      }
-    }
-    finally {
-      await this.removeRepositoryDirectory(repositoryDirectoryPath)
-    }
+    renderSummaryDisplay("安装完成", ["已安装完成。"])
   }
 
   /**
@@ -341,25 +75,23 @@ class InstallCommand implements BaseCommand<InstallCommandOptions> {
    * @param program - Commander 程序对象。
    */
   public register(program: Command): void {
-    const installCommand = program.command(this.command).description(this.description)
+    const installCommand = program
+      .command(this.commandName)
+      .description(this.commandDescription)
 
-    this.optionList.forEach((optionDefinition) => {
-      installCommand.option(optionDefinition.flags, optionDefinition.description)
+    this.commandOptionList.forEach((commandOptionItem) => {
+      installCommand.option(
+        commandOptionItem.commandOptionFlag,
+        commandOptionItem.commandOptionDescription,
+      )
     })
 
-    installCommand.action(async (rawOptions: RawInstallCommandOptions) => {
-      const platformNameList = parsePlatformNameList(rawOptions.platform)
-      const skillNameList = parseSkillNameList(rawOptions.skill)
-
-      const commandOptions: InstallCommandOptions = {
-        platformNameList,
-        skillNameList,
-        dryRun: rawOptions.dryRun,
-        backup: rawOptions.backup,
-        offline: rawOptions.offline,
+    installCommand.action(async (rawCommandOption: RawInstallCommandOption) => {
+      const commandOption: InstallCommandOption = {
+        rawSkillNameText: rawCommandOption.skill,
       }
 
-      await this.execute(commandOptions)
+      await this.execute(commandOption)
     })
   }
 }
