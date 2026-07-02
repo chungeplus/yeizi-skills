@@ -1,37 +1,38 @@
+import type { RepositoryConfig } from "@/types/config"
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
 
+import { join } from "node:path"
 import { downloadTemplate } from "giget"
 
-import { remoteConfig } from "@/config"
+import { repositoryConfig } from "@/config"
 
-class RemoteSkillService {
-  private static remoteConfig = remoteConfig
+class RemoteRepositoryService {
+  private static repositoryConfig: RepositoryConfig = repositoryConfig
 
-  private static repositoryDirectoryPath: string | undefined
+  private static localRepositoryDirectoryPath: string | undefined
 
-  private static initRepositoryContentPromise: Promise<[void]> | undefined
+  private static initRemoteRepositoryPromise: Promise<[void]> | null
 
-  public static async initRepositoryContent(): Promise<[void]> {
-    if (RemoteSkillService.initRepositoryContentPromise === undefined) {
-      RemoteSkillService.initRepositoryContentPromise = Promise.all([
-        RemoteSkillService.createLoadRepositoryDirectoryPathPromise(),
+  public static async initRemoteRepository(): Promise<[void]> {
+    if (RemoteRepositoryService.initRemoteRepositoryPromise === null) {
+      RemoteRepositoryService.initRemoteRepositoryPromise = Promise.all([
+        RemoteRepositoryService.createLoadLocalRepositoryDirectoryPathPromise(),
       ])
     }
 
-    return RemoteSkillService.initRepositoryContentPromise
+    return RemoteRepositoryService.initRemoteRepositoryPromise
   }
 
-  private static async createLoadRepositoryDirectoryPathPromise(): Promise<void> {
-    const repositoryDirectoryPath = await RemoteSkillService.loadRepositoryDirectoryPath()
-    RemoteSkillService.repositoryDirectoryPath = repositoryDirectoryPath
+  private static async createLoadLocalRepositoryDirectoryPathPromise(): Promise<void> {
+    const localRepositoryDirectoryPath = await RemoteRepositoryService.loadLocalRepositoryDirectoryPath()
+    RemoteRepositoryService.localRepositoryDirectoryPath = localRepositoryDirectoryPath!
   }
 
-  private static async loadRepositoryDirectoryPath(): Promise<string> {
+  private static async loadLocalRepositoryDirectoryPath(): Promise<string> {
     const tempDirectoryPath = await mkdtemp(join(tmpdir(), "yeizi-skills-repo-"))
 
-    const downloadResult = await downloadTemplate(RemoteSkillService.getRepositoryRequestPath(), {
+    const downloadResult = await downloadTemplate(RemoteRepositoryService.getRemoteRepositoryRequestPath(), {
       dir: tempDirectoryPath,
       forceClean: true,
     })
@@ -39,32 +40,39 @@ class RemoteSkillService {
     return downloadResult.dir
   }
 
-  private static getRepositoryRequestPath(): string {
-    return `gh:${RemoteSkillService.remoteConfig.remoteOwner}/${RemoteSkillService.remoteConfig.remoteName}#${RemoteSkillService.remoteConfig.remoteBranch}`
+  private static getRemoteRepositoryRequestPath(): string {
+    const {
+      repositoryOwner,
+      repositoryName,
+      repositoryBranch,
+    } = RemoteRepositoryService.repositoryConfig
+
+    return `gh:${repositoryOwner}/${repositoryName}#${repositoryBranch}`
   }
 
-  public static async getRepositoryDirectoryPath(): Promise<string> {
-    await RemoteSkillService.initRepositoryContent()
+  public static async getLocalRepositoryDirectoryPath(): Promise<string> {
+    await RemoteRepositoryService.initRemoteRepository()
 
-    return RemoteSkillService.repositoryDirectoryPath!
+    return RemoteRepositoryService.localRepositoryDirectoryPath!
   }
 
-  public static async getRepositorySkillDirectoryPath(): Promise<string> {
-    const repositoryDirectoryPath = await RemoteSkillService.getRepositoryDirectoryPath()
+  public static async getLocalRepositorySkillDirectoryPath(): Promise<string> {
+    await RemoteRepositoryService.initRemoteRepository()
 
-    return join(repositoryDirectoryPath, RemoteSkillService.remoteConfig.remoteSkillDirectoryPath)
+    return join(
+      RemoteRepositoryService.localRepositoryDirectoryPath!,
+      RemoteRepositoryService.repositoryConfig.repositorySkillDirectoryName,
+    )
   }
 
-  public static async removeContent(): Promise<void> {
-    if (RemoteSkillService.repositoryDirectoryPath === undefined) {
-      RemoteSkillService.initRepositoryContentPromise = undefined
+  public static async removeLocalRepositoryDirectory(): Promise<void> {
+    if (RemoteRepositoryService.localRepositoryDirectoryPath === undefined) {
       return
     }
-
-    await rm(RemoteSkillService.repositoryDirectoryPath, { recursive: true })
-    RemoteSkillService.repositoryDirectoryPath = undefined
-    RemoteSkillService.initRepositoryContentPromise = undefined
+    await rm(RemoteRepositoryService.localRepositoryDirectoryPath, { recursive: true })
+    RemoteRepositoryService.localRepositoryDirectoryPath = undefined
+    RemoteRepositoryService.initRemoteRepositoryPromise = null
   }
 }
 
-export { RemoteSkillService as RepositoryContentService }
+export { RemoteRepositoryService }

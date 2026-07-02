@@ -6,7 +6,7 @@ import type { SkillItem, SkillName } from "@/types/skill"
 
 import { renderSummaryDisplay } from "@/features/display"
 import { buildPlatformList, PlatformContentService, promptPlatformNameList } from "@/features/platform"
-import { RepositoryContentService } from "@/features/repository"
+import { RemoteRepositoryService } from "@/features/repository"
 import { buildSelectedSkillList, copySkillListToPlatformList, parseSkillNameList, promptSkillNameList, SkillContentService } from "@/features/skill"
 
 /**
@@ -41,7 +41,7 @@ class InstallCommand {
   public async execute(installCommandOption: InstallCommandOption): Promise<void> {
     await SkillContentService.initSkillContent()
 
-    await RepositoryContentService.initRepositoryContent()
+    await RemoteRepositoryService.initRemoteRepository()
 
     await PlatformContentService.initPlatformContent()
 

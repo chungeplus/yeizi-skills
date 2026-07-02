@@ -6,7 +6,7 @@ import { join } from "node:path"
 import matter from "gray-matter"
 
 import { AppError, AppErrorCode } from "@/error"
-import { RepositoryContentService } from "@/features/repository"
+import { RemoteRepositoryService } from "@/features/repository"
 import { skillEntryFileObjectSchema } from "@/schemas/skill/entry-file-data"
 
 const SKILL_ENTRY_FILE_NAME = "SKILL.md"
@@ -32,7 +32,7 @@ class SkillContentService {
   }
 
   private static async loadRemoteSkillList(): Promise<SkillItem[]> {
-    const remoteSkillDirectoryPath = await RepositoryContentService.getRepositorySkillDirectoryPath()
+    const remoteSkillDirectoryPath = await RemoteRepositoryService.getLocalRepositorySkillDirectoryPath()
     const remoteSkillDirectoryEntryList = await readdir(remoteSkillDirectoryPath, { withFileTypes: true })
 
     const remoteSkillList: SkillItem[] = await Promise.all(

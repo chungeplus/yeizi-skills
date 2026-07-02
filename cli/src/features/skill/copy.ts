@@ -3,7 +3,7 @@ import type { SkillItem } from "@/types/skill"
 
 import { resolve } from "node:path"
 
-import { RepositoryContentService } from "@/features/repository"
+import { RemoteRepositoryService } from "@/features/repository"
 import { copyDirectory } from "@/tools/filesystem"
 
 /**
@@ -16,7 +16,7 @@ async function copySkillListToPlatformList(
   skillList: SkillItem[],
   platformList: PlatformItem[],
 ): Promise<void> {
-  const skillSourceRootDirectoryPath = await RepositoryContentService.getRepositorySkillDirectoryPath()
+  const skillSourceRootDirectoryPath = await RemoteRepositoryService.getLocalRepositorySkillDirectoryPath()
 
   await Promise.all(
     skillList.flatMap(skillItem =>
