@@ -1,3 +1,3 @@
-export { PlatformConfigService } from "./config"
+export { PlatformContentService } from "./remote"
 export { promptPlatformNameList } from "./prompt"
-export { buildSelectedPlatformList, parsePlatformNameList } from "./resolver"
+export { buildPlatformList } from "./resolver"
