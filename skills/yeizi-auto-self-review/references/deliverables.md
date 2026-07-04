@@ -1,21 +1,21 @@
-# Cross-Deliverable Alignment Checks
+# 跨交付物一致性检查
 
-If the current task changes multiple deliverables, do not review each file or page in isolation. Also check whether the deliverables stay aligned with each other.
+如果当前任务同时改动了多个交付物,不要只对单个文件或页面孤立自审。还要检查这些交付物彼此之间是否仍然保持一致。
 
-Common linked combinations include:
+常见的关联组合包括:
 
-- PRD + prototype
-- Prototype + page implementation
-- Page implementation + API / data structure
-- Test records + integration results + test handoff notes
-- Release notes + delivery checklist + actual artifact paths
+- PRD + 原型
+- 原型 + 页面实现
+- 页面实现 + API / 数据结构
+- 测试记录 + 集成结论 + 提测说明
+- 发布说明 + 交付清单 + 实际产物路径
 
-At minimum, check whether the following stay aligned:
+至少要核对以下几项是否保持一致:
 
-- Names: module name, page name, API name, version name
-- Counts: number of pages, APIs, steps, checklist items
-- Paths or references: file paths, links, endpoints, asset references
-- Status labels: completed / waiting for integration / waiting for testing / released
-- Version and scope: whether the PRD, prototype, implementation, and release notes still point to the same version scope
+- 命名:模块名、页面名、API 名、版本名
+- 数量:页面数、API 数、步骤数、清单条目数
+- 路径或引用:文件路径、链接、接口端点、资源引用
+- 状态标签:已完成 / 待集成 / 待测试 / 已发布
+- 版本与范围:PRD、原型、实现、发布说明是否仍然指向同一版本范围
 
-If these deliverables are out of sync, do not give only a local pass conclusion. Prioritize the alignment gap in the self-review result.
+如果这些交付物之间出现不一致,不要只给出"局部通过"的结论。要把一致性缺口作为自审结论中的高优项。

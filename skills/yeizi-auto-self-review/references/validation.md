@@ -1,55 +1,55 @@
-# Verification Evidence and Sampling Review
+# 验证证据与抽样自审
 
-## Evidence Sources
+## 证据来源
 
-Before you write conclusions such as "within the verified scope", make the evidence source explicit. Use one or more of the following:
+在写出"在已核验范围内"之类结论之前,先把证据来源说清楚。可以使用下面一种或多种:
 
-- Static review: code, docs, config, structure, or style inspection
-- Runtime evidence: local execution, build results, command output, API responses, logs
-- Browser or page inspection: rendering, layout, interaction states, scrolling, visibility
-- Test output: unit tests, integration tests, regression tests, manual validation notes
-- Document comparison: PRD, prototype, implementation, test notes, and delivery checklist alignment
-- Manual walkthrough: structure checks, path checks, state checks based on the current context
+- 静态审查:代码、文档、配置、结构或样式检查
+- 运行时证据:本地执行、构建结果、命令输出、API 响应、日志
+- 浏览器或页面检查:渲染、布局、交互状态、滚动、可见性
+- 测试输出:单元测试、集成测试、回归测试、人工验证记录
+- 文档比对:PRD、原型、实现、测试记录、交付清单之间的对齐
+- 人工走查:基于当前上下文进行结构、路径、状态的人工核对
 
-Try to match the wording of the conclusion to the actual evidence source:
+让结论的措辞与真实证据来源对得上:
 
-- Do not describe static review as runtime verification
-- Do not describe sampling a few pages as full verification
-- Do not describe document alignment as proof that the feature is usable
+- 不要把静态审查说成运行时验证
+- 不要把抽样几页说成全量验证
+- 不要把文档对齐说成功能可用性证明
 
-## Sampling Large Outputs
+## 大体量产物的抽样
 
-When the output is large enough that full review is disproportionately expensive, sampling is allowed. These thresholds are only heuristics, not hard rules:
+当产物体量较大、全量审查成本明显过高时,可以抽样。下面这些阈值只是经验值,不是硬性规则:
 
-- Code: roughly more than 300 lines
-- HTML/CSS: roughly more than 500 lines
-- Documents: roughly more than 1000 words or characters of meaningful content
+- 代码:大约超过 300 行
+- HTML/CSS:大约超过 500 行
+- 文档:大约超过 1000 字或 1000 个有意义字符
 
-### Sampling Rules
+### 抽样规则
 
-1. Always inspect:
-   - Entry and exit logic, such as function boundaries or first-screen / bottom critical page areas
-   - Declaration zones, such as `import`s, global state, CSS variables, or config sections
-   - Start/end structure, such as opening and closing layout structure, module boundaries, document intro and ending
-   - Shared styles or shared capabilities, such as common components, layout skeletons, theme variables
-2. Sample additional representative sections:
-   - Inspect 2-3 representative middle sections or modules
-   - Cover different content types when possible, such as form page + list page + detail page, or initialization + main flow + error branch
-   - Avoid inspecting only adjacent sections or overly similar samples
-3. Explain the review scope:
-   - State whether the review was full or sampled
-   - If it was sampled, state the covered scope, uncovered scope, and residual risk
+1. 始终检查:
+   - 入口与出口逻辑,例如函数边界、首页/末页等关键页面区域
+   - 声明区,例如 `import`、全局状态、CSS 变量、配置段
+   - 起止结构,例如布局的开闭结构、模块边界、文档的首尾
+   - 共享样式或共享能力,例如公共组件、布局骨架、主题变量
+2. 再补充若干有代表性的片段:
+   - 抽取 2-3 段有代表性的中间段落或模块
+   - 尽量覆盖不同内容类型,例如表单页 + 列表页 + 详情页,或初始化 + 主流程 + 异常分支
+   - 避免只看相邻片段,也不要只抽过于相似的样本
+3. 说明自审范围:
+   - 明确说明本次自审是全量还是抽样
+   - 如果是抽样,要写清楚已覆盖范围、未覆盖范围、残余风险
 
-If the user explicitly asks for strict verification, full inspection, or a high-confidence conclusion, do not default to sampling.
+如果用户明确要求严格验证、全量检查或高置信结论,不要默认走抽样。
 
-## High-Risk Changes That Should Not Default to Sampling
+## 不应默认抽样的高风险改动
 
-Even if the output is large, do not default to sampling for these high-risk areas:
+即使产物体量较大,以下高风险领域也不要默认抽样:
 
-- Permission, authentication, login, registration, or risk-control logic
-- Payment, charging, order-state transitions, or refund logic
-- Release scripts, deployment workflows, or environment switching
-- Data migration, bulk update, delete, or backfill scripts
-- Critical paths that involve security boundaries, sensitive data, or external callbacks
+- 权限、登录、注册、风控逻辑
+- 支付、计费、订单状态流转、退款逻辑
+- 发布脚本、部署流程、环境切换
+- 数据迁移、批量更新、删除、回填脚本
+- 涉及安全边界、敏感数据、外部回调的关键路径
 
-If stronger verification cannot be completed in those cases, do not force a high-confidence pass conclusion. State the verification gap and residual risk explicitly.
+在这些场景下,如果无法完成更严格的验证,不要硬给高置信的"通过"结论。要明确写出验证缺口和残余风险。

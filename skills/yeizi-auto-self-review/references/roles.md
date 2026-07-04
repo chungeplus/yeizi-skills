@@ -1,17 +1,17 @@
-# Review Lenses and Typical Symptoms
+# 自审视角与典型症状
 
-Adjust the review focus based on the primary lens. Keep the dimensions abstract and use the symptoms to spot common failure modes. The symptom list is not an exhaustive checklist; always judge it against the project phase and current deliverable.
+根据主视角调整自审重心。维度本身保持抽象,用症状去发现常见失效模式。症状列表不是穷尽清单,始终要结合项目阶段和当前交付物做判断。
 
-| Review lens | Typical tasks / deliverables | Main review focus | Typical symptoms to investigate |
+| 自审视角 | 典型任务 / 交付物 | 主要自审重心 | 需要排查的典型症状 |
 | --- | --- | --- | --- |
-| Product / requirements | PRDs, user stories, flows, acceptance criteria, release notes | Closed-loop completeness, role/permission boundaries, exception flows, scope boundaries, acceptance framing | Main flow exists but exception flow is missing; feature exists but acceptance criteria do not; role exists but permission boundary does not; version scope drift; document and prototype disagree |
-| Design / frontend UI | Prototypes, pages, components, design specs, interaction drafts | Layout completeness, interaction closure, visual consistency, state coverage, responsiveness | Elements overflow the page; unexpected blank scroll space; fixed elements overlap content; clicks have no feedback; same component type looks inconsistent; old styling remains |
-| Implementation | Frontend code, backend code, APIs, services, scripts, jobs | Runtime risk, edge cases, exception handling, regression risk, maintainability | `null` / `undefined` not handled; async races; state not reset; duplicated logic; magic numbers; patch-like branch buildup; unclear backfill scope |
-| Architecture / technical plan | Architecture plans, module splits, technology choices, dependency governance | Risk coverage, rollback / degradation, extensibility, dependency boundaries, cost and safety | A plan exists but no rollback; a dependency exists but no degradation path; extension points lack guardrails; ownership boundaries are blurry; cost ceiling is unclear; security boundary is unspecified; migration script has no rollback; schema change is not synchronized with upstream/downstream systems |
-| Testing / verification | Test cases, validation records, integration conclusions, walkthrough results | Verification scope, evidence quality, pass conditions, omission risk | The conclusion is written without evidence; verified and unverified items are mixed together; a sampled conclusion is written as if full coverage happened; an integration issue has no reproduction path |
-| Delivery | Test handoff notes, release notes, delivery checklists, status sync | Deliverable consistency, dependency alignment, status sync, clarity of next steps | The document differs from the actual artifact; paths or versions are out of sync; test-entry conditions are unclear; ownership boundaries are unclear; the next step has no owner or no starting point |
+| 产品 / 需求 | PRD、用户故事、流程、验收标准、发布说明 | 闭环完整性、角色 / 权限边界、异常流程、范围边界、验收口径 | 主流程存在但缺异常流程;功能存在但缺验收标准;角色存在但缺权限边界;版本范围漂移;文档与原型不一致 |
+| 设计 / 前端 UI | 原型、页面、组件、设计规范、交互稿 | 布局完整性、交互闭环、视觉一致性、状态覆盖、响应式表现 | 元素溢出页面;出现意外空白滚动;固定元素与内容重叠;点击无反馈;同类组件视觉不一致;旧样式残留 |
+| 实现 | 前端代码、后端代码、API、服务、脚本、Job | 运行时风险、边界用例、异常处理、回归风险、可维护性 | `null` / `undefined` 未处理;异步竞态;状态未重置;逻辑重复;魔法值;补丁式分支堆积;回填范围不清 |
+| 架构 / 技术方案 | 架构方案、模块拆分、技术选型、依赖治理 | 风险覆盖、回滚 / 降级、扩展性、依赖边界、成本与安全 | 有方案但无回滚;有依赖但无降级路径;扩展点缺乏守门规则;所有权边界模糊;成本上限不清;安全边界未声明;迁移脚本无回滚;Schema 改动未与上下游同步 |
+| 测试 / 验证 | 测试用例、验证记录、集成结论、走查结论 | 验证范围、证据质量、通过条件、遗漏风险 | 结论无证据;已验证与未验证项混在一起;抽样结论被写成全量验证;集成问题没有复现路径 |
+| 交付 | 提测说明、发布说明、交付清单、状态对齐 | 交付物一致性、依赖对齐、状态同步、下一步清晰度 | 文档与实际产物不一致;路径或版本错位;提测入口条件不清;所有权边界不清;下一步无人接手或无起点 |
 
-Default rules:
+默认规则:
 
-- If the deliverable is code, API, service, script, or module implementation, default to the implementation lens
-- If the task spans multiple deliverables, choose the primary lens from the final deliverable first, then add only directly relevant secondary checks
+- 如果交付物是代码、API、服务、脚本或模块实现,默认走实现视角
+- 如果任务跨多个交付物,先按最终交付物选择主视角,再补充直接相关的次要检查项

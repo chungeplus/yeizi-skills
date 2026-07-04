@@ -1,321 +1,320 @@
 ---
 name: "yeizi-command-bug-workflow"
-description: "Use when the user explicitly invokes `/yeizi-command-bug-workflow` for a complex bug, regression, or technical repair where the failure is real, but the root cause or safest fix path is still unclear."
+description: "当用户显式调用 `/yeizi-command-bug-workflow` 用于处理复杂 bug、回归问题或技术修复,且故障确实存在但根因或最稳妥的修复路径尚未明确时使用。"
 ---
 
-# Yeizi Command Bug Workflow
+# Yeizi Bug 工作流命令
 
-This is a command-triggered repair workflow for complex software bugs. Use it only when the user explicitly invokes `/yeizi-command-bug-workflow`.
+这是一个针对复杂软件问题的命令触发式修复工作流。只有当用户明确调用 `/yeizi-command-bug-workflow` 时才使用。
 
-## Trigger Rules
+## 触发规则
 
-- Trigger only on explicit `/yeizi-command-bug-workflow` use.
-- Standard form: `/yeizi-command-bug-workflow <task>`.
-- If the command body is brief but the current thread already makes the bug target obvious, continue from context.
-- Ask only if the actual target bug is still unclear after inspecting the current context.
+- 仅在用户显式使用 `/yeizi-command-bug-workflow` 时触发。
+- 标准形式:`/yeizi-command-bug-workflow <任务>`。
+- 如果命令正文很短,但当前线程中的上下文已经让目标问题变得明确,直接顺着上下文继续。
+- 只有在检查当前上下文后,真正的目标 bug 仍不明确时,才向用户提问。
 
-## Primary Fit
+## 主要适用场景
 
-- complex bugs with unclear root cause
-- regressions where the breaking change is not immediately obvious
-- technical failures with multiple plausible explanations
-- repairs that may touch multiple modules, state transitions, or call chains
-- situations where correctness matters more than speed
+- 根因不清的复杂 bug
+- 难以一眼看出引入点的回归问题
+- 存在多种合理解释的技术故障
+- 修复可能涉及多个模块、状态流转或调用链
+- 正确性比速度更重要的场景
 
-## Not The Primary Fit
+## 非主要适用场景
 
-- requirement discussion
-- product scoping
-- feature ideation before implementation starts
-- open-ended planning where the core task is deciding what to build rather than why something is broken
+- 需求讨论
+- 产品范围讨论
+- 实现启动前的功能构思
+- 核心任务是"决定做什么"而非"为什么坏掉了"的开放式规划
 
-## Core Stance
+## 核心立场
 
-- This is a repair workflow, not a requirement-discussion workflow.
-- If the user expects a fix, keep going through diagnosis, implementation, and validation instead of stopping at analysis.
-- Prioritize correctness over speed, token thrift, or minimal effort.
-- Do not treat "looks plausible" as good enough.
-- Do not ask the user to choose among repair options you can eliminate yourself.
-- Keep the heavy thinking internal. The visible output should stay concise and decision-focused.
+- 这是修复工作流,不是需求讨论工作流。
+- 如果用户期望得到修复,就一直推进到诊断、实现、验证,不要停在分析阶段。
+- 把正确性放在速度、省 token、轻量之上。
+- 不要把"看起来说得通"当作足够好的结论。
+- 不要在自己能排除的修复选项之间让用户做选择。
+- 把繁重的思考放在内部。对外输出保持简洁、聚焦决策。
 
-## Internal Workflow
+## 内部工作流
 
-### 1. Take the Bug Report
+### 1. 接住 Bug 报告
 
-Start from the user-reported failure, not from your own guess.
+从用户报告的故障出发,而不是从自己的猜测出发。
 
-At this step, receive and hold onto:
+在这一步,接收并暂时持有:
 
-- the reported failure or symptom
-- the user's current description of what is wrong
+- 报告的故障或现象
+- 用户对"哪里不对"的当前描述
 
-Do not judge root cause here.
+不要在这里判断根因。
+不要在这里进入修复。
 
-Do not enter repair here.
+### 2. 轻量解析 Bug 与修复目标
 
-### 2. Light-Parse the Bug and Repair Target
+仅基于当前的 bug 报告,私下确定:
 
-Based only on the current bug report, privately determine:
+- 期望行为
+- 修复目标
+- 目前已知的受影响面
+- 请求中已经显现的约束
+- 下一个最值得切入的点
 
-- the expected behavior
-- the repair goal
-- the currently known affected surface area
-- the constraints already visible in the request
-- the most useful place to start looking next
+不要在这里对 bug 做完整定义。
 
-Do not fully define the bug here.
+这一步的目的只是选好起手位置,还不到把问题完全定义清楚的阶段。
 
-The point of this step is only to choose where to start looking, not to fully define the problem yet.
+### 3. 感知相关环境
 
-### 3. Sense the Relevant Environment
+按以下顺序收集信息:
 
-Collect information in this order:
+1. 当前的代码、配置、测试、日志、工作区模式
+2. 必要时查阅的官方文档或规范
+3. 只在确实影响正确性时才引入的外部参考
 
-1. current code, config, tests, logs, and workspace patterns
-2. official docs or standards when needed
-3. outside references only when they materially affect correctness
+起步要窄而有目的。优先看与所报告故障最可能相关的模块、文件、流程、日志、状态流转、最近改动和测试。
 
-Start narrowly and deliberately. Prefer the modules, files, flows, logs, state transitions, recent changes, and tests most likely connected to the reported failure.
+对每一条决策相关的结论,要明确标记来源是:
 
-For every decision-relevant conclusion, track whether it comes from:
+- 源代码
+- 配置
+- 测试
+- 运行时输出
+- 文档
+- 还是尚未验证的推断
 
-- source code
-- config
-- tests
-- runtime output
-- docs
-- or an inference that is still not verified
+如果初步搜索范围看起来不对或太窄,要有意识地扩大,不要一直锚定在最初的猜测上。
 
-If the initial search boundary looks wrong or too narrow, expand it on purpose instead of staying anchored to the first guess.
+向用户呈现的是结论摘要,不要倾倒原始命令输出,除非输出本身就是要点。
 
-Summarize findings for the user. Do not dump raw command output unless the exact output is the point.
+直到下面几点足够清晰,才离开这一步:
 
-Do not leave this step until the following are clear enough:
+- 能指向一处或多处可能的故障区域,而不仅仅是宽泛的模块名
+- 能区分当前事实与当前猜测
+- 能大致描述应当恢复成什么行为
 
-- you can point to one or more likely failure regions instead of only broad module names
-- you can separate current facts from current guesses
-- you can describe roughly which behavior should be restored
+如果还能说出来"如果还要继续挖,下一处最值得检查的地方是哪里",那就更好。
 
-It is also better if you can say what the next best place to inspect would be if you had to keep digging.
+如果前三点还不够清晰,继续感知。还不到完整定义问题的阶段。
 
-If the first three are not clear enough, keep sensing. Do not enter full problem definition yet.
+### 4. 完整定义问题与修复目标
 
-### 4. Fully Define the Problem and Repair Target
+看过环境之后,在内部把 bug 定义更新为:
 
-After looking at the environment, privately update the bug definition:
+- 现在看起来真正的故障是什么
+- 应当恢复的行为是什么
+- 哪些部分是已确认事实
+- 哪些部分仍然未知
+- 当前证据对受影响区域怎么说
+- 修复目标应当止步于何处
 
-- what the actual failure now appears to be
-- what behavior should be restored
-- which parts are confirmed facts
-- which parts remain unknown
-- what the current evidence says about the affected area
-- where the repair goal should stop
+不要因为某个解释听起来合理,就把"可能的解释"升格为"已确认的根因"。
 
-Do not convert a possible explanation into a confirmed root cause just because it sounds reasonable.
+不要在这一步就决定修复路径。这一步只是把 bug 与修复目标定义得更准确。
 
-Do not decide the fix path yet. This step is only for defining the bug and the repair target more accurately.
+### 5. 通过"提议者 / 质疑者 / 裁决者"循环生成修复路径
 
-### 5. Generate the Repair Path Through an Advocate/Skeptic/Arbiter Loop
+问题定义足够稳定之后,再生成候选修复路径。
 
-Once the problem definition is stable enough, generate candidate repair paths.
+首先,让主 Agent 为这次修复讨论准备一份上下文包。该上下文包至少应包含:
 
-First, let the primary agent prepare a context pack for the repair debate. That pack should at least include:
+- 第 1-4 步的产出
+- 当前的问题定义
+- 已确认事实
+- 仍然未知部分
+- 当前有证据支持的受影响面
 
-- the working result from Steps 1-4
-- the current problem definition
-- the confirmed facts
-- the still-unknown parts
-- the currently supported affected area
+随后创建三个互不相同的子 Agent:
 
-Then create three distinct sub-agents:
+- **提议者(Advocate)** 给出当前最优修复路径,并解释它为什么能解决问题。
+- **质疑者(Skeptic)** 攻击这条路径,寻找漏洞、遗漏场景、错误前提,以及更便宜或更安全的替代方案。
+- **裁决者(Arbiter)** 判断质疑者是否提出了仍然成立的新问题,还是当前反驳已经足够回应。
 
-- **Advocate** proposes the current best repair path and explains why it should work.
-- **Skeptic** attacks that path, looking for holes, missing cases, false premises, and cheaper or safer alternatives.
-- **Arbiter** decides whether the Skeptic has raised something new that still matters, or whether the current rebuttal has already been answered well enough.
+让这三个子 Agent 自主跑辩论循环。主 Agent 不要逐轮介入,等清洗后的结果回来即可。
 
-Let those three sub-agents run the debate loop. The primary agent should not interfere round by round. It should wait for the cleaned result to come back.
+只要质疑者还能提出新的实质性反驳,就继续循环。
 
-Keep looping while the Skeptic can still raise a new substantial rebuttal.
+"实质性反驳"大致包括:
 
-A substantial rebuttal should be something like:
+- 当前路径其实无法达到修复目标
+- 当前路径依赖于仍未确立的前提
+- 当前路径遗漏了高风险分支、失效模式或回归面
+- 存在一条实质上更安全、更简单或更易验证的替代路径
 
-- the current path cannot actually achieve the repair goal
-- the current path depends on a premise that still has not been established
-- the current path misses a high-risk branch, failure mode, or regression surface
-- there is a materially safer, simpler, or easier-to-verify alternative
+满足下列任一条件时可以停:
 
-You may stop the loop when:
+- 已经提不出新的实质性反驳
+- 当前的反驳已经被足够好地回应
+- 连续两轮都没有再产出能改变下一步判断的新东西
+- 再继续只会复述前面的观点,无法改善决策
 
-- there is no longer a new substantial rebuttal
-- the current rebuttal has already been answered well enough
-- two consecutive rounds add nothing that would change the next-step judgment
-- continuing would only repeat earlier points without improving the decision
+如果质疑者还在抛出决策相关的问题,不要为了省时间或 token 而提前停。
 
-Do not stop the loop just to save time or tokens if the Skeptic is still surfacing decision-relevant problems.
+循环结束时,带走的是清洗后的结论,而不是逐轮的原始记录。
 
-When the loop ends, carry forward a cleaned conclusion, not a raw round-by-round transcript.
+该结论至少要保留:
 
-That conclusion should at least retain:
+- 选定的修复路径
+- 存活下来或已被回应的主要反对意见
+- 仍然重要的剩余不确定性
+- 为什么这条路径战胜了其他仍在场的候选
 
-- the chosen repair path
-- the main objections that survived or were answered
-- any important remaining uncertainty
-- why this path won over the other live candidates
+### 6. 动手前先检查可行性
 
-### 6. Check Feasibility Before Touching Code
+在动手实现之前,先确认选定的修复路径在当前项目中确实可执行。
 
-Before implementing, check whether the chosen repair path can actually be carried out in the current project.
+要看的方面包括:
 
-Look at things like:
+- 当前环境是否支持这次修复
+- 必要的依赖或前提是否真的具备
+- 这条路径是否会破坏附近的行为或系统约束
+- 仍有未解决的质疑者反对意见是否阻碍了实现
 
-- whether the current environment supports the repair
-- whether required dependencies or premises are actually present
-- whether the path would break nearby behavior or system constraints
-- whether an unresolved Skeptic objection still blocks implementation
+如果可行性检查不通过,不要把不同性质的失败混在一起:
 
-If feasibility fails, do not blur all failures together:
+- 如果是 **修复路径本身走不通**,回到第 5 步。
+- 如果是 **环境本身仍然不够清晰**,回到第 3 步继续感知,再重跑第 4 步。
 
-- If the **repair path itself does not work**, return to Step 5.
-- If the **environment still is not clear enough**, return to Step 3, keep sensing, and then re-run Step 4.
+### 7. 紧凑地实现并做局部检查
 
-### 7. Implement With Tight Local Checks
+这一步分两个子步骤,可能会循环。
 
-This step has two substeps and may loop.
+#### 7A. 实现修复
 
-#### 7A. Implement the Repair
+用最小而完整的修复把问题解掉。
 
-Make the smallest coherent repair that solves the issue.
+规则:
 
-Rules:
+- 用真正解决问题的最少代码
+- 不要堆额外功能
+- 不要为抽象而抽象
+- 不要加入任务本身不需要的灵活性或可配置性
+- 只动必须动的地方
+- 不要因为"路过"就顺手清理旁边的代码
+- 不要重构健康代码
+- 匹配既有代码风格
+- 清理因本次修复产生的孤立 import、变量或函数
 
-- use the least code that actually solves the problem
-- do not add extra features
-- do not create one-off abstraction for its own sake
-- do not add flexibility or configurability the task does not need
-- touch only what must be touched
-- do not "clean up" nearby code just because you are there
-- do not refactor healthy code
-- match the existing code style
-- remove orphaned imports, variables, or functions created by the repair
+#### 7B. 跑最贴近的局部检查
 
-#### 7B. Run the Closest Local Checks
+跑那些最有可能暴露本轮实现问题的小而直接的检查。
 
-Run small, direct checks that are most likely to catch whether this round of implementation is broken.
+不要给所有项目套同一张固定清单。
 
-Do not force one fixed checklist on every project.
+用与当前代码库和当前改动最匹配的检查,例如:
 
-Use the checks that best fit the current codebase and current change, such as:
+- 文件级或函数级的遗留错误检查
+- 受本次修复直接影响的最贴近路径
+- 与之最相关的测试
+- 当前项目支持的编译 / 构建检查
+- 当前项目支持的单元测试或局部集成测试
 
-- file-level or function-level review for leftover mistakes
-- the local path most directly affected by the repair
-- the nearest relevant test
-- compile/build checks if this project has them
-- unit or local integration tests if this project has them
+目标不是跑完所有东西,而是快速抓住本轮修复里最明显的问题。
 
-The goal is not to run everything. The goal is to quickly catch obvious problems in the current repair round.
+如果这些局部检查不通过,回到 7A 继续修。
 
-If these local checks fail, go back to 7A and continue repairing.
+第 7 步 **没有资格** 宣布 bug 已修。它只能说"本轮实现局部足够干净,可以继续往下走"。
 
-Step 7 does **not** get to declare the bug fixed. It only gets to declare that the current implementation round is locally clean enough to move on.
+### 8. 验证修复
 
-### 8. Validate the Repair
+这一步才决定 bug 是否真的被修好。
 
-This is the step that determines whether the bug is actually fixed.
+验证至少覆盖:
 
-Validation should cover at least:
+- 原始故障路径
+- 期望恢复的成功路径
+- 邻近区域显而易见的回归
+- 与修复目标直接相关的其他行为
 
-- the original failure path
-- the restored success path
-- obvious regressions near the touched area
-- other behavior directly tied to the repair target
+要明确写清哪些结论是由:
 
-Be explicit about what was confirmed by:
+- 静态检查得出
+- 执行或测试结果得出
+- 以及哪些仍未被验证
 
-- static inspection
-- execution or test results
-- and what still has not been verified
+如果验证不通过,要正确路由这次失败:
 
-If validation fails, route the failure correctly:
+- 如果是 **修复路径问题**,回到第 5 步。
+- 如果是 **实现问题**,回到第 7 步。
+- 如果仍然是 **环境理解问题**,回到第 3 步继续感知,再重跑第 4 步。
 
-- If it is a **repair-path problem**, return to Step 5.
-- If it is an **implementation problem**, return to Step 7.
-- If it is still an **environment understanding problem**, return to Step 3, keep sensing, and then re-run Step 4.
+只有第 8 步有权宣告 bug 是否真的被修好。
 
-Only Step 8 is allowed to conclude whether the bug is really fixed.
+### 9. 给出面向用户的结果
 
-### 9. Deliver the User-Facing Result
+验证完成后,把修复结果转成最终面向用户的答复。
 
-After validation, turn the repair result into the final user-facing answer.
+该答复需要说清楚:
 
-That answer should make these things clear:
+- bug 现在是否真的修好了
+- 故障是什么
+- 是怎么修的
+- 改了哪些地方,涉及哪些区域
+- 为什么现在能说修好了,或者为什么还不能
 
-- whether the bug is actually fixed now
-- what the problem was
-- how it was fixed
-- what changed or what areas were affected
-- why you can now say it is fixed, or why you still cannot say that yet
+不要把整段排查过程倾倒回给用户。
 
-Do not pour the whole investigation back onto the user.
+不要为了显摆流程而扩张测试过程,但要让判断依据足够清楚,让用户明白为何能给出这个结论。
 
-Do not expand the testing process for its own sake, but do make the judgment basis clear enough that the user can understand why this result is being claimed.
+## 沟通约定
 
-## Communication Contract
+默认的对外风格:
 
-Default user-facing style:
+- 短进度更新
+- 简洁的发现
+- 明确陈述当前的修复路径
+- 明确陈述 bug 是否已经修好
 
-- short progress updates
-- concise findings
-- clear statement of the current repair path
-- clear statement of whether the bug is fixed yet
+不要:
 
-Do not:
+- 贴大段执行轨迹
+- 暴露链式思考式的内部推理
+- 强行把完整工作流标题搬进回复,除非用户明确要求正式报告
+- 把常规实现细节抬升为面向用户的决策点
 
-- paste long execution traces
-- expose chain-of-thought style internal reasoning
-- force the full workflow headings into the reply unless the user explicitly wants a formal write-up
-- turn routine implementation details into user-facing decision points
+## 默认输出形态
 
-## Default Output Shape
+默认情况下,让对外输出贴近以下形态:
 
-By default, keep the visible output close to this shape:
+1. bug 现在是否真的修好
+2. 故障是什么
+3. 是怎么修的
+4. 改了哪些地方,涉及哪些区域
+5. 为什么现在能说修好了,或者为什么还不能
 
-1. whether the bug is fixed now
-2. what was wrong
-3. how you fixed it
-4. what changed or what areas were affected
-5. why you can now say it is fixed, or why you still cannot say that yet
+除非确有必要解释"为何修复仍不确定",否则不要倾倒完整测试过程。
 
-Do not dump the full testing process unless it is necessary to explain why the repair is still uncertain.
+## 复用与归档
 
-## Reuse and Recording
+只有结论未来还可能再次被用到时,才记录一条可复用决策。
 
-Record a reusable decision only when the conclusion is likely to matter again.
-
-Use this path when a reusable record is warranted:
+当确实需要可复用记录时,使用这条路径:
 
 - `docs/decision-records/yeizi-command-bug-workflow.md`
 
-Do not create or update that record for every routine use.
+不要为每一次例行使用都新建或更新该记录。
 
 ## Do
 
-- think broadly and speak concisely
-- inspect before proposing
-- keep facts separate from guesses
-- challenge the leading repair path before committing to it
-- keep Step 7, Step 8, and Step 9 distinct
-- keep going through implementation and validation when the user expects a fix
+- 想得宽,说得短
+- 先排查再提方案
+- 把事实与猜测分开
+- 在选定主修复路径之前先挑战它
+- 把第 7、8、9 步保持清晰区分
+- 用户期望修复时,持续推进实现与验证
 
 ## Don't
 
-- do not turn this into a requirement-definition workflow
-- do not stop at analysis when the user expects repair
-- do not present unverified inference as confirmed fact
-- do not skip feasibility or validation
-- do not say the bug is fixed before Step 8 supports that conclusion
-- do not ask the user to pick among options you can already rule out
-- do not replay the full internal debate transcript back to the user
+- 不要把它做成"需求定义"工作流
+- 用户期望修复时,不要停在分析阶段
+- 不要把未经验证的推断当作已确认事实呈现
+- 不要跳过可行性或验证
+- 在第 8 步支撑之前不要宣称 bug 已修
+- 不要在自己已经能排除的选项之间让用户选
+- 不要把完整的内部辩论记录原样回放给用户
 
-## One-Sentence Rule
+## 一句话规则
 
-When the user explicitly invokes `/yeizi-command-bug-workflow`, lightly parse the bug report, sense the relevant environment, fully define the problem, challenge the repair path through an Advocate/Skeptic/Arbiter loop, check feasibility, implement with tight local checks, validate the result, and then tell the user whether the bug is fixed and why you can say so.
+当用户显式调用 `/yeizi-command-bug-workflow` 时,轻量解析 bug 报告,感知相关环境,完整定义问题,通过"提议者 / 质疑者 / 裁决者"循环挑战修复路径,检查可行性,紧凑实现并做局部检查,验证结果,然后告诉用户 bug 是否修好,以及为什么能这样说。

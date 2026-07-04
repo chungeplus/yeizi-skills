@@ -1,202 +1,202 @@
 ---
 name: yeizi-auto-self-review
 description: |
-  Use when a long software-delivery request signals post-task refinement, review, validation, or release-readiness work on the delivered result through auto-trigger conditions.
+  当用户的请求同时具备"较长的软件交付任务"与"明确的审查类关键词",并希望对已交付结果进行任务后优化、复查、校验或发布前确认时使用。本技能由自动触发条件开启,不需要显式命令。
 ---
 
-# Yeizi Auto Self Review
+# Yeizi 自动自审
 
-It is an **auto-triggered** post-task review skill. Its initial trigger is armed by a long software-delivery request plus an explicit review-oriented keyword, then executed only after the main long task has been completed. It also supports a narrow continuation mode for the immediately previous self-review result in the same thread. It does **not** require an explicit command, and it should not be used as a standalone user-triggered review command.
+这是一个 **自动触发** 的任务后自审技能。它的初始触发由"较长的软件交付请求 + 明确的审查类关键词"双重条件开启,并且只在主线长任务完成之后才真正执行;此外它还支持一种仅针对同一会话内紧邻上一次自审结果的窄义续作模式。它 **不要求** 显式命令触发,也不应被当作用户主动调起的独立审查命令使用。
 
-## Trigger Logic
+## 触发逻辑
 
-Unless an exemption applies, activate this skill only through one of the two valid modes below.
+除非存在豁免,否则只能通过下面两种合法模式之一来激活本技能。
 
-### Mode A: Initial Trigger
+### 模式 A: 初始触发
 
-Required conditions:
+必要条件:
 
-1. The current request includes a long software-delivery task that should be completed in the current workflow
-2. The current request contains an explicit review-oriented keyword
+1. 当前请求中包含一项需要在本轮工作流中完成的较长软件交付任务
+2. 当前请求中包含明确的审查类关键词
 
-### Mode B: Self-Review Continuation
+### 模式 B: 自审续作
 
-Required conditions:
+必要条件:
 
-1. The immediately previous assistant turn already delivered a self-review from this skill
-2. The very next user reply in the same thread clearly continues, accepts, or asks to execute that self-review suggestion
-3. No unrelated task or topic change appears between the self-review and that follow-up reply
+1. 紧邻的上一个助手回复刚刚交付了来自本技能的自审结论
+2. 同一会话中用户的下一条回复明确地在承接、接受或要求执行该自审建议
+3. 在该自审与紧接其后的回复之间没有夹杂任何不相关的任务或主题切换
 
-Do **not** wait for an explicit command. Do **not** activate this skill as a standalone manual review request from the user. Keywords alone are not enough for the initial trigger, and a long task without review-oriented keywords is not enough either. Continuation mode is allowed only for the immediately previous self-review in the same thread.
+不要等待显式命令。不要把本技能当作用户主动发起的独立审查请求来激活。仅有关键词不足以构成初始触发;只有长任务而没有审查类关键词也同样不够。续作模式只允许针对同一会话中紧邻的上一次自审。
 
-Typical deliverables include:
+典型的交付物包括:
 
-- PRDs, user stories, flows, acceptance criteria, release notes
-- Prototypes, UI pages, design specs, component styles
-- Frontend pages, components, state logic, API integration
-- Backend APIs, services, scripts, jobs, database-related logic
-- Test cases, validation notes, integration results, test/release instructions
+- PRD、用户故事、流程、验收标准、发布说明
+- 原型、UI 页面、设计规范、组件样式
+- 前端页面、组件、状态逻辑、API 对接
+- 后端 API、服务、脚本、Job、数据库相关逻辑
+- 测试用例、验证记录、集成结论、提测/发布说明
 
-Typical post-task keywords include refine, improve, polish, review, self-review, recheck, validate, prepare for testing, prepare for release, ready for testing, or ready for release.
-Treat semantically equivalent Chinese phrasing the same way, such as `优化`, `完善`, `复查`, `自审`, `校验`, `提测前检查`, `发布前检查`, `准备提测`, `准备发布`, `可以提测了`, or `可以发布了`.
-Do not treat broad delivery words such as continue, fix, complete, integrate, or migrate as standalone review triggers. They are too broad unless they are clearly part of an already active self-review continuation.
+典型的任务后关键词包括:refine、improve、polish、review、self-review、recheck、validate、prepare for testing、prepare for release、ready for testing、ready for release。
+对语义等价的中文说法应同等看待,例如 `优化`、`完善`、`复查`、`自审`、`校验`、`提测前检查`、`发布前检查`、`准备提测`、`准备发布`、`可以提测了`、`可以发布了`。
+不要把 continue、fix、complete、integrate、migrate 这类过于宽泛的交付动词当作独立的审查触发词。除非它们明显属于一次已经在进行中的自审续作,否则都过于宽泛。
 
-A long task does not only mean many lines changed. It can also mean completing a feature, bugfix pass, refactor step, page flow, integration milestone, testing pass, or release-prep step.
+"长任务"并不只是看改动行数。它也可以是一项功能的完成、一轮 bugfix、一轮重构、一段页面流程、一个集成里程碑、一轮测试或一轮发布准备。
 
-### Exemptions
+### 豁免
 
-- The user explicitly wants only the result, with no suggestions or extra commentary
-- The final output must remain in a strict format such as pure JSON, pure patch, pure code, or a strict table
-- The turn is only a greeting, yes/no answer, explanation, analysis, or brainstorming
-- The change is genuinely tiny and low risk, such as a non-critical wording tweak or a style value that does not affect behavior
+- 用户明确表示只要结果,不要建议或额外说明
+- 最终输出必须保持纯 JSON、纯 patch、纯代码或严格表格等固定格式
+- 当前回合只是问候、是否作答、解释、分析或头脑风暴
+- 改动确实极小且低风险,例如非关键文案微调、不影响行为的样式值
 
-When judging whether something is tiny, look at risk scope, not just line count. A one-line change is not exempt if it affects core logic, permissions, state transitions, or a critical layout.
+判断是否极小要看风险面,而不只是行数。即使只有一行,只要影响核心逻辑、权限、状态流转或关键布局,就不属于豁免范围。
 
-## Workflow
+## 工作流
 
-### Step 0: Determine Trigger Mode and Identify the Current Target
+### 第 0 步: 判断触发模式并锁定当前对象
 
-First determine whether this is:
+首先判断当前属于:
 
-- `Mode A: Initial Trigger`
-- `Mode B: Self-Review Continuation`
+- `模式 A: 初始触发`
+- `模式 B: 自审续作`
 
-`Immediate follow-up` means the **very next user turn** directly responding to the previous self-review result in the same thread, with no unrelated request inserted in between.
+"紧邻续作"指的是在同一个会话中,用户紧接上一次自审结果之后给出的 **紧邻下一轮** 回复,且其中没有夹杂任何不相关的请求。
 
-If `Mode A` is valid but the user says only "improve it", "review it", "recheck it", or similar language without naming the target, infer the file, module, page, document, or plan from the current context first. Ask the user only if the target is still unclear.
+如果 `模式 A` 成立,但用户只说了"优化一下"、"复查一下"、"再确认一下"这类没有点名对象的表达,先从当前上下文推断文件、模块、页面、文档或方案。只有当对象仍然不明确时才向用户确认。
 
-### Step 0.5: Detect Whether the User Is Continuing a Previous Self-Review Suggestion
+### 第 0.5 步: 判断用户是否在续作上一次自审建议
 
-If the user says "continue", "agreed", "do the next step", or similar wording, or equivalent Chinese continuation phrasing such as `继续`, `同意`, `按这个做`, or `执行下一步`, and the context clearly points to the immediately previous self-review suggestion, treat it as `Mode B: Self-Review Continuation` rather than a new trigger or a request to explain the suggestion again.
+如果用户说"继续"、"同意"、"按这个做"、"执行下一步"或语义等价的中文续作表达(例如 `继续`、`同意`、`按这个做`、`执行下一步`),且上下文明显指向紧邻的上一次自审建议,则应按 `模式 B: 自审续作` 处理,而不要当作新一轮触发,也不要再要求解释该建议。
 
-Rules:
+规则:
 
-- If the previous suggestion is a tight group of related steps that should be completed together, execute them as one batch
-- If the previous round offered multiple mutually exclusive or very different options, ask the user before choosing one
-- If the suggestion involves actions such as verify, inspect, open, compare, or test, actually do them; do not invent a verification report
-- After execution, treat the updated result as the new current version and continue with self-review
+- 如果上一次的建议是一组紧密相关、应当一气呵成的步骤,就一次性执行完
+- 如果上一轮给出了多个互斥或差异较大的选项,先向用户确认再选择
+- 如果建议涉及 verify、inspect、open、compare、test 这类动作,必须真正去做,不能编造一份验证报告
+- 执行完成后,要把更新后的结果当作新的当前版本继续自审
 
-### Step 1: Finish the User's Current Request First
+### 第 1 步: 先把用户当前请求做完
 
-If this is `Mode A`, complete the current long task first before spending effort on post-task self-review.
+如果是 `模式 A`,先完成当前长任务,再投入任务后自审的精力。
 
-This skill should not be used as a standalone manual improvement request with no long task completed in the current workflow.
-If the long task is still in progress, do not enter self-review yet even if a review-oriented keyword already appears.
+本技能不应被当作一次没有任何长任务已完成的独立手动改进请求来使用。
+即使审查类关键词已经出现,如果长任务仍在进行中,也不要进入自审。
 
-### Step 2: Review the Updated Result
+### 第 2 步: 复审最新结果
 
-Treat the improved result, or the result after executing the previous suggestion, as the current version and inspect it again for:
+把改进后的结果,或执行上一条建议之后的结果,视为当前版本,再次检查是否存在:
 
-- obvious omissions
-- high-priority risks
-- directly actionable next improvements
-- readiness to move to the next stage
+- 明显遗漏
+- 高优风险
+- 可直接执行的下一步改进
+- 进入下一阶段的成熟度
 
-### Step 3: Give a Truthful Conclusion
+### 第 3 步: 给出真实的结论
 
-There are three valid outcomes:
+结论只有三种合法形态:
 
-1. **Still has improvement room**
-   Give 1-3 specific, actionable suggestions in priority order.
-2. **Currently in good shape**
-   State clearly that no high-priority issue was found in the verified scope and that the work can move forward.
-3. **Insufficient verification / cannot conclude yet**
-   State which evidence, tools, or context are still missing and why a high-confidence conclusion is not justified yet. If helpful, suggest the next verification step.
+1. **仍有改进空间**
+   按优先级给出 1-3 条具体、可执行的建议。
+2. **当前状态良好**
+   明确说明在已核验范围内没有发现高优问题,工作可以继续推进。
+3. **证据不足 / 暂时无法下结论**
+   说明还缺少哪些证据、工具或上下文,以及为什么还不能给出高置信结论。必要时给出下一步核验动作。
 
-Do not invent filler suggestions just to have a list.
+不要为了凑出列表而编造建议。
 
-## Default Review Lens Selection
+## 默认自审视角选择
 
-Pick the primary review lens from the final deliverable:
+根据最终交付物选择主要自审视角:
 
-- PRDs, requirement specs, flows, acceptance criteria, version scope: product / requirements lens
-- Prototypes, pages, components, visual specs, interaction drafts: design / frontend UI lens
-- Frontend code, backend code, APIs, services, scripts, jobs: implementation lens
-- Technical plans, architecture splits, technology choices, dependency governance: architecture lens
-- Test cases, validation reports, integration results, walkthrough conclusions: testing / verification lens
-- Test handoff notes, release notes, delivery checklists, status alignment: delivery lens
+- PRD、需求规范、流程、验收标准、版本范围:产品 / 需求视角
+- 原型、页面、组件、视觉规范、交互稿:设计 / 前端 UI 视角
+- 前端代码、后端代码、API、服务、脚本、Job:实现视角
+- 技术方案、架构拆分、技术选型、依赖治理:架构视角
+- 测试用例、验证报告、集成结论、走查结论:测试 / 验证视角
+- 提测说明、发布说明、交付清单、状态对齐:交付视角
 
-Default rules:
+默认规则:
 
-- If the deliverable is code, API, service, script, or module implementation, default to the implementation lens
-- If a task spans multiple roles, keep only one primary lens based on the final deliverable
-- Add secondary checks only when they are directly relevant; do not expand every task into an all-role audit
+- 如果交付物是代码、API、服务、脚本或模块实现,默认走实现视角
+- 如果任务跨多个角色,只根据最终交付物保留一个主视角
+- 只有在直接相关时才增加次要检查项,不要把任何任务都扩成全员审计
 
-See [references/roles.md](references/roles.md) for the full lens table and typical symptoms.
+完整视角表与典型症状参见 [references/roles.md](references/roles.md)。
 
-## Verification and Scope
+## 验证与范围
 
-- Match the strength of the conclusion to the level of verification actually performed
-- Do not write "verified" or "passed" if no real verification was executed
-- If you use sampling, state the sampled scope, uncovered scope, and residual risk explicitly
-- If the user asks for strict verification, full inspection, or a high-confidence conclusion, do not default to sampling
-- If multiple deliverables changed together, check whether they stay aligned with each other
+- 让结论的强度匹配实际完成的验证等级
+- 没有真正执行过验证就不要写"已核验"、"通过"之类的话
+- 如果使用抽样,必须明确写出抽样范围、未覆盖范围以及残余风险
+- 如果用户要求严格验证、全量检查或高置信结论,就不要默认走抽样
+- 如果多个交付物一起改动,还要检查它们彼此是否仍然保持一致
 
-See the detailed guidance for evidence sources, cross-deliverable checks, and sampling:
+证据来源、跨交付物检查、抽样的详细指引参见:
 
 - [references/validation.md](references/validation.md)
 - [references/deliverables.md](references/deliverables.md)
 
-## Output Guidance
+## 输出建议
 
-When the output format allows it, the self-review conclusion should normally be visible to the user because this review result is part of the delivered outcome after the long task. It should still stay concise and should not become empty template filler.
+在输出格式允许的前提下,自审结论默认应当对用户可见,因为自审结果本身就是长任务完成后的交付之一。但仍应保持简洁,不要变成空模板的填充。
 
-Priority order:
+优先级:
 
-1. Follow the user's required output format first.
-2. Then follow the host or system response style.
-3. Only then use the structures suggested by this skill.
+1. 首先遵守用户要求的输出格式。
+2. 然后遵守宿主或系统的回复风格。
+3. 最后才使用本技能建议的结构。
 
-Additional rules:
+附加规则:
 
-- For long-task completions, prefer a visible self-review conclusion unless the user explicitly asked for result-only output or the format forbids extra commentary
-- Keep it short by default and avoid repeating the main output
-- If the host already has a fixed closing structure, do not force this skill's format on top of it
-- If the final output must be pure JSON, pure patch, pure code, or another fixed format, do not append extra commentary
-- For tiny changes, internal self-review without extra visible output is acceptable
+- 长任务完成后,默认给出可见的自审结论,除非用户明确要求"只给结果"或格式禁止附加说明
+- 默认保持简短,不要重复主输出
+- 如果宿主已经有固定的结尾结构,不要强行套用本技能的格式
+- 如果最终输出必须保持纯 JSON、纯 patch、纯代码或其他固定格式,不要附加额外说明
+- 对极小改动,只做内部自审、不额外可见输出也是可以接受的
 
-### Suggested Structure A: Still Has Improvement Room
-
-```markdown
----
-
-**Self-Review**
-
-The current version completes the request, but there is still one high-value follow-up to address: [most important and most concrete improvement].
-
-**Suggested Next Step**
-- [directly actionable follow-up]
-```
-
-### Suggested Structure B: Currently in Good Shape
+### 建议结构 A: 仍有改进空间
 
 ```markdown
 ---
 
-**Self-Review**
+**自审**
 
-The current version completes the request. Within the verified scope, no high-priority issue was found, and the work can move to the next stage.
+当前版本已完成请求,但仍有一项高价值的下一步需要处理:[最重要且最具体的改进项]。
 
-**Suggested Next Step**
-- [review / testing / commit / acceptance / next delivery step]
+**建议下一步**
+- [可直接执行的后续动作]
 ```
 
-### Suggested Structure C: Insufficient Verification / Cannot Conclude Yet
+### 建议结构 B: 当前状态良好
 
 ```markdown
 ---
 
-**Self-Review**
+**自审**
 
-The current version completes the request, but the currently available evidence is not strong enough for a high-confidence conclusion.
+当前版本已完成请求。在已核验范围内没有发现高优问题,工作可以进入下一阶段。
 
-**Current Gap**
-- [missing evidence / missing tool access / missing context]
-
-**Suggested Next Step**
-- [additional verification / runtime result / page inspection / missing context]
+**建议下一步**
+- [复核 / 提测 / 提交 / 验收 / 下一步交付动作]
 ```
 
-## One-Sentence Rule
+### 建议结构 C: 证据不足 / 暂时无法下结论
 
-For software-delivery requests, arm this loop only through one of two valid modes: either the current request combines a long task with an explicit review-oriented keyword, or the very next user reply clearly continues the immediately previous self-review suggestion; then complete the main work first when needed, review the latest result once, and tell the user whether it still needs improvement, can move forward, or lacks enough verification.
+```markdown
+---
+
+**自审**
+
+当前版本已完成请求,但当前可用证据还不足以支撑高置信结论。
+
+**当前缺口**
+- [缺少的证据 / 工具访问 / 上下文]
+
+**建议下一步**
+- [补充验证 / 运行时结果 / 页面检查 / 补齐上下文]
+```
+
+## 一句话规则
+
+对于软件交付类请求,本循环只能通过两种合法模式开启:要么当前请求同时具备"长任务 + 明确审查类关键词",要么紧邻的下一条回复明确地在续作紧邻的上一次自审建议;需要时先完成主线工作,再对最新结果做一次自审,然后告诉用户是仍需改进、可以继续推进,还是证据不足。
