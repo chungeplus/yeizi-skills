@@ -1,7 +1,6 @@
 ---
 name: yeizi-command-pair-program
-description: |
-  通过提议 vs 反驳的配对讨论对中小规模软件问题做压力测试,产出更稳的方案。`/yeizi-command-pair-program` 显式调用时触发。
+description: "在中小规模软件问题尚未想清楚、需要更稳的方案时使用。仅在显式调用 `/yeizi-command-pair-program` 时触发。"
 ---
 
 # Yeizi 配对编程命令
