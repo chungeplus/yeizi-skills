@@ -1,6 +1,6 @@
 ---
 name: yeizi-command-pair-program
-description: "在中小规模软件问题尚未想清楚、需要更稳的方案时使用。仅在显式调用 `/yeizi-command-pair-program` 时触发。"
+description: "在中小规模软件问题尚未想清楚、需要更稳的方案时使用。"
 ---
 
 # Yeizi 配对编程命令
