@@ -1,7 +1,7 @@
 ---
 name: yeizi-command-pair-program
 description: |
-  当用户显式调用 `/yeizi-command-pair-program`,用于中小规模软件问题(涉及需求评审、方案对比、架构拆分、重构规划、测试策略、集成规划或发布准备)时使用。
+  通过提议 vs 反驳的配对讨论对中小规模软件问题做压力测试,产出更稳的方案。`/yeizi-command-pair-program` 显式调用时触发。
 ---
 
 # Yeizi 配对编程命令

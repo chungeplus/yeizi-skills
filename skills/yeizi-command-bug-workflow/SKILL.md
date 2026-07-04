@@ -1,6 +1,6 @@
 ---
 name: "yeizi-command-bug-workflow"
-description: "当用户显式调用 `/yeizi-command-bug-workflow` 用于处理复杂 bug、回归问题或技术修复,且故障确实存在但根因或最稳妥的修复路径尚未明确时使用。"
+description: "复杂 bug、回归或技术故障的诊断与修复,在故障存在但根因或修复路径不明确时使用。`/yeizi-command-bug-workflow` 显式调用时触发。"
 ---
 
 # Yeizi Bug 工作流命令
