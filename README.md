@@ -2,115 +2,58 @@
 
 这是一个给软件开发配套用的 yeizi skills 集合。
 
-命名规则：
-
-- `yeizi-command-*`：用户显式输入命令后触发
-- `yeizi-auto-*`：根据关键词和上下文条件自动触发
-
-## 安装与使用
-
-通过 `yeizi-skills` CLI 把仓库里的 skill 同步到本地 AI 工具的技能目录：
+## 快速上手
 
 ```bash
-npx yeizi-skills install --platform claude,codex --skill yeizi-auto-self-review
-npx yeizi-skills list --platform claude,codex,trae
+npx yeizi-skills install --skill <skill-name>
 ```
 
-详细的命令参数、支持平台、维护者开发流程和 `SKILL.md` frontmatter 规范见 [`cli/README.md`](./cli/README.md)。
+例如安装第一个 skill：
 
-## `.development-reference`
-
-这是一个**不属于任何 skill** 的参考文档目录。
-
-它专门用来保存技能开发过程里的预处理文档、设计参考文、流程草稿、说明稿等内容。
-
-推荐用法是：
-
-- 先在 `.development-reference/` 里整理和收敛 skill 参考文
-- 参考文稳定后，再同步回真正的 `SKILL.md`、README 或其他正式文件
-
-当前已经迁入的内容：
-
-- `.development-reference/yeizi-command-bug-workflow/yeizi-command-bug-workflow_perfect.md`
-
-## `yeizi-command-bug-workflow`
-
-> 复杂 bug、回归问题、技术故障不能直接开改时，用它让 AI 先诊断、再收方案、再实施修复，最后给出验证结果。
-
-**怎么用**
-
-`/yeizi-command-bug-workflow <你需要解决的问题>`
-
-**什么时候用**
-
-- 这个 bug 比较复杂，不是改一两个地方就能完事
-- 这个问题的根因不清楚，需要先定位再修
-- 这个问题可能会牵涉多个模块、调用链或状态流，直接开改风险高
-- 你需要的不是一个猜测，而是一整套从诊断到验证的处理过程
-
-**不适合什么时候用**
-
-- 你还在讨论“到底要做什么功能”
-- 你还想先发散方案，不想让 AI 直接进入修复
-- 这个问题其实很小，根因和修法都已经很明确
-
-**流程图**
-
-```mermaid
-flowchart LR
-    A["提出 BUG"] --> B["轻量理解问题"]
-    B --> C["定向感知环境"]
-    C --> D["完整定义问题"]
-    D --> E["两辩一裁收住方案"]
-    E --> F["可行性分析"]
-    F --> G["实施修复 + 局部检查"]
-    G --> H["正式验证结果"]
-    H --> I["输出结论"]
+```bash
+npx yeizi-skills install --skill yeizi-auto-self-review
 ```
 
 ## `yeizi-auto-self-review`
 
 > 事情做完了，但你还想让 AI 自动再检查一遍有没有遗漏、风险或下一步建议时，就用这个。
 
-**怎么用**
+**触发方式**
 
 自动触发，无需手动命令。\
 当长任务请求里带有复查、自审、校验这类关键词时触发。
 
-**什么时候用**
+**适用场景**
 
 - 一个大任务刚做完，想知道还有没有坑
 - bug 修完了、功能补完了、重构做完了，想再查一遍
 - 你想拿到下一步该继续补什么的建议
 
-**流程图**
+## `yeizi-command-bug-workflow`
 
-```mermaid
-flowchart LR
-    A["先把任务做完"] --> B["自动再看一遍"]
-    B --> C["找遗漏和风险"]
-    C --> D["给出下一步建议"]
-```
+> 复杂 bug、回归问题、技术故障不能直接开改时，用它让 AI 先诊断、再收方案、再实施修复，最后给出验证结果。
+
+**触发方式**
+
+`/yeizi-command-bug-workflow <你需要解决的问题>`
+
+**适用场景**
+
+- 这个 bug 比较复杂，不是改一两个地方就能完事
+- 这个问题的根因不清楚，需要先定位再修
+- 这个问题可能会牵涉多个模块、调用链或状态流，直接开改风险高
+- 你需要的不是一个猜测，而是一整套从诊断到验证的处理过程
 
 ## `yeizi-command-pair-program`
 
 > 还没想清楚怎么做时，用它先让 AI 帮你整理上下文、讨论方案，再给出更稳的结论。
 
-**怎么用**
+**触发方式**
 
 `/yeizi-command-pair-program <你需要解决的问题>`
 
-**什么时候用**
+**适用场景**
 
 - 这个 bug 不知道该怎么改
 - 这个需求不知道该怎么实现
 - 你想先拿思路和方案，不想让 AI 直接改代码
-
-**流程图**
-
-```mermaid
-flowchart LR
-    A["提出问题"] --> B["先整理上下文"]
-    B --> C["内部讨论"]
-    C --> D["给出思路和方案"]
-```

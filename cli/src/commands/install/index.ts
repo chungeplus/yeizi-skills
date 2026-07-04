@@ -1,1 +1,0 @@
-export { InstallCommand } from "./command"

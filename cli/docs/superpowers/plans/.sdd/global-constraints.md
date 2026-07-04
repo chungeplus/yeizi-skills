@@ -1,5 +1,0 @@
-﻿- The project does not allow `unknown` or `any`.
-- Commander-specific handling stays inside `src/errors/*`.
-- CLI rendering may stay inside `src/errors/*`.
-- Error-only shared types should stay inside the error domain.
-- `src/errors/types/*` is not needed at the current project size.

@@ -1,1 +1,0 @@
-export { executePrompt } from "./interactive"
